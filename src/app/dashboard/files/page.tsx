@@ -1,9 +1,28 @@
 'use client';
 import { useState } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  useUser,
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+  deleteDocumentNonBlocking,
+} from '@/firebase';
+import { collection, query, where, serverTimestamp, doc } from 'firebase/firestore';
 import type { Folder, File as FileType } from '@/lib/types';
-import { PlusCircle, Loader2, Folder as FolderIcon, File as FileIcon, MoreVertical, Trash2, Edit } from 'lucide-react';
+import {
+  PlusCircle,
+  Loader2,
+  Folder as FolderIcon,
+  File as FileIcon,
+  MoreVertical,
+  Trash2,
+  Edit,
+  UploadCloud,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -12,43 +31,142 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+
+const folderSchema = z.object({
+  name: z.string().min(1, { message: 'اسم المجلد مطلوب.' }),
+});
+
+const fileSchema = z.object({
+    name: z.string().min(1, { message: "اسم الملف مطلوب" }),
+    file: z.instanceof(FileList).refine((files) => files?.length === 1, "الملف مطلوب."),
+});
+
 
 export default function FilesPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
+
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
+  const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Memoized query for folders
+  const folderForm = useForm<z.infer<typeof folderSchema>>({
+    resolver: zodResolver(folderSchema),
+    defaultValues: { name: '' },
+  });
+  
+  const fileForm = useForm<z.infer<typeof fileSchema>>({
+    resolver: zodResolver(fileSchema)
+  });
+
+  const fileRef = fileForm.register("file");
+
+
+  const foldersCollectionRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return collection(firestore, `users/${user.uid}/folders`);
+  }, [user, firestore]);
+
+  const filesCollectionRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return collection(firestore, `users/${user.uid}/files`);
+  }, [user, firestore]);
+
+
   const foldersQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(
-      collection(firestore, `users/${user.uid}/folders`),
-      where('parentId', '==', currentFolderId)
-    );
-  }, [user, firestore, currentFolderId]);
+    if (!foldersCollectionRef) return null;
+    return query(foldersCollectionRef, where('parentId', '==', currentFolderId));
+  }, [foldersCollectionRef, currentFolderId]);
 
-  // Memoized query for files
   const filesQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(
-      collection(firestore, `users/${user.uid}/files`),
-      where('folderId', '==', currentFolderId)
-    );
-  }, [user, firestore, currentFolderId]);
+    if (!filesCollectionRef) return null;
+    return query(filesCollectionRef, where('folderId', '==', currentFolderId));
+  }, [filesCollectionRef, currentFolderId]);
 
   const { data: folders, isLoading: isLoadingFolders } = useCollection<Folder>(foldersQuery);
   const { data: files, isLoading: isLoadingFiles } = useCollection<FileType>(filesQuery);
 
   const isLoading = isLoadingFolders || isLoadingFiles;
 
-  const handleCreateFolder = () => {
-    // TODO: Implement folder creation logic
-    console.log('Create new folder');
+  const handleCreateFolder = async (values: z.infer<typeof folderSchema>) => {
+    if (!user || !foldersCollectionRef) return;
+    setIsSubmitting(true);
+    const newFolder: Omit<Folder, 'id'> = {
+      name: values.name,
+      userId: user.uid,
+      parentId: currentFolderId,
+      createdAt: serverTimestamp(),
+    };
+    await addDocumentNonBlocking(foldersCollectionRef, newFolder);
+    toast({ title: 'نجاح', description: 'تم إنشاء المجلد.' });
+    setIsSubmitting(false);
+    setIsFolderDialogOpen(false);
+    folderForm.reset();
+  };
+  
+  const handleUploadFile = async (values: z.infer<typeof fileSchema>) => {
+    if (!user || !filesCollectionRef) return;
+    setIsSubmitting(true);
+    
+    const file = values.file[0];
+    
+    // NOTE: This is a placeholder for actual file upload to Firebase Storage.
+    // We are only creating the Firestore document here.
+    const newFile: Omit<FileType, 'id'> = {
+      name: values.name,
+      userId: user.uid,
+      folderId: currentFolderId,
+      storagePath: `users/${user.uid}/files/${file.name}`, // Placeholder path
+      fileType: file.type,
+      createdAt: serverTimestamp(),
+    };
+    
+    await addDocumentNonBlocking(filesCollectionRef, newFile);
+    
+    toast({ title: 'نجاح', description: 'تم رفع معلومات الملف.' });
+    setIsSubmitting(false);
+    setIsFileDialogOpen(false);
+    fileForm.reset();
   };
 
-  const handleUploadFile = () => {
-    // TODO: Implement file upload logic
-    console.log('Upload new file');
+  const handleDelete = (type: 'folder' | 'file', id: string) => {
+    if (!user || !firestore) return;
+    const ref = doc(firestore, `users/${user.uid}/${type}s`, id);
+    // TODO: Also delete contents of folder or file from storage
+    deleteDocumentNonBlocking(ref);
+    toast({ title: 'تم الحذف', description: `تم حذف الـ ${type === 'folder' ? 'مجلد' : 'ملف'} بنجاح.` });
   };
 
   return (
@@ -56,14 +174,91 @@ export default function FilesPage() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">الملفات والمجلدات</h2>
         <div className="flex items-center space-x-2">
-          <Button onClick={handleCreateFolder}>
-            <PlusCircle className="ml-2 h-4 w-4" />
-            مجلد جديد
-          </Button>
-          <Button variant="secondary" onClick={handleUploadFile}>
-            <PlusCircle className="ml-2 h-4 w-4" />
-            رفع ملف
-          </Button>
+          <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="ml-2 h-4 w-4" />
+                مجلد جديد
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>إنشاء مجلد جديد</DialogTitle></DialogHeader>
+              <Form {...folderForm}>
+                <form onSubmit={folderForm.handleSubmit(handleCreateFolder)} className="space-y-4">
+                  <FormField
+                    control={folderForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>اسم المجلد</FormLabel>
+                        <FormControl>
+                          <Input placeholder="مثال: مشاريعي" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <DialogFooter>
+                    <DialogClose asChild><Button type="button" variant="secondary">إلغاء</Button></DialogClose>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                      إنشاء
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isFileDialogOpen} onOpenChange={setIsFileDialogOpen}>
+            <DialogTrigger asChild>
+               <Button variant="secondary">
+                <UploadCloud className="ml-2 h-4 w-4" />
+                رفع ملف
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader><DialogTitle>رفع ملف جديد</DialogTitle></DialogHeader>
+                 <Form {...fileForm}>
+                    <form onSubmit={fileForm.handleSubmit(handleUploadFile)} className="space-y-4">
+                        <FormField
+                            control={fileForm.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>اسم الملف</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="مثال: تقرير الربع الأول" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={fileForm.control}
+                            name="file"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>الملف</FormLabel>
+                                    <FormControl>
+                                        <Input type="file" {...fileRef} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <DialogFooter>
+                            <DialogClose asChild><Button type="button" variant="secondary">إلغاء</Button></DialogClose>
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                                رفع
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                 </Form>
+            </DialogContent>
+          </Dialog>
+
         </div>
       </div>
 
@@ -99,24 +294,40 @@ export default function FilesPage() {
                 <FolderIcon className="h-16 w-16 text-primary" />
                 <span className="mt-2 font-medium truncate w-full text-center">{folder.name}</span>
               </CardContent>
-               <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Edit className="ml-2 h-4 w-4" />
-                        <span>إعادة تسمية</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash2 className="ml-2 h-4 w-4" />
-                        <span>حذف</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>
+                      <Edit className="ml-2 h-4 w-4" />
+                      <span>إعادة تسمية</span>
+                    </DropdownMenuItem>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                             <Trash2 className="ml-2 h-4 w-4" />
+                             <span>حذف</span>
+                           </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>هل أنت متأكد من حذف المجلد؟</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              هذا الإجراء سيحذف المجلد وكل محتوياته ولا يمكن التراجع عنه.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete('folder', folder.id)}>متابعة</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </Card>
           ))}
@@ -128,22 +339,38 @@ export default function FilesPage() {
               </CardContent>
               <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                       <DropdownMenuItem>
-                        <Edit className="ml-2 h-4 w-4" />
-                        <span>إعادة تسمية</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash2 className="ml-2 h-4 w-4" />
-                        <span>حذف</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>
+                      <Edit className="ml-2 h-4 w-4" />
+                      <span>إعادة تسمية</span>
+                    </DropdownMenuItem>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                             <Trash2 className="ml-2 h-4 w-4" />
+                             <span>حذف</span>
+                           </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>هل أنت متأكد من حذف الملف؟</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              هذا الإجراء لا يمكن التراجع عنه.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete('file', file.id)}>متابعة</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </Card>
           ))}
@@ -152,3 +379,5 @@ export default function FilesPage() {
     </div>
   );
 }
+
+    
