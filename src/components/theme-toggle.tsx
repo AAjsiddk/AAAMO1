@@ -8,19 +8,26 @@ export function ThemeToggle() {
   const [theme, setTheme] = React.useState('dark');
   
   React.useEffect(() => {
-    // On mount, check if light mode is preferred and set it.
-    const isLight = document.documentElement.classList.contains('dark') || 
-                   (localStorage.getItem('theme') === 'light') ||
-                   (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches);
-    setTheme(isLight ? 'light' : 'dark');
+    // On mount, check the saved theme or system preference
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else {
+      // Default to dark as requested
+      setTheme('dark');
+    }
   }, []);
 
   React.useEffect(() => {
     if (theme === 'light') {
-      document.documentElement.classList.add('dark'); // dark class in globals.css is actually light mode now
+      document.documentElement.classList.add('light'); // 'light' class in globals.css is light mode
+      document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('dark'); // Default is dark now
+      document.documentElement.classList.remove('light');
       localStorage.setItem('theme', 'dark');
     }
   }, [theme]);
@@ -31,9 +38,11 @@ export function ThemeToggle() {
 
   return (
     <Button variant="ghost" size="icon" onClick={toggleTheme}>
-      <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all light:-rotate-90 light:scale-0 dark:rotate-90 dark:scale-0" />
+      <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all light:rotate-0 light:scale-100 dark:rotate-0 dark:scale-100" />
       <span className="sr-only">Toggle theme</span>
     </Button>
   );
 }
+
+    

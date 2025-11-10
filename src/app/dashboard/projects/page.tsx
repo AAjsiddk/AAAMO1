@@ -14,10 +14,12 @@ export default function ProjectsPage() {
           <FolderKanban className="h-16 w-16 text-muted-foreground" />
           <h3 className="text-xl font-semibold">قيد الإنشاء</h3>
           <p className="text-muted-foreground max-w-md">
-            قسم المشاريع الطويلة قيد التطوير حاليًا. عد قريبًا لإدارة مشاريعك الكبيرة!
+            هذا القسم مخصص لإدارة المشاريع الكبيرة التي تتطلب مراحل متعددة ومهام فرعية. سيتم بناء هذه الميزة قريبًا!
           </p>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    

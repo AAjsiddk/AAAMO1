@@ -39,7 +39,7 @@
     --sidebar-ring: 231 48% 70%;
   }
 
-  .dark {
+  .light {
     --background: 234 43% 94%; /* light-blue E8EAF6 */
     --foreground: 231 48% 28%;
     --card: 234 43% 99%;
@@ -92,6 +92,8 @@
 .react-calendar-heatmap .color-scale-1 {
   fill: hsl(var(--primary));
 }
-.dark .react-calendar-heatmap .color-empty {
+.light .react-calendar-heatmap .color-empty {
   fill: hsl(var(--muted) / 0.2);
 }
+
+    
