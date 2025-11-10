@@ -5,23 +5,23 @@ import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function ThemeToggle() {
-  const [theme, setTheme] = React.useState('light');
+  const [theme, setTheme] = React.useState('dark');
   
   React.useEffect(() => {
-    // On mount, check if dark mode is preferred and set it.
-    const isDark = document.documentElement.classList.contains('dark') || 
-                   (localStorage.getItem('theme') === 'dark') ||
-                   (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    setTheme(isDark ? 'dark' : 'light');
+    // On mount, check if light mode is preferred and set it.
+    const isLight = document.documentElement.classList.contains('dark') || 
+                   (localStorage.getItem('theme') === 'light') ||
+                   (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches);
+    setTheme(isLight ? 'light' : 'dark');
   }, []);
 
   React.useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+    if (theme === 'light') {
+      document.documentElement.classList.add('dark'); // dark class in globals.css is actually light mode now
+      localStorage.setItem('theme', 'light');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      localStorage.setItem('theme', 'dark');
     }
   }, [theme]);
   

@@ -23,6 +23,7 @@ import {
   Repeat,
   BarChart,
   Settings,
+  FolderKanban,
 } from 'lucide-react'
 
 export function AppSidebar() {
@@ -96,6 +97,18 @@ export function AppSidebar() {
               <Link href="/dashboard/habits">
                 <Repeat />
                 <span>العادات</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive('/dashboard/projects')}
+              tooltip="المشاريع الطويلة"
+            >
+              <Link href="/dashboard/projects">
+                <FolderKanban />
+                <span>المشاريع</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
