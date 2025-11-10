@@ -15,7 +15,6 @@ import {
   ClipboardCheck,
   Repeat,
   Inbox,
-  Calendar,
 } from 'lucide-react';
 import { TimeWidget } from '@/components/dashboard/time-widget';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
@@ -181,7 +180,7 @@ export default function DashboardPage() {
              <CardDescription>
               رسالتك اليومية للتحفيز والإلهام.
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
              <p className="text-center text-muted-foreground py-8">"لا تؤجل عمل اليوم إلى الغد."</p>
           </CardContent>
