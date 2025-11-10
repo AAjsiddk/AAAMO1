@@ -93,12 +93,12 @@ export default function FilesPage() {
 
 
   const foldersCollectionRef = useMemoFirebase(() => {
-    if (!user) return null;
+    if (!user || !firestore) return null;
     return collection(firestore, `users/${user.uid}/folders`);
   }, [user, firestore]);
 
   const filesCollectionRef = useMemoFirebase(() => {
-    if (!user) return null;
+    if (!user || !firestore) return null;
     return collection(firestore, `users/${user.uid}/files`);
   }, [user, firestore]);
 
