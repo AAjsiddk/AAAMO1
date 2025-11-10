@@ -10,6 +10,7 @@ import {
   Lock,
   Palette,
   Sparkles,
+  Loader2,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -35,7 +36,12 @@ export default function Home() {
   }, [user, isUserLoading, router]);
 
   if (isUserLoading || user) {
-    return <div className="flex h-screen items-center justify-center">جاري التحميل...</div>;
+    return (
+       <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="mr-4">جاري التحميل...</p>
+      </div>
+    );
   }
   
   const features = [

@@ -24,6 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/logo';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   displayName: z.string().min(1, { message: 'الرجاء إدخال اسمك.' }),
@@ -92,11 +93,13 @@ export default function RegisterPage() {
       );
       const newUser = userCredential.user;
 
-      // 2. Update user's profile in Firebase Auth
-      await updateProfile(newUser, { displayName: values.displayName });
+      // 2. Update user's profile in Firebase Auth and save to Firestore
+      // Run these in parallel
+      await Promise.all([
+        updateProfile(newUser, { displayName: values.displayName }),
+        saveUserToFirestore(newUser, values.displayName, values.email)
+      ]);
 
-      // 3. Save user data to Firestore
-      await saveUserToFirestore(newUser, values.displayName, values.email);
 
       toast({
         title: 'تم إنشاء الحساب بنجاح!',
@@ -127,7 +130,8 @@ export default function RegisterPage() {
   if (isUserLoading || user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p>جاري التحميل...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="mr-4">جاري التحميل...</p>
       </div>
     );
   }

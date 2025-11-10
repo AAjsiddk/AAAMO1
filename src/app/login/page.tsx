@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useAuth, useUser, initiateEmailSignIn } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -18,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/logo';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'الرجاء إدخال بريد إلكتروني صالح.' }),
@@ -49,12 +51,12 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       if (auth) {
-        await initiateEmailSignIn(auth, values.email, values.password);
+        await signInWithEmailAndPassword(auth, values.email, values.password);
         toast({
-          title: 'جاري تسجيل الدخول...',
-          description: 'سيتم توجيهك قريباً.',
+          title: 'تم تسجيل الدخول بنجاح!',
+          description: 'سيتم توجيهك إلى لوحة التحكم.',
         });
-        // The onAuthStateChanged listener will handle the redirect via the useEffect
+        // The useEffect will handle the redirect
       } else {
         throw new Error('Firebase Auth not available');
       }
@@ -65,14 +67,16 @@ export default function LoginPage() {
         title: 'حدث خطأ',
         description: 'فشل تسجيل الدخول. الرجاء التحقق من بريدك الإلكتروني وكلمة المرور.',
       });
-      setIsLoading(false);
+    } finally {
+        setIsLoading(false);
     }
   };
   
   if (isUserLoading || user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p>جاري التحميل...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="mr-4">جاري التحميل...</p>
       </div>
     );
   }
@@ -117,7 +121,8 @@ export default function LoginPage() {
               )}
             />
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
+              {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+              تسجيل الدخول
             </Button>
           </form>
         </Form>
