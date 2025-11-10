@@ -120,18 +120,18 @@ function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: T
   const endDate = getSafeDate(task.endDate);
 
   return (
-    <div style={{ marginLeft: `${level * 2}rem` }}>
+    <div style={{ marginLeft: level > 0 ? `1rem` : '0' }}>
       <Card className="mb-2">
         <CardHeader className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 flex-grow">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-grow min-w-0">
                {task.subtasks && task.subtasks.length > 0 && (
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsExpanded(!isExpanded)}>
+                <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={() => setIsExpanded(!isExpanded)}>
                   {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               )}
-               {!(task.subtasks && task.subtasks.length > 0) && <div className="w-6 h-6" />}
-              <CardTitle className="text-lg font-semibold">{task.title}</CardTitle>
+               {level > 0 && <div className="w-1" />}
+              <CardTitle className="text-lg font-semibold truncate">{task.title}</CardTitle>
             </div>
             <div className="flex items-center flex-shrink-0">
                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onAddSubtask(task.id)}>
@@ -145,21 +145,18 @@ function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: T
               </Button>
             </div>
           </div>
-          {task.description && <CardDescription className="pt-2 pr-8">{task.description}</CardDescription>}
+          {task.description && <CardDescription className="pt-2 pl-8">{task.description}</CardDescription>}
         </CardHeader>
-        <CardContent className="p-4 pt-0 pr-8">
-           <div className="text-sm text-muted-foreground space-y-2">
+        <CardContent className="p-4 pt-0 pl-8">
+           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
               <div className='flex items-center gap-2'>
                 <span className="font-semibold">الحالة:</span>
                 <Badge variant="outline" className={cn("font-normal", statusColors[task.status])}>
                    {statusTranslations[task.status]}
                 </Badge>
               </div>
-            </div>
-        </CardContent>
-         {(startDate || endDate) && (
-            <CardFooter className="p-4 pt-0 pr-8">
-                <div className="text-sm text-muted-foreground flex items-center gap-2">
+              {(startDate || endDate) && (
+                 <div className="flex items-center gap-2">
                    <CalendarIcon className="h-4 w-4" />
                    <span>
                      {startDate ? format(startDate, 'dd/MM/yy') : '...'}
@@ -169,13 +166,14 @@ function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: T
                      {endDate ? format(endDate, 'dd/MM/yy') : '...'}
                    </span>
                  </div>
-            </CardFooter>
-          )}
+              )}
+            </div>
+        </CardContent>
       </Card>
       {isExpanded && task.subtasks && (
          <div className="pl-4 border-r-2 border-gray-200 dark:border-gray-700">
           {task.subtasks.map(subtask => (
-            <TaskItem key={subtask.id} task={subtask} level={level} onEdit={onEdit} onDelete={onDelete} onAddSubtask={onAddSubtask} />
+            <TaskItem key={subtask.id} task={subtask} level={level + 1} onEdit={onEdit} onDelete={onDelete} onAddSubtask={onAddSubtask} />
           ))}
         </div>
       )}
@@ -213,19 +211,18 @@ export default function TasksPage() {
   
   const tasks = useMemo(() => {
     if (!allTasks) return [];
-    const taskMap = new Map<string, Task>();
+    const taskMap = new Map<string, Task & { subtasks: Task[] }>();
     const rootTasks: Task[] = [];
 
     allTasks.forEach(task => {
-        task.subtasks = [];
-        taskMap.set(task.id, task);
+        taskMap.set(task.id, { ...task, subtasks: [] });
     });
 
     allTasks.forEach(task => {
         if (task.parentId && taskMap.has(task.parentId)) {
-            taskMap.get(task.parentId)?.subtasks?.push(task);
+            taskMap.get(task.parentId)?.subtasks.push(taskMap.get(task.id)!);
         } else {
-            rootTasks.push(task);
+            rootTasks.push(taskMap.get(task.id)!);
         }
     });
 
@@ -466,7 +463,7 @@ export default function TasksPage() {
       {!isLoadingTasks && tasks && tasks.length > 0 && (
          <div className="space-y-2">
           {tasks.map((task) => (
-            <TaskItem key={task.id} task={task} onEdit={handleDialogOpen} onDelete={handleDeleteTask} onAddSubtask={(parentId) => handleDialogOpen(null, parentId)} />
+            <TaskItem key={task.id} task={task} level={0} onEdit={handleDialogOpen} onDelete={handleDeleteTask} onAddSubtask={(parentId) => handleDialogOpen(null, parentId)} />
           ))}
          </div>
       )}

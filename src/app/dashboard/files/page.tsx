@@ -88,7 +88,10 @@ export default function FilesPage() {
   });
   
   const fileForm = useForm<z.infer<typeof fileSchema>>({
-    resolver: zodResolver(fileSchema)
+    resolver: zodResolver(fileSchema),
+     defaultValues: {
+      name: '',
+    },
   });
 
   const fileRef = fileForm.register("file");

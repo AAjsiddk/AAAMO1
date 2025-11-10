@@ -78,7 +78,7 @@ const goalSchema = z.object({
   startDate: z.date().optional(),
   endDate: z.date().optional(),
   password: z.string().optional().default(''),
-  progress: z.number().min(0).max(100).optional().default(0),
+  progress: z.coerce.number().min(0).max(100).optional().default(0),
 });
 
 
@@ -366,6 +366,20 @@ export default function GoalsPage() {
                       <FormControl>
                         <Textarea placeholder="لماذا تريد تحقيق هذا الهدف؟" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="progress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>التقدم</FormLabel>
+                      <FormControl>
+                        <Input type="number" min="0" max="100" {...field} />
+                      </FormControl>
+                       <Progress value={field.value} className="mt-2" />
                       <FormMessage />
                     </FormItem>
                   )}
