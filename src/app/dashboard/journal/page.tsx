@@ -1,0 +1,241 @@
+'use client';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  useFirestore,
+  useUser,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+  deleteDocumentNonBlocking
+} from '@/firebase';
+import { collection, doc, serverTimestamp, query, orderBy, where } from 'firebase/firestore';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  PlusCircle,
+  Trash2,
+  Loader2,
+  Inbox,
+  Calendar,
+  Smile,
+  Frown,
+  Meh,
+  Sparkles,
+  Annoyed,
+  CalendarHeart,
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import type { JournalEntry } from '@/lib/types';
+import { format, getMonth, getDate } from 'date-fns';
+import Image from 'next/image';
+
+const journalSchema = z.object({
+  title: z.string().min(1, { message: 'العنوان مطلوب.' }),
+  content: z.string().min(1, { message: 'المحتوى مطلوب.' }),
+  imageUrl: z.string().url().optional().or(z.literal('')),
+});
+
+const moodIcons = {
+    happy: <Smile className="h-5 w-5 text-green-500" />,
+    sad: <Frown className="h-5 w-5 text-blue-500" />,
+    neutral: <Meh className="h-5 w-5 text-gray-500" />,
+    excited: <Sparkles className="h-5 w-5 text-yellow-500" />,
+    anxious: <Annoyed className="h-5 w-5 text-purple-500" />,
+};
+
+const analyzeMood = (text: string): JournalEntry['mood'] => {
+    const lowerText = text.toLowerCase();
+    if (lowerText.includes('سعيد') || lowerText.includes('متحمس') || lowerText.includes('رائع')) return 'happy';
+    if (lowerText.includes('حزين') || lowerText.includes('محبط') || lowerText.includes('سيء')) return 'sad';
+    if (lowerText.includes('قلق') || lowerText.includes('متوتر')) return 'anxious';
+    if (lowerText.includes('مثير') || lowerText.includes('مدهش')) return 'excited';
+    return 'neutral';
+};
+
+export default function JournalPage() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showOnThisDay, setShowOnThisDay] = useState(false);
+
+  const { toast } = useToast();
+  const firestore = useFirestore();
+  const { user } = useUser();
+
+  const form = useForm<z.infer<typeof journalSchema>>({
+    resolver: zodResolver(journalSchema),
+    defaultValues: { title: '', content: '', imageUrl: '' },
+  });
+
+  const journalCollectionRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, `users/${user.uid}/journalEntries`);
+  }, [firestore, user]);
+
+  const today = new Date();
+  const onThisDayQuery = useMemoFirebase(() => {
+    if (!journalCollectionRef) return null;
+    // This is a simplified query. For a real app, you'd need a more complex
+    // setup or cloud function to query by day/month across years efficiently.
+    // For this prototype, we'll just fetch all and filter client-side.
+    return query(journalCollectionRef, orderBy('date', 'desc'));
+  }, [journalCollectionRef]);
+
+
+  const entriesQuery = useMemoFirebase(() => {
+    if (!journalCollectionRef) return null;
+    return query(journalCollectionRef, orderBy('date', 'desc'));
+  }, [journalCollectionRef]);
+
+  const { data: allEntries, isLoading: isLoadingEntries } = useCollection<JournalEntry>(entriesQuery);
+
+  const entries = showOnThisDay 
+    ? allEntries?.filter(entry => {
+        const entryDate = entry.date.toDate();
+        return entryDate.getDate() === today.getDate() && entryDate.getMonth() === today.getMonth() && entryDate.getFullYear() !== today.getFullYear();
+      })
+    : allEntries;
+
+  const onSubmit = async (values: z.infer<typeof journalSchema>) => {
+    if (!firestore || !user || !journalCollectionRef) return;
+    setIsSubmitting(true);
+    
+    const mood = analyzeMood(values.content);
+
+    const newEntry: Omit<JournalEntry, 'id'> = {
+      ...values,
+      userId: user.uid,
+      mood: mood,
+      createdAt: serverTimestamp(),
+      date: new Date(),
+    };
+
+    await addDocumentNonBlocking(journalCollectionRef, newEntry);
+    
+    toast({ title: 'نجاح', description: 'تمت إضافة تدوينتك بنجاح.' });
+    setIsSubmitting(false);
+    setIsDialogOpen(false);
+    form.reset();
+  };
+
+  const handleDelete = (entryId: string) => {
+    if (!firestore || !user) return;
+    const entryDocRef = doc(firestore, `users/${user.uid}/journalEntries`, entryId);
+    deleteDocumentNonBlocking(entryDocRef);
+    toast({ title: 'تم الحذف', description: 'تم حذف التدوينة بنجاح.' });
+  };
+
+  return (
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">المذكرات</h2>
+        <div className="flex items-center space-x-2">
+           <Button variant={showOnThisDay ? "secondary" : "ghost"} onClick={() => setShowOnThisDay(!showOnThisDay)}>
+                <CalendarHeart className="ml-2 h-4 w-4" />
+                في مثل هذا اليوم
+            </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="ml-2 h-4 w-4" />
+                تدوينة جديدة
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader><DialogTitle>تدوينة جديدة</DialogTitle></DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField name="title" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>العنوان</FormLabel><FormControl><Input placeholder="يوم مميز..." {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField name="content" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>المحتوى</FormLabel><FormControl><Textarea placeholder="ماذا يدور في خلدك؟" {...field} rows={6} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField name="imageUrl" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>رابط صورة (اختياري)</FormLabel><FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <DialogFooter>
+                    <DialogClose asChild><Button type="button" variant="secondary">إلغاء</Button></DialogClose>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                      حفظ
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {isLoadingEntries && <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin" /></div>}
+
+      {!isLoadingEntries && (!entries || entries.length === 0) && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
+            <Inbox className="h-16 w-16 text-muted-foreground" />
+            <h3 className="text-xl font-semibold">{showOnThisDay ? "لا توجد ذكريات في مثل هذا اليوم" : "لا توجد تدوينات بعد"}</h3>
+            <p className="text-muted-foreground">{showOnThisDay ? "ربما العام القادم؟" : "ابدأ بكتابة أول تدوينة لك."}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {!isLoadingEntries && entries && entries.length > 0 && (
+        <div className="space-y-4">
+          {entries.map((entry) => (
+            <Card key={entry.id}>
+              <CardHeader>
+                <CardTitle className="flex justify-between items-start">
+                  <span>{entry.title}</span>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => handleDelete(entry.id)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </CardTitle>
+                <CardDescription className="flex items-center gap-4">
+                    <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(entry.date.toDate(), 'PPP p')}</span>
+                    {entry.mood && moodIcons[entry.mood] && <span className="flex items-center gap-1">المزاج: {moodIcons[entry.mood]}</span>}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {entry.imageUrl && (
+                    <div className="mb-4">
+                        <Image src={entry.imageUrl} alt={entry.title} width={400} height={250} className="rounded-md object-cover" />
+                    </div>
+                )}
+                <p className="whitespace-pre-wrap">{entry.content}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

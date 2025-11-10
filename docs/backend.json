@@ -80,17 +80,41 @@
       ]
     },
     "Folder": {
-        "title": "Folder",
-        "type": "object",
-        "description": "Represents a folder in the file system.",
-        "properties": {
-            "id": { "type": "string", "description": "Unique identifier for the folder." },
-            "userId": { "type": "string", "description": "The ID of the user who owns the folder." },
-            "name": { "type": "string", "description": "The name of the folder." },
-            "parentId": { "type": ["string", "null"], "description": "The ID of the parent folder. Null for root folders." },
-            "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the folder was created." }
+      "title": "Folder",
+      "type": "object",
+      "description": "Represents a folder in the file system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the folder."
         },
-        "required": ["id", "userId", "name", "createdAt"]
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns the folder."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the folder."
+        },
+        "parentId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The ID of the parent folder. Null for root folders."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the folder was created."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "createdAt"
+      ]
     },
     "AuditLog": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -133,82 +157,280 @@
       "type": "object",
       "description": "Represents a user's task with detailed properties.",
       "properties": {
-        "id": { "type": "string", "description": "Unique identifier for the task." },
-        "userId": { "type": "string", "description": "The ID of the user who owns the task." },
-        "title": { "type": "string", "description": "The title of the task." },
-        "description": { "type": "string", "description": "A detailed description of the task." },
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the task."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns the task."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the task."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the task."
+        },
         "status": {
           "type": "string",
-          "enum": ["pending", "in_progress", "completed", "deferred", "cancelled", "waiting_for", "archived"],
+          "enum": [
+            "pending",
+            "in_progress",
+            "completed",
+            "deferred",
+            "cancelled",
+            "waiting_for",
+            "archived"
+          ],
           "description": "The current status of the task."
         },
-        "progress": { "type": "number", "description": "Progress of the task from 0 to 100." },
-        "startDate": { "type": "string", "format": "date-time", "description": "The start date and time of the task." },
-        "endDate": { "type": "string", "format": "date-time", "description": "The end date and time of the task." },
-        "relatedGoalId": { "type": "string", "description": "ID of a related goal." },
-        "relatedHabitId": { "type": "string", "description": "ID of a related habit." },
-        "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp of the last modification." }
+        "progress": {
+          "type": "number",
+          "description": "Progress of the task from 0 to 100."
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The start date and time of the task."
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The end date and time of the task."
+        },
+        "relatedGoalId": {
+          "type": "string",
+          "description": "ID of a related goal."
+        },
+        "relatedHabitId": {
+          "type": "string",
+          "description": "ID of a related habit."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last modification."
+        }
       },
-      "required": ["id", "userId", "title", "status", "updatedAt"]
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "status",
+        "updatedAt"
+      ]
     },
     "Attachment": {
       "title": "Attachment",
       "type": "object",
       "description": "Represents a file attached to a task.",
       "properties": {
-        "id": { "type": "string", "description": "Unique identifier for the attachment." },
-        "taskId": { "type": "string", "description": "The ID of the task this attachment belongs to." },
-        "userId": { "type": "string", "description": "The ID of the user who owns the task and attachment." },
-        "fileName": { "type": "string", "description": "The name of the attached file." },
-        "fileUrl": { "type": "string", "description": "The URL to access the file in storage." },
-        "uploadedAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the file was uploaded." }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the attachment."
+        },
+        "taskId": {
+          "type": "string",
+          "description": "The ID of the task this attachment belongs to."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns the task and attachment."
+        },
+        "fileName": {
+          "type": "string",
+          "description": "The name of the attached file."
+        },
+        "fileUrl": {
+          "type": "string",
+          "description": "The URL to access the file in storage."
+        },
+        "uploadedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the file was uploaded."
+        }
       },
-      "required": ["id", "taskId", "userId", "fileName", "fileUrl", "uploadedAt"]
+      "required": [
+        "id",
+        "taskId",
+        "userId",
+        "fileName",
+        "fileUrl",
+        "uploadedAt"
+      ]
     },
     "Habit": {
       "title": "Habit",
       "type": "object",
       "description": "Represents a user's habit to acquire or quit.",
       "properties": {
-        "id": { "type": "string", "description": "Unique identifier for the habit." },
-        "userId": { "type": "string", "description": "The ID of the user who owns the habit." },
-        "name": { "type": "string", "description": "The name of the habit." },
-        "type": { "type": "string", "enum": ["acquire", "quit"], "description": "The type of habit." },
-        "frequency": { "type": "string", "description": "The repetition schedule (e.g., daily, weekly)." },
-        "streak": { "type": "number", "description": "Current number of consecutive days the habit was maintained." }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the habit."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns the habit."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the habit."
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "acquire",
+            "quit"
+          ],
+          "description": "The type of habit."
+        },
+        "frequency": {
+          "type": "string",
+          "description": "The repetition schedule (e.g., daily, weekly)."
+        },
+        "streak": {
+          "type": "number",
+          "description": "Current number of consecutive days the habit was maintained."
+        }
       },
-      "required": ["id", "userId", "name", "type"]
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "type"
+      ]
     },
     "HabitMark": {
       "title": "Habit Mark",
       "type": "object",
       "description": "Represents a single day's record for a habit.",
       "properties": {
-        "id": { "type": "string" },
-        "habitId": { "type": "string" },
-        "userId": { "type": "string" },
-        "date": { "type": "string", "format": "date" },
-        "completed": { "type": "boolean" }
+        "id": {
+          "type": "string"
+        },
+        "habitId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "completed": {
+          "type": "boolean"
+        }
       },
-      "required": ["id", "habitId", "userId", "date", "completed"]
+      "required": [
+        "id",
+        "habitId",
+        "userId",
+        "date",
+        "completed"
+      ]
     },
     "Goal": {
-        "title": "Goal",
-        "type": "object",
-        "description": "Represents a user's goal with detailed properties.",
-        "properties": {
-            "id": { "type": "string", "description": "Unique identifier for the goal." },
-            "userId": { "type": "string", "description": "The ID of the user who owns the goal." },
-            "name": { "type": "string", "description": "The name of the goal." },
-            "description": { "type": "string", "description": "A detailed description of the goal." },
-            "motivation": { "type": "string", "description": "The motivation behind the goal." },
-            "startDate": { "type": "string", "format": "date-time", "description": "The start date and time of the goal." },
-            "endDate": { "type": "string", "format": "date-time", "description": "The end date and time of the goal." },
-            "progress": { "type": "number", "description": "Progress of the goal from 0 to 100." },
-            "passwordHash": { "type": "string", "description": "An optional password hash to lock the goal." },
-            "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp of the last modification." }
+      "title": "Goal",
+      "type": "object",
+      "description": "Represents a user's goal with detailed properties.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the goal."
         },
-        "required": ["id", "userId", "name", "updatedAt"]
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns the goal."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the goal."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the goal."
+        },
+        "motivation": {
+          "type": "string",
+          "description": "The motivation behind the goal."
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The start date and time of the goal."
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The end date and time of the goal."
+        },
+        "progress": {
+          "type": "number",
+          "description": "Progress of the goal from 0 to 100."
+        },
+        "passwordHash": {
+          "type": "string",
+          "description": "An optional password hash to lock the goal."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last modification."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "updatedAt"
+      ]
+    },
+    "JournalEntry": {
+      "title": "Journal Entry",
+      "type": "object",
+      "description": "Represents a single entry in the user's journal.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the journal entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns the entry."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the journal entry."
+        },
+        "content": {
+          "type": "string",
+          "description": "The main text content of the journal entry."
+        },
+        "mood": {
+          "type": "string",
+          "description": "The analyzed mood of the entry (e.g., happy, sad, neutral)."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of an image attached to the entry."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the entry was created."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "content",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -289,7 +511,9 @@
         "path": "/users/{userId}/tasks/{taskId}",
         "definition": {
           "entityName": "Task",
-          "schema": { "$ref": "#/backend/entities/Task" },
+          "schema": {
+            "$ref": "#/backend/entities/Task"
+          },
           "description": "Stores tasks for each user. `userId` must match the authenticated user's UID."
         }
       },
@@ -297,7 +521,9 @@
         "path": "/users/{userId}/tasks/{taskId}/attachments/{attachmentId}",
         "definition": {
           "entityName": "Attachment",
-          "schema": { "$ref": "#/backend/entities/Attachment" },
+          "schema": {
+            "$ref": "#/backend/entities/Attachment"
+          },
           "description": "Stores attachments for a specific task. `userId` must match the authenticated user's UID."
         }
       },
@@ -305,15 +531,19 @@
         "path": "/users/{userId}/habits/{habitId}",
         "definition": {
           "entityName": "Habit",
-          "schema": { "$ref": "#/backend/entities/Habit" },
+          "schema": {
+            "$ref": "#/backend/entities/Habit"
+          },
           "description": "Stores habits for each user. `userId` must match the authenticated user's UID."
         }
       },
-       {
+      {
         "path": "/users/{userId}/habits/{habitId}/marks/{markId}",
         "definition": {
           "entityName": "HabitMark",
-          "schema": { "$ref": "#/backend/entities/HabitMark" },
+          "schema": {
+            "$ref": "#/backend/entities/HabitMark"
+          },
           "description": "Stores daily completion marks for a specific habit. `userId` must match the authenticated user's UID."
         }
       },
@@ -321,8 +551,20 @@
         "path": "/users/{userId}/goals/{goalId}",
         "definition": {
           "entityName": "Goal",
-          "schema": { "$ref": "#/backend/entities/Goal" },
+          "schema": {
+            "$ref": "#/backend/entities/Goal"
+          },
           "description": "Stores goals for each user. `userId` must match the authenticated user's UID."
+        }
+      },
+      {
+        "path": "/users/{userId}/journalEntries/{journalEntryId}",
+        "definition": {
+          "entityName": "JournalEntry",
+          "schema": {
+            "$ref": "#/backend/entities/JournalEntry"
+          },
+          "description": "Stores journal entries for each user. `userId` must match the authenticated user's UID."
         }
       }
     ],

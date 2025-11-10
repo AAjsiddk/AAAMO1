@@ -61,3 +61,14 @@ export type File = {
     fileType: string;
     createdAt: FieldValue;
 }
+
+export type JournalEntry = {
+    id: string;
+    userId: string;
+    title: string;
+    content: string;
+    mood?: 'happy' | 'sad' | 'neutral' | 'excited' | 'anxious';
+    imageUrl?: string;
+    createdAt: FieldValue;
+    date: Timestamp;
+}
