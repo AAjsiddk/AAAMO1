@@ -11,7 +11,7 @@ import {
   addDocumentNonBlocking,
   deleteDocumentNonBlocking
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, orderBy, where } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -55,13 +55,13 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { JournalEntry } from '@/lib/types';
-import { format, getMonth, getDate } from 'date-fns';
+import { format, getMonth, getDate, isSameDay } from 'date-fns';
 import Image from 'next/image';
 
 const journalSchema = z.object({
   title: z.string().min(1, { message: 'العنوان مطلوب.' }),
   content: z.string().min(1, { message: 'المحتوى مطلوب.' }),
-  imageUrl: z.string().url().optional().or(z.literal('')),
+  imageUrl: z.string().url({ message: 'الرجاء إدخال رابط صحيح' }).optional().or(z.literal('')),
 });
 
 const moodIcons = {
@@ -100,27 +100,21 @@ export default function JournalPage() {
     return collection(firestore, `users/${user.uid}/journalEntries`);
   }, [firestore, user]);
 
-  const today = new Date();
-  const onThisDayQuery = useMemoFirebase(() => {
-    if (!journalCollectionRef) return null;
-    // This is a simplified query. For a real app, you'd need a more complex
-    // setup or cloud function to query by day/month across years efficiently.
-    // For this prototype, we'll just fetch all and filter client-side.
-    return query(journalCollectionRef, orderBy('date', 'desc'));
-  }, [journalCollectionRef]);
-
-
   const entriesQuery = useMemoFirebase(() => {
     if (!journalCollectionRef) return null;
-    return query(journalCollectionRef, orderBy('date', 'desc'));
+    return query(journalCollectionRef, orderBy('createdAt', 'desc'));
   }, [journalCollectionRef]);
 
   const { data: allEntries, isLoading: isLoadingEntries } = useCollection<JournalEntry>(entriesQuery);
 
+  const today = new Date();
   const entries = showOnThisDay 
     ? allEntries?.filter(entry => {
-        const entryDate = entry.date.toDate();
-        return entryDate.getDate() === today.getDate() && entryDate.getMonth() === today.getMonth() && entryDate.getFullYear() !== today.getFullYear();
+        const entryDate = entry.createdAt.toDate();
+        // Exclude entries from today
+        return !isSameDay(entryDate, today) && 
+               entryDate.getDate() === today.getDate() && 
+               entryDate.getMonth() === today.getMonth();
       })
     : allEntries;
 
@@ -131,11 +125,12 @@ export default function JournalPage() {
     const mood = analyzeMood(values.content);
 
     const newEntry: Omit<JournalEntry, 'id'> = {
-      ...values,
+      title: values.title,
+      content: values.content,
+      imageUrl: values.imageUrl || undefined,
       userId: user.uid,
       mood: mood,
       createdAt: serverTimestamp(),
-      date: new Date(),
     };
 
     await addDocumentNonBlocking(journalCollectionRef, newEntry);
@@ -158,7 +153,7 @@ export default function JournalPage() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">المذكرات</h2>
         <div className="flex items-center space-x-2">
-           <Button variant={showOnThisDay ? "secondary" : "ghost"} onClick={() => setShowOnThisDay(!showOnThisDay)}>
+           <Button variant={showOnThisDay ? "default" : "outline"} onClick={() => setShowOnThisDay(!showOnThisDay)}>
                 <CalendarHeart className="ml-2 h-4 w-4" />
                 في مثل هذا اليوم
             </Button>
@@ -196,7 +191,7 @@ export default function JournalPage() {
         </div>
       </div>
 
-      {isLoadingEntries && <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin" /></div>}
+      {isLoadingEntries && <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}
 
       {!isLoadingEntries && (!entries || entries.length === 0) && (
         <Card>
@@ -204,6 +199,12 @@ export default function JournalPage() {
             <Inbox className="h-16 w-16 text-muted-foreground" />
             <h3 className="text-xl font-semibold">{showOnThisDay ? "لا توجد ذكريات في مثل هذا اليوم" : "لا توجد تدوينات بعد"}</h3>
             <p className="text-muted-foreground">{showOnThisDay ? "ربما العام القادم؟" : "ابدأ بكتابة أول تدوينة لك."}</p>
+             {!showOnThisDay && (
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <PlusCircle className="ml-2 h-4 w-4" />
+                تدوينة جديدة
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -220,14 +221,14 @@ export default function JournalPage() {
                   </Button>
                 </CardTitle>
                 <CardDescription className="flex items-center gap-4">
-                    <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(entry.date.toDate(), 'PPP p')}</span>
+                    <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(entry.createdAt.toDate(), 'PPP p')}</span>
                     {entry.mood && moodIcons[entry.mood] && <span className="flex items-center gap-1">المزاج: {moodIcons[entry.mood]}</span>}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {entry.imageUrl && (
-                    <div className="mb-4">
-                        <Image src={entry.imageUrl} alt={entry.title} width={400} height={250} className="rounded-md object-cover" />
+                    <div className="mb-4 relative aspect-video max-w-lg">
+                        <Image src={entry.imageUrl} alt={entry.title} layout="fill" className="rounded-md object-cover" />
                     </div>
                 )}
                 <p className="whitespace-pre-wrap">{entry.content}</p>

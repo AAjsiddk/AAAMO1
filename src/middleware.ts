@@ -9,14 +9,15 @@ export async function middleware(request: NextRequest) {
   const publicPaths = ['/', '/login', '/register'];
 
   // If the path is public, just continue
-  if (publicPaths.includes(pathname)) {
+  if (publicPaths.includes(pathname) || pathname.startsWith('/_next/') || pathname.startsWith('/static/') || pathname.includes('.')) {
     return NextResponse.next();
   }
 
-  // Check for the Firebase auth token cookie
-  const idTokenCookie = cookieStore.get('firebaseIdToken');
+  // Check for the Firebase auth token cookie, typically set on client-side after login
+  // Note: This is a basic check. For production, you'd verify the token's validity.
+  const authTokenCookie = cookieStore.get('firebaseIdToken'); // Use a generic name or the actual cookie name your app sets
 
-  if (!idTokenCookie) {
+  if (!authTokenCookie) {
     // If no token, redirect to login
     const loginUrl = new URL('/login', request.url);
     // Store the original path to redirect back after login
@@ -25,15 +26,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // If the token exists, let the request proceed.
-  // The actual token verification will happen on the client-side
-  // or in API routes if necessary. The presence of the cookie is a
-  // good first-level check for the middleware.
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    // Match all paths except for static assets and API routes
+    // Match all paths except for API routes and static files.
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };

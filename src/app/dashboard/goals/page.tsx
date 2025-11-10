@@ -9,7 +9,8 @@ import {
   useCollection,
   useMemoFirebase,
   addDocumentNonBlocking,
-  deleteDocumentNonBlocking
+  deleteDocumentNonBlocking,
+  setDocumentNonBlocking, // Import setDocumentNonBlocking
 } from '@/firebase';
 import { collection, doc, serverTimestamp, query } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -86,10 +87,14 @@ function GoalCard({ goal, onDelete }: { goal: Goal; onDelete: (goalId: string) =
     const [isLocked, setIsLocked] = useState(!!goal.passwordHash);
     const [password, setPassword] = useState('');
     
-    // In a real app, you would verify the password against the hash.
-    // For this prototype, we'll just unlock if any password is entered.
     const handleUnlock = () => {
-        if(password) setIsLocked(false);
+        // In a real app, you would verify the password against the hash.
+        // This requires a backend function. For this prototype, we'll just check for non-empty.
+        if (password) {
+            setIsLocked(false);
+        } else {
+            alert('الرجاء إدخال كلمة المرور.');
+        }
     }
 
     return (
@@ -98,12 +103,13 @@ function GoalCard({ goal, onDelete }: { goal: Goal; onDelete: (goalId: string) =
               <div className="flex flex-col items-center justify-center flex-grow p-6">
                 <Lock className="h-12 w-12 text-muted-foreground" />
                 <p className="mt-4 text-muted-foreground">هذا الهدف مقفول</p>
-                <div className="flex w-full max-w-sm items-center space-x-2 mt-4">
+                <div className="flex w-full max-w-sm items-center space-x-2 mt-4" dir="ltr">
                   <Input 
                     type="password" 
                     placeholder="كلمة المرور" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    className="text-right"
                   />
                   <Button onClick={handleUnlock}>فتح</Button>
                 </div>
@@ -111,17 +117,17 @@ function GoalCard({ goal, onDelete }: { goal: Goal; onDelete: (goalId: string) =
           ) : (
            <>
             <CardHeader>
-              <CardTitle className="flex justify-between items-start">
-                <span className='w-full'>{goal.name}</span>
-                <div className="flex items-center gap-1">
+              <CardTitle className="flex justify-between items-start gap-2">
+                <span className='flex-grow'>{goal.name}</span>
+                <div className="flex items-center flex-shrink-0">
                     {goal.passwordHash && (
-                         <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => setIsLocked(true)}>
+                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setIsLocked(true); setPassword(''); } }>
                            <Unlock className="h-4 w-4" />
                          </Button>
                     )}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                         <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                         <Button variant="ghost" size="icon" className="h-8 w-8">
                            <Trash2 className="h-4 w-4 text-destructive" />
                          </Button>
                       </AlertDialogTrigger>
@@ -161,13 +167,13 @@ function GoalCard({ goal, onDelete }: { goal: Goal; onDelete: (goalId: string) =
                    <CalendarIcon className="h-4 w-4" />
                    <span>
                      {goal.startDate
-                       ? format(new Date(goal.startDate.seconds * 1000), 'dd/MM/yy')
+                       ? format(goal.startDate.toDate(), 'dd/MM/yy')
                        : '...'}
                    </span>
                    <span>-</span>
                    <span>
                      {goal.endDate
-                       ? format(new Date(goal.endDate.seconds * 1000), 'dd/MM/yy')
+                       ? format(goal.endDate.toDate(), 'dd/MM/yy')
                        : '...'}
                    </span>
                  </div>
@@ -202,6 +208,7 @@ export default function GoalsPage() {
 
   const goalsQuery = useMemoFirebase(() => {
     if (!goalsCollectionRef) return null;
+    // You might want to add orderBy here, e.g., orderBy('endDate', 'asc')
     return query(goalsCollectionRef);
   }, [goalsCollectionRef]);
 
@@ -218,23 +225,23 @@ export default function GoalsPage() {
     }
     setIsSubmitting(true);
 
-    // In a real app, you would generate a secure hash for the password.
-    // For this prototype, we'll just store a flag if a password is set.
-    const passwordHash = values.password ? "dummy_hash" : undefined;
+    // In a real app, you would generate a secure hash for the password using a backend function.
+    // For this prototype, we'll just store a simple "locked" flag if a password is present.
+    const passwordHash = values.password ? "dummy_hash_replace_with_real_one" : undefined;
 
-    const newGoal: Omit<Goal, 'id'> = {
+    const newGoalData = {
       name: values.name,
-      description: values.description,
-      motivation: values.motivation,
-      startDate: values.startDate ? new Date(values.startDate) : undefined,
-      endDate: values.endDate ? new Date(values.endDate) : undefined,
-      passwordHash,
+      description: values.description || '',
+      motivation: values.motivation || '',
+      startDate: values.startDate || null,
+      endDate: values.endDate || null,
+      passwordHash: passwordHash,
       userId: user.uid,
       progress: 0,
       updatedAt: serverTimestamp(),
     };
 
-    await addDocumentNonBlocking(goalsCollectionRef, newGoal);
+    await addDocumentNonBlocking(goalsCollectionRef, newGoalData);
     
     toast({
       title: 'نجاح',
@@ -249,7 +256,7 @@ export default function GoalsPage() {
   const handleDeleteGoal = (goalId: string) => {
     if (!firestore || !user) return;
     const goalDocRef = doc(firestore, `users/${user.uid}/goals`, goalId);
-    // In a real app, you'd also delete subtasks here in a batch write.
+    // In a real app, you'd also delete subtasks here in a transaction or batched write.
     deleteDocumentNonBlocking(goalDocRef);
     toast({
       title: 'تم الحذف',
@@ -431,12 +438,16 @@ export default function GoalsPage() {
 
       {!isLoadingGoals && (!goals || goals.length === 0) && (
          <Card>
-           <CardContent className="flex flex-col items-center justify-center gap-4 p-8 text-center">
-              <Inbox className="h-12 w-12 text-muted-foreground" />
+           <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
+              <Inbox className="h-16 w-16 text-muted-foreground" />
               <h3 className="text-xl font-semibold">لا توجد أهداف بعد</h3>
-              <p className="text-muted-foreground">
-                ابدأ بإضافة هدفك الأول لتتبع طموحاتك.
+              <p className="text-muted-foreground max-w-md">
+                ابدأ بإضافة هدفك الأول لتتبع طموحاتك وتحقيق أحلامك.
               </p>
+               <Button onClick={() => setIsDialogOpen(true)}>
+                  <PlusCircle className="ml-2 h-4 w-4" />
+                  إضافة هدف جديد
+               </Button>
            </CardContent>
          </Card>
       )}
