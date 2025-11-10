@@ -63,9 +63,11 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <Button variant="outline" className="flex flex-col h-24">
-              <Target className="h-8 w-8 mb-2 text-primary" />
-              <span>هدف</span>
+            <Button asChild variant="outline" className="flex flex-col h-24">
+              <Link href="/dashboard/goals">
+                <Target className="h-8 w-8 mb-2 text-primary" />
+                <span>هدف</span>
+              </Link>
             </Button>
              <Button asChild variant="outline" className="flex flex-col h-24">
               <Link href="/dashboard/habits">

@@ -13,6 +13,7 @@
  * - /users/{userId}/tasks/{taskId}/attachments/{attachmentId}: Stores attachments for tasks.
  * - /users/{userId}/habits/{habitId}: Stores habits for each user.
  * - /users/{userId}/habits/{habitId}/marks/{markId}: Stores daily habit tracking marks.
+ * - /users/{userId}/goals/{goalId}: Stores goals for each user.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -74,6 +75,12 @@ service cloud.firestore {
         allow get, list, create, update, delete: if isOwner(userId);
         // Ensure data integrity
         allow create, update: if request.resource.data.userId == userId && request.resource.data.habitId == habitId;
+    }
+
+    match /users/{userId}/goals/{goalId} {
+      allow get, list, create, update, delete: if isOwner(userId);
+      // Ensure data integrity on create/update
+      allow create, update: if request.resource.data.userId == userId;
     }
   }
 }

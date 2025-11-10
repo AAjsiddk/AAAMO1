@@ -178,6 +178,24 @@
         "completed": { "type": "boolean" }
       },
       "required": ["id", "habitId", "userId", "date", "completed"]
+    },
+    "Goal": {
+        "title": "Goal",
+        "type": "object",
+        "description": "Represents a user's goal with detailed properties.",
+        "properties": {
+            "id": { "type": "string", "description": "Unique identifier for the goal." },
+            "userId": { "type": "string", "description": "The ID of the user who owns the goal." },
+            "name": { "type": "string", "description": "The name of the goal." },
+            "description": { "type": "string", "description": "A detailed description of the goal." },
+            "motivation": { "type": "string", "description": "The motivation behind the goal." },
+            "startDate": { "type": "string", "format": "date-time", "description": "The start date and time of the goal." },
+            "endDate": { "type": "string", "format": "date-time", "description": "The end date and time of the goal." },
+            "progress": { "type": "number", "description": "Progress of the goal from 0 to 100." },
+            "passwordHash": { "type": "string", "description": "An optional password hash to lock the goal." },
+            "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp of the last modification." }
+        },
+        "required": ["id", "userId", "name", "updatedAt"]
     }
   },
   "auth": {
@@ -274,6 +292,14 @@
           "entityName": "HabitMark",
           "schema": { "$ref": "#/backend/entities/HabitMark" },
           "description": "Stores daily completion marks for a specific habit. `userId` must match the authenticated user's UID."
+        }
+      },
+      {
+        "path": "/users/{userId}/goals/{goalId}",
+        "definition": {
+          "entityName": "Goal",
+          "schema": { "$ref": "#/backend/entities/Goal" },
+          "description": "Stores goals for each user. `userId` must match the authenticated user's UID."
         }
       }
     ],

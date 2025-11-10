@@ -30,3 +30,16 @@ export type HabitMark = {
   date: Date | Timestamp;
   completed: boolean;
 };
+
+export type Goal = {
+    id: string;
+    userId: string;
+    name: string;
+    description?: string;
+    motivation?: string;
+    startDate?: Timestamp;
+    endDate?: Timestamp;
+    progress?: number;
+    passwordHash?: string;
+    updatedAt: FieldValue;
+};
