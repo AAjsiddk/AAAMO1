@@ -8,6 +8,7 @@
  * Data Structure:
  * - /users/{userId}: Stores user profiles and preferences.
  * - /users/{userId}/files/{fileId}: Stores files for each user.
+ * - /users/{userId}/folders/{folderId}: Stores folders for each user.
  * - /users/{userId}/auditLogs/{auditLogId}: Stores audit logs for each user.
  * - /users/{userId}/tasks/{taskId}: Stores tasks for each user.
  * - /users/{userId}/tasks/{taskId}/attachments/{attachmentId}: Stores attachments for tasks.
@@ -38,6 +39,12 @@ service cloud.firestore {
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
+    }
+    
+    match /users/{userId}/folders/{folderId} {
+      allow get, list, create, update, delete: if isOwner(userId);
+      // Ensure data integrity on create/update
+      allow create, update: if request.resource.data.userId == userId;
     }
 
     match /users/{userId}/files/{fileId} {

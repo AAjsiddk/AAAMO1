@@ -43,3 +43,21 @@ export type Goal = {
     passwordHash?: string;
     updatedAt: FieldValue;
 };
+
+export type Folder = {
+    id: string;
+    userId: string;
+    name: string;
+    parentId: string | null;
+    createdAt: FieldValue;
+}
+
+export type File = {
+    id: string;
+    userId: string;
+    name: string;
+    folderId: string | null;
+    storagePath: string;
+    fileType: string;
+    createdAt: FieldValue;
+}

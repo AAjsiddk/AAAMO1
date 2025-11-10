@@ -85,9 +85,11 @@ export default function DashboardPage() {
               <Book className="h-8 w-8 mb-2 text-primary" />
               <span>ملاحظة</span>
             </Button>
-            <Button variant="outline" className="flex flex-col h-24">
-              <FilePlus className="h-8 w-8 mb-2 text-primary" />
-              <span>ملف</span>
+            <Button asChild variant="outline" className="flex flex-col h-24">
+              <Link href="/dashboard/files">
+                <FilePlus className="h-8 w-8 mb-2 text-primary" />
+                <span>ملف</span>
+              </Link>
             </Button>
           </CardContent>
         </Card>
