@@ -27,12 +27,12 @@ export function TimeWidget() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-center text-2xl">{time}</CardTitle>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-center text-3xl font-bold tracking-tighter">{time}</CardTitle>
       </CardHeader>
       <CardContent className="text-center">
-        <p className="text-lg text-muted-foreground">{gregorianDate}</p>
-        <p className="text-lg text-primary">{hijriDate}</p>
+        <p className="text-sm text-muted-foreground">{gregorianDate}</p>
+        <p className="text-sm font-medium text-primary">{hijriDate}</p>
       </CardContent>
     </Card>
   );

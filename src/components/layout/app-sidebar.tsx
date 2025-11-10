@@ -49,30 +49,43 @@ export function AppSidebar() {
     return pathname === path || pathname.startsWith(`${path}/`)
   }
 
-  const sections = [
+  const mainSections = [
     { name: 'لوحة التحكم', href: '/dashboard', icon: <LayoutDashboard /> },
     { name: 'التقويم الذكي', href: '/dashboard/calendar', icon: <Calendar /> },
+  ]
+
+  const personalGrowthSections = [
     { name: 'الأهداف', href: '/dashboard/goals', icon: <Target /> },
     { name: 'المهام', href: '/dashboard/tasks', icon: <ClipboardCheck /> },
     { name: 'العادات', href: '/dashboard/habits', icon: <Repeat /> },
+    { name: 'المشاريع الطويلة', href: '/dashboard/projects', icon: <FolderKanban /> },
+    { name: 'الإنجازات والتحديات', href: '/dashboard/achievements', icon: <Trophy /> },
+  ];
+
+  const organizationSections = [
     { name: 'المجلدات', href: '/dashboard/files', icon: <File /> },
     { name: 'المذكرات', href: '/dashboard/journal', icon: <Book /> },
-    { name: 'المشاريع الطويلة', href: '/dashboard/projects', icon: <FolderKanban /> },
-    { type: 'separator' },
-    { name: 'التحليلات العامة', href: '/dashboard/analytics', icon: <BarChart /> },
-    { name: 'الإنجازات والتحديات', href: '/dashboard/achievements', icon: <Trophy /> },
-    { name: 'الذكاء المساعد', href: '/dashboard/ai-assistant', icon: <Sparkles /> },
-    { type: 'separator' },
-    { name: 'مرآة الذات', href: '/dashboard/mood', icon: <Smile /> },
-    { name: 'الذكريات', href: '/dashboard/memories', icon: <Camera /> },
-    { name: 'رسائل لنفسي', href: '/dashboard/messages', icon: <MessageSquare /> },
-    { name: 'صندوق الامتنان', href: '/dashboard/gratitude', icon: <Heart /> },
-    { name: 'مكتبة التطوير', href: '/dashboard/library', icon: <BookOpen /> },
-    { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: <Clock /> },
-    { name: 'زاوية الراحة', href: '/dashboard/relax', icon: <Users /> },
-    { name: 'قسم الإيمان', href: '/dashboard/faith', icon: <ShieldCheck /> },
-
   ];
+  
+  const selfReflectionSections = [
+      { name: 'مرآة الذات', href: '/dashboard/mood', icon: <Smile /> },
+      { name: 'الذكريات', href: '/dashboard/memories', icon: <Camera /> },
+      { name: 'رسائل لنفسي', href: '/dashboard/messages', icon: <MessageSquare /> },
+      { name: 'صندوق الامتنان', href: '/dashboard/gratitude', icon: <Heart /> },
+  ];
+  
+  const toolsSections = [
+      { name: 'الذكاء المساعد', href: '/dashboard/ai-assistant', icon: <Sparkles /> },
+      { name: 'التحليلات العامة', href: '/dashboard/analytics', icon: <BarChart /> },
+      { name: 'مكتبة التطوير', href: '/dashboard/library', icon: <BookOpen /> },
+      { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: <Clock /> },
+      { name: 'زاوية الراحة', href: '/dashboard/relax', icon: <Users /> },
+  ];
+
+  const spiritualSection = [
+      { name: 'قسم الإيمان', href: '/dashboard/faith', icon: <ShieldCheck /> },
+  ]
+
 
   return (
     <Sidebar>
@@ -81,25 +94,71 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {sections.map((section, index) => {
-            if (section.type === 'separator') {
-              return <SidebarSeparator key={`sep-${index}`} className="my-1" />;
-            }
-            return (
-              <SidebarMenuItem key={section.href}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive(section.href!)}
-                  tooltip={section.name}
-                >
-                  <Link href={section.href!}>
-                    {section.icon}
-                    <span>{section.name}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
+          {mainSections.map((section) => (
+            <SidebarMenuItem key={section.href}>
+              <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
+                <Link href={section.href!}>
+                  {section.icon}
+                  <span>{section.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+          <SidebarSeparator className="my-1" />
+          {personalGrowthSections.map((section) => (
+            <SidebarMenuItem key={section.href}>
+              <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
+                <Link href={section.href!}>
+                  {section.icon}
+                  <span>{section.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+           <SidebarSeparator className="my-1" />
+           {organizationSections.map((section) => (
+            <SidebarMenuItem key={section.href}>
+              <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
+                <Link href={section.href!}>
+                  {section.icon}
+                  <span>{section.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+          <SidebarSeparator className="my-1" />
+          {selfReflectionSections.map((section) => (
+            <SidebarMenuItem key={section.href}>
+              <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
+                <Link href={section.href!}>
+                  {section.icon}
+                  <span>{section.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+          <SidebarSeparator className="my-1" />
+          {toolsSections.map((section) => (
+            <SidebarMenuItem key={section.href}>
+              <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
+                <Link href={section.href!}>
+                  {section.icon}
+                  <span>{section.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+          <SidebarSeparator className="my-1" />
+          {spiritualSection.map((section) => (
+            <SidebarMenuItem key={section.href}>
+              <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
+                <Link href={section.href!}>
+                  {section.icon}
+                  <span>{section.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
@@ -127,5 +186,3 @@ export function AppSidebar() {
     </Sidebar>
   )
 }
-
-    
