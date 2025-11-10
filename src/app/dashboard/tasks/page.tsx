@@ -143,6 +143,7 @@ export default function TasksPage() {
     try {
         const newTask: Omit<Task, 'id'> = {
           ...values,
+          description: values.description || '',
           userId: user.uid,
           updatedAt: serverTimestamp(),
         };

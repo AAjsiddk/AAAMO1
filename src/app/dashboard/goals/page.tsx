@@ -195,6 +195,7 @@ export default function GoalsPage() {
       name: '',
       description: '',
       motivation: '',
+      password: '',
     },
   });
 
