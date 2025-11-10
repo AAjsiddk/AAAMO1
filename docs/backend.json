@@ -1,0 +1,169 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the Smart Personal World application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "theme": {
+          "type": "string",
+          "description": "The user's preferred theme (e.g., 'light', 'dark')."
+        },
+        "primaryColor": {
+          "type": "string",
+          "description": "The user's primary color preference."
+        },
+        "backgroundColor": {
+          "type": "string",
+          "description": "The user's background color preference."
+        },
+        "accentColor": {
+          "type": "string",
+          "description": "The user's accent color preference."
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "File": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "File",
+      "type": "object",
+      "description": "Represents a file stored in the centralized storage.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the File entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N File).  Encrypted user ID for data isolation."
+        },
+        "storageLocation": {
+          "type": "string",
+          "description": "The location of the file in the storage system."
+        },
+        "uploadTimestamp": {
+          "type": "string",
+          "description": "Timestamp of when the file was uploaded.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "storageLocation",
+        "uploadTimestamp"
+      ]
+    },
+    "AuditLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AuditLog",
+      "type": "object",
+      "description": "Represents an audit log entry for data modifications.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AuditLog entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. Encrypted user ID for data isolation."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of the modification.",
+          "format": "date-time"
+        },
+        "deviceId": {
+          "type": "string",
+          "description": "The ID of the device used for the modification."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the change."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "timestamp",
+        "deviceId",
+        "description"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles.  `userId` corresponds to the authenticated user's UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/files/{fileId}",
+        "definition": {
+          "entityName": "File",
+          "schema": {
+            "$ref": "#/backend/entities/File"
+          },
+          "description": "Stores files for each user. Enforces user-specific file storage. `userId` must match the authenticated user's UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "fileId",
+              "description": "The unique identifier of the file."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/auditLogs/{auditLogId}",
+        "definition": {
+          "entityName": "AuditLog",
+          "schema": {
+            "$ref": "#/backend/entities/AuditLog"
+          },
+          "description": "Stores audit logs for each user. Enforces user-specific logging. `userId` must match the authenticated user's UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "auditLogId",
+              "description": "The unique identifier of the audit log entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed to support the 'Smart Personal World' application, focusing on data isolation, audit logging, centralized storage, theme customization, and AI assistance. The structure emphasizes Authorization Independence, DBAC (Database-Based Access Control), and simplifies security rules for `list` operations (QAPs). It achieves these goals through denormalization of authorization data and structural segregation.\n\n**Authorization Independence:** User-owned data is stored under `/users/{userId}`, enabling simple path-based rules. Data requiring more complex authorization (collaborative documents, etc.) would necessitate denormalization of membership information directly into the documents. Since the provided data model is exclusively user-owned, this denormalization is not currently implemented but would be crucial for collaborative features.\n\n**Data Isolation:**  Each user's data (files, audit logs, and the user document itself) is stored under their specific user ID (`/users/{userId}`). This ensures complete data isolation, as Firestore security rules can easily restrict access based on the authenticated user's ID.\n\n**QAPs (Rules are not Filters):**  The path-based ownership model enables secure `list` operations. Rules can allow a user to list only documents within their `/users/{userId}` path, preventing unauthorized access to other users' data.\n\n**Audit Logs:** Audit logs are stored as subcollections under each user's document (`/users/{userId}/auditLogs`). This aligns the logs with the user whose actions they represent and simplifies security rules.\n\n**Centralized File Storage:** While the data structure itself doesn't directly manage the centralized storage, the `File` entity includes a `storageLocation` field.  The security rules must ensure that only the corresponding user can read or modify the storage location for their files.\n\n**Theme Customization:** The user's theme preferences are stored directly in the `/users/{userId}` document, making them easily accessible and modifiable.\n\n**Considerations for Future Features:**\n*   If collaborative features are added (e.g., shared files or notes), the `Membership Map` pattern should be implemented.  This would involve adding a `members` map field to the collaborative document, containing user IDs and their roles.  The security rules would then check this map to determine access rights.\n*   For AI-powered assistance features, consider adding a subcollection to store AI-generated data, applying the same ownership and data isolation principles."
+  }
+}
