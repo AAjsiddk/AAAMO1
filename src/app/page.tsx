@@ -76,7 +76,7 @@ export default function Home() {
                 className="mt-10 flex items-center justify-center gap-x-6"
               >
                 <Button asChild size="lg">
-                  <Link href="#">
+                  <Link href="/register">
                     ابدأ رحلتك الآن
                     <ArrowLeft className="mr-2 h-5 w-5" />
                   </Link>
@@ -149,7 +149,7 @@ export default function Home() {
             </p>
             <div className="mt-10">
               <Button asChild size="lg">
-                <Link href="#">
+                <Link href="/register">
                   إنشاء حساب مجاني
                   <ArrowLeft className="mr-2 h-5 w-5" />
                 </Link>
