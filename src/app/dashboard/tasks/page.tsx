@@ -65,6 +65,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Task } from '@/lib/types';
+import { Badge } from '@/components/ui/badge';
 
 const taskSchema = z.object({
   title: z.string().min(1, { message: 'العنوان مطلوب.' }),
@@ -81,6 +82,26 @@ const taskSchema = z.object({
   startDate: z.date().optional(),
   endDate: z.date().optional(),
 });
+
+const statusTranslations: { [key in Task['status']]: string } = {
+  pending: 'قيد الانتظار',
+  in_progress: 'قيد التنفيذ',
+  completed: 'مكتملة',
+  deferred: 'مؤجلة',
+  cancelled: 'ملغاة',
+  waiting_for: 'في انتظار طرف آخر',
+  archived: 'مؤرشفة',
+};
+
+const statusColors: { [key in Task['status']]: string } = {
+  pending: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
+  in_progress: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
+  completed: 'bg-green-500/10 text-green-700 dark:text-green-400',
+  deferred: 'bg-purple-500/10 text-purple-700 dark:text-purple-400',
+  cancelled: 'bg-red-500/10 text-red-700 dark:text-red-400',
+  waiting_for: 'bg-orange-500/10 text-orange-700 dark:text-orange-400',
+  archived: 'bg-gray-500/10 text-gray-700 dark:text-gray-400',
+};
 
 export default function TasksPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -354,28 +375,30 @@ export default function TasksPage() {
                  <div className="text-sm text-muted-foreground space-y-2">
                   <div className='flex items-center gap-2'>
                     <span className="font-semibold">الحالة:</span>
-                    <span className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs">
-                       {task.status}
-                    </span>
+                    <Badge variant="outline" className={cn("text-xs font-normal", statusColors[task.status])}>
+                       {statusTranslations[task.status]}
+                    </Badge>
                   </div>
-                   {(task.startDate || task.endDate) && (
-                     <div className="flex items-center gap-2 pt-2">
+                 </div>
+              </CardContent>
+              {(task.startDate || task.endDate) && (
+                <CardFooter>
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
                        <CalendarIcon className="h-4 w-4" />
                        <span>
                          {task.startDate
-                           ? format(new Date(task.startDate.seconds * 1000), 'dd/MM/yy')
+                           ? format(task.startDate.toDate(), 'dd/MM/yy')
                            : '...'}
                        </span>
                        <span>-</span>
                        <span>
                          {task.endDate
-                           ? format(new Date(task.endDate.seconds * 1000), 'dd/MM/yy')
+                           ? format(task.endDate.toDate(), 'dd/MM/yy')
                            : '...'}
                        </span>
                      </div>
-                   )}
-                 </div>
-              </CardContent>
+                </CardFooter>
+              )}
             </Card>
           ))}
          </div>

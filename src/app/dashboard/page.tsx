@@ -1,5 +1,5 @@
 'use client';
-import { useUser } from '@/firebase';
+import { useUser, useCollection, useMemoFirebase, useFirestore } from '@/firebase';
 import {
   Card,
   CardContent,
@@ -14,11 +14,80 @@ import {
   Book,
   ClipboardCheck,
   Repeat,
+  Inbox,
+  Calendar,
 } from 'lucide-react';
 import { TimeWidget } from '@/components/dashboard/time-widget';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import Link from 'next/link';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
+import type { JournalEntry } from '@/lib/types';
+import { format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function LatestJournalEntries() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const entriesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    const entriesRef = collection(firestore, `users/${user.uid}/journalEntries`);
+    return query(entriesRef, orderBy('createdAt', 'desc'), limit(3));
+  }, [user, firestore]);
+
+  const { data: entries, isLoading } = useCollection<JournalEntry>(entriesQuery);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center space-x-4 space-x-reverse">
+          <Skeleton className="h-12 w-12 rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-[250px]" />
+            <Skeleton className="h-4 w-[200px]" />
+          </div>
+        </div>
+        <div className="flex items-center space-x-4 space-x-reverse">
+          <Skeleton className="h-12 w-12 rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-[250px]" />
+            <Skeleton className="h-4 w-[200px]" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!entries || entries.length === 0) {
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        <Inbox className="mx-auto h-12 w-12" />
+        <p className="mt-4">لا توجد مذكرات لعرضها بعد.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {entries.map((entry) => (
+        <div key={entry.id} className="flex items-center">
+          <div className="flex flex-col items-center justify-center bg-muted text-muted-foreground rounded-lg p-2 h-16 w-16 mr-4">
+            <span className="text-sm font-bold">{format(entry.createdAt.toDate(), 'MMM')}</span>
+            <span className="text-2xl font-bold">{format(entry.createdAt.toDate(), 'dd')}</span>
+          </div>
+          <div className="space-y-1">
+            <Link href="/dashboard/journal" className="font-medium hover:underline">{entry.title}</Link>
+            <p className="text-sm text-muted-foreground truncate">
+              {entry.content.substring(0, 100)}...
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 
 export default function DashboardPage() {
   const { user } = useUser();
@@ -81,9 +150,11 @@ export default function DashboardPage() {
                 <span>مهمة</span>
               </Link>
             </Button>
-            <Button variant="outline" className="flex flex-col h-24">
-              <Book className="h-8 w-8 mb-2 text-primary" />
-              <span>ملاحظة</span>
+            <Button asChild variant="outline" className="flex flex-col h-24">
+              <Link href="/dashboard/journal">
+                <Book className="h-8 w-8 mb-2 text-primary" />
+                <span>مذكرة</span>
+              </Link>
             </Button>
             <Button asChild variant="outline" className="flex flex-col h-24">
               <Link href="/dashboard/files">
@@ -101,9 +172,7 @@ export default function DashboardPage() {
             <CardTitle>آخر المذكرات</CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
-            <div className="space-y-4">
-                <p className="text-center text-muted-foreground py-8">لا توجد مذكرات لعرضها بعد.</p>
-            </div>
+            <LatestJournalEntries />
           </CardContent>
         </Card>
         <Card className="col-span-1 lg:col-span-3">

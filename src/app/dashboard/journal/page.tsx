@@ -55,7 +55,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { JournalEntry } from '@/lib/types';
-import { format, getMonth, getDate, isSameDay } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import Image from 'next/image';
 
 const journalSchema = z.object({
@@ -64,12 +64,20 @@ const journalSchema = z.object({
   imageUrl: z.string().url({ message: 'الرجاء إدخال رابط صحيح' }).optional().or(z.literal('')),
 });
 
-const moodIcons = {
+const moodIcons: { [key in NonNullable<JournalEntry['mood']>]: React.ReactElement } = {
     happy: <Smile className="h-5 w-5 text-green-500" />,
     sad: <Frown className="h-5 w-5 text-blue-500" />,
     neutral: <Meh className="h-5 w-5 text-gray-500" />,
     excited: <Sparkles className="h-5 w-5 text-yellow-500" />,
     anxious: <Annoyed className="h-5 w-5 text-purple-500" />,
+};
+
+const moodTranslations: { [key in NonNullable<JournalEntry['mood']>]: string } = {
+    happy: 'سعيد',
+    sad: 'حزين',
+    neutral: 'محايد',
+    excited: 'متحمس',
+    anxious: 'قلق',
 };
 
 const analyzeMood = (text: string): JournalEntry['mood'] => {
@@ -124,7 +132,7 @@ export default function JournalPage() {
     
     const mood = analyzeMood(values.content);
 
-    const newEntry: Omit<JournalEntry, 'id'> = {
+    const newEntry: Omit<JournalEntry, 'id' | 'createdAt'> = {
       title: values.title,
       content: values.content,
       imageUrl: values.imageUrl || undefined,
@@ -220,15 +228,20 @@ export default function JournalPage() {
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </CardTitle>
-                <CardDescription className="flex items-center gap-4">
-                    <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(entry.createdAt.toDate(), 'PPP p')}</span>
-                    {entry.mood && moodIcons[entry.mood] && <span className="flex items-center gap-1">المزاج: {moodIcons[entry.mood]}</span>}
+                <CardDescription className="flex items-center gap-4 text-xs">
+                    <span className="flex items-center gap-1"><Calendar className="h-4 w-4" /> {format(entry.createdAt.toDate(), 'PPP p')}</span>
+                    {entry.mood && moodIcons[entry.mood] && (
+                        <span className="flex items-center gap-1">
+                            {moodIcons[entry.mood]}
+                            <span>{moodTranslations[entry.mood]}</span>
+                        </span>
+                    )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {entry.imageUrl && (
-                    <div className="mb-4 relative aspect-video max-w-lg">
-                        <Image src={entry.imageUrl} alt={entry.title} layout="fill" className="rounded-md object-cover" />
+                    <div className="mb-4 relative aspect-video max-w-lg overflow-hidden rounded-md">
+                        <Image src={entry.imageUrl} alt={entry.title} layout="fill" className="object-cover" />
                     </div>
                 )}
                 <p className="whitespace-pre-wrap">{entry.content}</p>
