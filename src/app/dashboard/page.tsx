@@ -18,6 +18,7 @@ import {
 import { TimeWidget } from '@/components/dashboard/time-widget';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const { user } = useUser();
@@ -70,9 +71,11 @@ export default function DashboardPage() {
               <Repeat className="h-8 w-8 mb-2 text-primary" />
               <span>عادة</span>
             </Button>
-            <Button variant="outline" className="flex flex-col h-24">
-              <ClipboardCheck className="h-8 w-8 mb-2 text-primary" />
-              <span>مهمة</span>
+            <Button asChild variant="outline" className="flex flex-col h-24">
+              <Link href="/dashboard/tasks">
+                <ClipboardCheck className="h-8 w-8 mb-2 text-primary" />
+                <span>مهمة</span>
+              </Link>
             </Button>
             <Button variant="outline" className="flex flex-col h-24">
               <Book className="h-8 w-8 mb-2 text-primary" />
@@ -103,7 +106,7 @@ export default function DashboardPage() {
              <CardDescription>
               رسالتك اليومية للتحفيز والإلهام.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
              <p className="text-center text-muted-foreground py-8">"لا تؤجل عمل اليوم إلى الغد."</p>
           </CardContent>

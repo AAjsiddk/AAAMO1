@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { authMiddleware, redirectToLogin } from 'firebase-actions/next/auth';
+import { cookies } from 'next/headers';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const cookieStore = cookies();
 
   // Define public paths that don't require authentication
   const publicPaths = ['/', '/login', '/register'];
@@ -12,26 +13,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // For all other paths, use Firebase Auth middleware
-  return authMiddleware(request, {
-    loginPath: '/login',
-    publicPaths: [], // No additional public paths for the auth middleware itself
-    callbacks: {
-      // This is called when the user is not authenticated
-      onUnauthenticated: () => {
-        return redirectToLogin(request, {
-          path: '/login',
-          // Optionally, you can redirect them back to the page they were trying to access after login
-          originPath: pathname, 
-        });
-      },
-      // This is called when the user is authenticated
-      onAuthenticated: async ({ token }) => {
-        // You can add additional logic here if needed, like checking for custom claims
-        return NextResponse.next();
-      },
-    },
-  });
+  // Check for the Firebase auth token cookie
+  const idTokenCookie = cookieStore.get('firebaseIdToken');
+
+  if (!idTokenCookie) {
+    // If no token, redirect to login
+    const loginUrl = new URL('/login', request.url);
+    // Store the original path to redirect back after login
+    loginUrl.searchParams.set('origin', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // If the token exists, let the request proceed.
+  // The actual token verification will happen on the client-side
+  // or in API routes if necessary. The presence of the cookie is a
+  // good first-level check for the middleware.
+  return NextResponse.next();
 }
 
 export const config = {

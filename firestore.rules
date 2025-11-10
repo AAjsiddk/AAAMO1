@@ -6,109 +6,74 @@
  * and no user can access another user's data. Data is isolated using path-based rules and verified identity.
  *
  * Data Structure:
- * - /users/{userId}: Stores user profiles and preferences. Only the authenticated user can read or write their own profile.
- * - /users/{userId}/files/{fileId}: Stores files for each user. Only the authenticated user can manage their own files.
- * - /users/{userId}/auditLogs/{auditLogId}: Stores audit logs for each user. Only the authenticated user can read their own audit logs.
- *
- * Key Security Decisions:
- * - No user listing is allowed.
- * - All write operations are validated to ensure data consistency and prevent unauthorized modifications.
- *
- * Denormalization for Authorization:
- * - The 'userId' is included in both the path and the document for /users/{userId}, /users/{userId}/files/{fileId}, and /users/{userId}/auditLogs/{auditLogId} to ensure that the authenticated user's UID matches the userId in the document.
+ * - /users/{userId}: Stores user profiles and preferences.
+ * - /users/{userId}/files/{fileId}: Stores files for each user.
+ * - /users/{userId}/auditLogs/{auditLogId}: Stores audit logs for each user.
+ * - /users/{userId}/tasks/{taskId}: Stores tasks for each user.
+ * - /users/{userId}/tasks/{taskId}/attachments/{attachmentId}: Stores attachments for tasks.
+ * - /users/{userId}/habits/{habitId}: Stores habits for each user.
+ * - /users/{userId}/habits/{habitId}/marks/{markId}: Stores daily habit tracking marks.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Enforces user-specific access control for user profiles.
-     * @path /users/{userId}
-     * @allow (create) - Authenticated user 'user_abc' can create their profile if request.auth.uid == 'user_abc' and request.resource.data.id == 'user_abc'.
-     * @allow (get, update, delete) - Authenticated user 'user_abc' can read/update/delete their profile.
-     * @deny (create) - Authenticated user 'user_xyz' cannot create a profile for user 'user_abc'.
-     * @deny (update, delete) - Authenticated user 'user_xyz' cannot update or delete the profile of user 'user_abc'.
-     * @principle Enforces document ownership, validates relational integrity between path and data, and verifies identity.
-     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
     match /users/{userId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
-      allow list: if false;
+      allow list: if false; // Do not allow listing all users.
 
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
-    /**
-     * @description Enforces user-specific access control for files.
-     * @path /users/{userId}/files/{fileId}
-     * @allow (create) - Authenticated user 'user_abc' can create a file in their files collection if request.auth.uid == 'user_abc' and request.resource.data.userId == 'user_abc'.
-     * @allow (get, list, update, delete) - Authenticated user 'user_abc' can read/list/update/delete their files.
-     * @deny (create) - Authenticated user 'user_xyz' cannot create a file in user 'user_abc's files collection.
-     * @deny (update, delete) - Authenticated user 'user_xyz' cannot update or delete a file owned by user 'user_abc'.
-     * @principle Enforces document ownership, validates relational integrity between path and data, and verifies identity.
-     */
     match /users/{userId}/files/{fileId} {
-       function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
+      allow get, list, create, update, delete: if isOwner(userId);
+      // Ensure data integrity on create/update
+      allow create, update: if request.resource.data.userId == userId;
     }
 
-    /**
-     * @description Enforces user-specific access control for audit logs.
-     * @path /users/{userId}/auditLogs/{auditLogId}
-     * @allow (create) - Authenticated user 'user_abc' can create an audit log in their auditLogs collection if request.auth.uid == 'user_abc' and request.resource.data.userId == 'user_abc'.
-     * @allow (get, list, update, delete) - Authenticated user 'user_abc' can read/list/update/delete their audit logs.
-     * @deny (create) - Authenticated user 'user_xyz' cannot create an audit log in user 'user_abc's auditLogs collection.
-     * @deny (update, delete) - Authenticated user 'user_xyz' cannot update or delete an audit log owned by user 'user_abc'.
-     * @principle Enforces document ownership, validates relational integrity between path and data, and verifies identity.
-     */
     match /users/{userId}/auditLogs/{auditLogId} {
-       function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
+      allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
+      // Audit logs should be immutable
+      allow update, delete: if false;
+    }
+
+    match /users/{userId}/tasks/{taskId} {
+      allow get, list, create, update, delete: if isOwner(userId);
+      // Ensure data integrity on create/update
+      allow create, update: if request.resource.data.userId == userId;
+    }
+    
+    match /users/{userId}/tasks/{taskId}/attachments/{attachmentId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+        // Ensure data integrity
+        allow create, update: if request.resource.data.userId == userId && request.resource.data.taskId == taskId;
+    }
+
+    match /users/{userId}/habits/{habitId} {
+       allow get, list, create, update, delete: if isOwner(userId);
+        // Ensure data integrity
+       allow create, update: if request.resource.data.userId == userId;
+    }
+    
+    match /users/{userId}/habits/{habitId}/marks/{markId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+        // Ensure data integrity
+        allow create, update: if request.resource.data.userId == userId && request.resource.data.habitId == habitId;
     }
   }
 }
