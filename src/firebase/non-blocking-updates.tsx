@@ -17,6 +17,10 @@ import {FirestorePermissionError} from '@/firebase/errors';
  * Does NOT await the write operation internally.
  */
 export function setDocumentNonBlocking(docRef: DocumentReference, data: any, options: SetOptions) {
+  // This is intentionally a fire-and-forget operation from the UI's perspective.
+  // The optimistic update happens in the local cache, and the `onSnapshot` listener
+  // will eventually receive the confirmed server state or an error.
+  // The global error handler will catch permission issues.
   setDoc(docRef, data, options).catch(error => {
     errorEmitter.emit(
       'permission-error',
@@ -27,7 +31,6 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
       })
     )
   })
-  // Execution continues immediately
 }
 
 
@@ -37,6 +40,8 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
  * Returns the Promise for the new doc ref, but typically not awaited by caller.
  */
 export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
+  // Returns the promise so the caller can (optionally) get the new doc's ID,
+  // but the primary interaction model is fire-and-forget.
   const promise = addDoc(colRef, data)
     .catch(error => {
       errorEmitter.emit(

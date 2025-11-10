@@ -8,11 +8,8 @@ import {
   useUser,
   useCollection,
   useMemoFirebase,
-  addDocumentNonBlocking,
-  deleteDocumentNonBlocking,
-  setDocumentNonBlocking, // Import setDocumentNonBlocking
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, addDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -208,7 +205,6 @@ export default function GoalsPage() {
 
   const goalsQuery = useMemoFirebase(() => {
     if (!goalsCollectionRef) return null;
-    // You might want to add orderBy here, e.g., orderBy('endDate', 'asc')
     return query(goalsCollectionRef);
   }, [goalsCollectionRef]);
 
@@ -225,43 +221,51 @@ export default function GoalsPage() {
     }
     setIsSubmitting(true);
 
-    // In a real app, you would generate a secure hash for the password using a backend function.
-    // For this prototype, we'll just store a simple "locked" flag if a password is present.
-    const passwordHash = values.password ? "dummy_hash_replace_with_real_one" : undefined;
+    try {
+        const passwordHash = values.password ? "dummy_hash_replace_with_real_one" : undefined;
 
-    const newGoalData = {
-      name: values.name,
-      description: values.description || '',
-      motivation: values.motivation || '',
-      startDate: values.startDate || null,
-      endDate: values.endDate || null,
-      passwordHash: passwordHash,
-      userId: user.uid,
-      progress: 0,
-      updatedAt: serverTimestamp(),
-    };
+        const newGoalData = {
+          name: values.name,
+          description: values.description || '',
+          motivation: values.motivation || '',
+          startDate: values.startDate || null,
+          endDate: values.endDate || null,
+          passwordHash: passwordHash,
+          userId: user.uid,
+          progress: 0,
+          updatedAt: serverTimestamp(),
+        };
 
-    await addDocumentNonBlocking(goalsCollectionRef, newGoalData);
-    
-    toast({
-      title: 'نجاح',
-      description: 'تمت إضافة الهدف بنجاح.',
-    });
-
-    setIsSubmitting(false);
-    setIsDialogOpen(false);
-    form.reset();
+        await addDoc(goalsCollectionRef, newGoalData);
+        
+        toast({
+          title: 'نجاح',
+          description: 'تمت إضافة الهدف بنجاح.',
+        });
+        
+        form.reset();
+        setIsDialogOpen(false);
+    } catch (error) {
+        console.error("Error creating goal: ", error);
+        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل إنشاء الهدف.' });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
   
-  const handleDeleteGoal = (goalId: string) => {
+  const handleDeleteGoal = async (goalId: string) => {
     if (!firestore || !user) return;
     const goalDocRef = doc(firestore, `users/${user.uid}/goals`, goalId);
-    // In a real app, you'd also delete subtasks here in a transaction or batched write.
-    deleteDocumentNonBlocking(goalDocRef);
-    toast({
-      title: 'تم الحذف',
-      description: 'تم حذف الهدف بنجاح.',
-    });
+    try {
+        await deleteDoc(goalDocRef);
+        toast({
+          title: 'تم الحذف',
+          description: 'تم حذف الهدف بنجاح.',
+        });
+    } catch (error) {
+        console.error("Error deleting goal: ", error);
+        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل حذف الهدف.'});
+    }
   };
 
   return (

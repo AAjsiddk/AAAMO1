@@ -32,18 +32,18 @@ export default function AnalyticsPage() {
   const { user } = useUser()
   const firestore = useFirestore()
 
-  const tasksRef = useMemoFirebase(
+  const tasksQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/tasks`) : null),
     [user, firestore]
   )
-  const habitsRef = useMemoFirebase(
+  const habitsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
     [user, firestore]
   )
 
-  const { data: tasks, isLoading: loadingTasks } = useCollection<Task>(tasksRef)
+  const { data: tasks, isLoading: loadingTasks } = useCollection<Task>(tasksQuery)
   const { data: habits, isLoading: loadingHabits } =
-    useCollection<Habit>(habitsRef)
+    useCollection<Habit>(habitsQuery)
 
   const taskStatusData = useMemo(() => {
     if (!tasks) return []

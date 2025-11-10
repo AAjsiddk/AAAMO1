@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useAuth, useFirestore, useUser, setDocumentNonBlocking } from '@/firebase';
-import { doc, serverTimestamp } from 'firebase/firestore';
+import { useAuth, useFirestore, useUser } from '@/firebase';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import {
   createUserWithEmailAndPassword,
   updateProfile,
+  User as FirebaseUser,
 } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import {
@@ -55,6 +56,21 @@ export default function RegisterPage() {
     },
   });
 
+  const saveUserToFirestore = async (user: FirebaseUser, displayName: string, email: string) => {
+    if (!firestore) return;
+    const userDocRef = doc(firestore, 'users', user.uid);
+    await setDoc(userDocRef, {
+      id: user.uid,
+      displayName: displayName,
+      email: email,
+      createdAt: serverTimestamp(),
+      theme: 'light',
+      primaryColor: '231 48% 54%',
+      backgroundColor: '234 43% 94%',
+      accentColor: '261 35% 58%',
+    }, { merge: true });
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     if (!auth || !firestore) {
@@ -68,48 +84,42 @@ export default function RegisterPage() {
     }
 
     try {
+      // 1. Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         values.email,
         values.password
       );
-      const user = userCredential.user;
+      const newUser = userCredential.user;
 
-      await updateProfile(user, { displayName: values.displayName });
+      // 2. Update user's profile in Firebase Auth
+      await updateProfile(newUser, { displayName: values.displayName });
 
-      const userDocRef = doc(firestore, 'users', user.uid);
-      
-      // Use non-blocking write
-      setDocumentNonBlocking(userDocRef, {
-        id: user.uid,
-        displayName: values.displayName,
-        email: values.email,
-        createdAt: serverTimestamp(),
-        theme: 'light',
-        primaryColor: '',
-        backgroundColor: '',
-        accentColor: '',
-      }, { merge: true });
+      // 3. Save user data to Firestore
+      await saveUserToFirestore(newUser, values.displayName, values.email);
 
       toast({
         title: 'تم إنشاء الحساب بنجاح!',
-        description: 'أهلاً بك في عالمك الشخصي الذكي.',
+        description: 'أهلاً بك في عالمك الشخصي الذكي. سيتم توجيهك الآن...',
       });
-      // The onAuthStateChanged listener will handle the redirect via the useEffect
+      // The onAuthStateChanged listener in FirebaseProvider will handle the redirect.
     } catch (error: any) {
-      console.error(error);
+      console.error("Registration Error:", error);
       const errorCode = error.code;
       let description = 'حدث خطأ غير متوقع. الرجاء المحاولة مرة أخرى.';
       if (errorCode === 'auth/email-already-in-use') {
         description = 'هذا البريد الإلكتروني مسجل بالفعل.';
       } else if (errorCode === 'auth/weak-password') {
-        description = 'كلمة المرور ضعيفة جدًا.';
+        description = 'كلمة المرور ضعيفة جدًا. يجب أن تتكون من 6 أحرف على الأقل.';
+      } else if (errorCode === 'auth/invalid-email') {
+        description = 'البريد الإلكتروني الذي أدخلته غير صالح.';
       }
       toast({
         variant: 'destructive',
         title: 'فشل إنشاء الحساب',
         description,
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -154,7 +164,7 @@ export default function RegisterPage() {
                 <FormItem>
                   <FormLabel>البريد الإلكتروني</FormLabel>
                   <FormControl>
-                    <Input placeholder="name@example.com" {...field} />
+                    <Input type="email" placeholder="name@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

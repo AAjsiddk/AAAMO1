@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import {
   Card,
   CardContent,
@@ -21,16 +21,20 @@ export default function SettingsPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [primaryColor, setPrimaryColor] = useState(
-    getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()
-  );
-  const [backgroundColor, setBackgroundColor] = useState(
-    getComputedStyle(document.documentElement).getPropertyValue('--background').trim()
-  );
-  const [accentColor, setAccentColor] = useState(
-    getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()
-  );
+  // Initialize with fallback values if CSS variables are not immediately available
+  const [primaryColor, setPrimaryColor] = useState('231 48% 54%');
+  const [backgroundColor, setBackgroundColor] = useState('234 43% 94%');
+  const [accentColor, setAccentColor] = useState('261 35% 58%');
   const [isSaving, setIsSaving] = useState(false);
+
+  useState(() => {
+    if (typeof window !== 'undefined') {
+        setPrimaryColor(getComputedStyle(document.documentElement).getPropertyValue('--primary').trim());
+        setBackgroundColor(getComputedStyle(document.documentElement).getPropertyValue('--background').trim());
+        setAccentColor(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
+    }
+  });
+
 
   const handleColorChange = (colorSetter: Function, cssVar: string, value: string) => {
     colorSetter(value);
@@ -52,11 +56,10 @@ export default function SettingsPage() {
     };
 
     try {
-        await setDocumentNonBlocking(userDocRef, themeData, { merge: true });
+        await setDoc(userDocRef, themeData, { merge: true });
         toast({ title: "تم الحفظ", description: "تم حفظ إعدادات المظهر بنجاح." });
     } catch(e) {
-        // The non-blocking function will handle permission errors globally
-        console.error(e); // Log other types of errors
+        console.error(e);
         toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ المظهر." });
     } finally {
         setIsSaving(false);

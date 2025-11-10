@@ -8,10 +8,8 @@ import {
   useUser,
   useCollection,
   useMemoFirebase,
-  addDocumentNonBlocking,
-  deleteDocumentNonBlocking
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, orderBy, addDoc, deleteDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -130,30 +128,41 @@ export default function JournalPage() {
     if (!firestore || !user || !journalCollectionRef) return;
     setIsSubmitting(true);
     
-    const mood = analyzeMood(values.content);
+    try {
+        const mood = analyzeMood(values.content);
 
-    const newEntry: Omit<JournalEntry, 'id' | 'createdAt'> = {
-      title: values.title,
-      content: values.content,
-      imageUrl: values.imageUrl || undefined,
-      userId: user.uid,
-      mood: mood,
-      createdAt: serverTimestamp(),
-    };
+        const newEntry: Omit<JournalEntry, 'id' | 'createdAt'> = {
+          title: values.title,
+          content: values.content,
+          imageUrl: values.imageUrl || undefined,
+          userId: user.uid,
+          mood: mood,
+          createdAt: serverTimestamp(),
+        };
 
-    await addDocumentNonBlocking(journalCollectionRef, newEntry);
-    
-    toast({ title: 'نجاح', description: 'تمت إضافة تدوينتك بنجاح.' });
-    setIsSubmitting(false);
-    setIsDialogOpen(false);
-    form.reset();
+        await addDoc(journalCollectionRef, newEntry);
+        
+        toast({ title: 'نجاح', description: 'تمت إضافة تدوينتك بنجاح.' });
+        form.reset();
+        setIsDialogOpen(false);
+    } catch (error) {
+        console.error("Error creating journal entry: ", error);
+        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل إنشاء التدوينة.' });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = (entryId: string) => {
+  const handleDelete = async (entryId: string) => {
     if (!firestore || !user) return;
     const entryDocRef = doc(firestore, `users/${user.uid}/journalEntries`, entryId);
-    deleteDocumentNonBlocking(entryDocRef);
-    toast({ title: 'تم الحذف', description: 'تم حذف التدوينة بنجاح.' });
+    try {
+        await deleteDoc(entryDocRef);
+        toast({ title: 'تم الحذف', description: 'تم حذف التدوينة بنجاح.' });
+    } catch (error) {
+        console.error("Error deleting journal entry: ", error);
+        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل حذف التدوينة.' });
+    }
   };
 
   return (

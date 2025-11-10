@@ -8,10 +8,8 @@ import {
   useUser,
   useCollection,
   useMemoFirebase,
-  addDocumentNonBlocking,
-  deleteDocumentNonBlocking
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, addDoc, deleteDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -94,13 +92,13 @@ const statusTranslations: { [key in Task['status']]: string } = {
 };
 
 const statusColors: { [key in Task['status']]: string } = {
-  pending: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
-  in_progress: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
-  completed: 'bg-green-500/10 text-green-700 dark:text-green-400',
-  deferred: 'bg-purple-500/10 text-purple-700 dark:text-purple-400',
-  cancelled: 'bg-red-500/10 text-red-700 dark:text-red-400',
-  waiting_for: 'bg-orange-500/10 text-orange-700 dark:text-orange-400',
-  archived: 'bg-gray-500/10 text-gray-700 dark:text-gray-400',
+  pending: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20',
+  in_progress: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
+  completed: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
+  deferred: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20',
+  cancelled: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',
+  waiting_for: 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20',
+  archived: 'bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20',
 };
 
 export default function TasksPage() {
@@ -141,33 +139,43 @@ export default function TasksPage() {
       return;
     }
     setIsSubmitting(true);
-
-    const newTask: Omit<Task, 'id'> = {
-      ...values,
-      userId: user.uid,
-      updatedAt: serverTimestamp(),
-    };
-
-    addDocumentNonBlocking(tasksCollectionRef, newTask);
     
-    toast({
-      title: 'نجاح',
-      description: 'تمت إضافة المهمة بنجاح.',
-    });
+    try {
+        const newTask: Omit<Task, 'id'> = {
+          ...values,
+          userId: user.uid,
+          updatedAt: serverTimestamp(),
+        };
 
-    setIsSubmitting(false);
-    setIsDialogOpen(false);
-    form.reset();
+        await addDoc(tasksCollectionRef, newTask);
+        
+        toast({
+          title: 'نجاح',
+          description: 'تمت إضافة المهمة بنجاح.',
+        });
+        form.reset();
+        setIsDialogOpen(false);
+    } catch(error) {
+        console.error("Error creating task: ", error);
+        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل إنشاء المهمة.' });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
   
-  const handleDeleteTask = (taskId: string) => {
+  const handleDeleteTask = async (taskId: string) => {
     if (!firestore || !user) return;
     const taskDocRef = doc(firestore, `users/${user.uid}/tasks`, taskId);
-    deleteDocumentNonBlocking(taskDocRef);
-    toast({
-      title: 'تم الحذف',
-      description: 'تم حذف المهمة بنجاح.',
-    });
+    try {
+        await deleteDoc(taskDocRef);
+        toast({
+          title: 'تم الحذف',
+          description: 'تم حذف المهمة بنجاح.',
+        });
+    } catch (error) {
+        console.error("Error deleting task: ", error);
+        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل حذف المهمة.' });
+    }
   };
 
   return (
@@ -375,7 +383,7 @@ export default function TasksPage() {
                  <div className="text-sm text-muted-foreground space-y-2">
                   <div className='flex items-center gap-2'>
                     <span className="font-semibold">الحالة:</span>
-                    <Badge variant="outline" className={cn("text-xs font-normal", statusColors[task.status])}>
+                    <Badge variant="outline" className={cn("font-normal", statusColors[task.status])}>
                        {statusTranslations[task.status]}
                     </Badge>
                   </div>

@@ -8,11 +8,8 @@ import {
   useUser,
   useCollection,
   useMemoFirebase,
-  addDocumentNonBlocking,
-  deleteDocumentNonBlocking,
-  setDocumentNonBlocking,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, where, getDocs, writeBatch, addDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -65,12 +62,12 @@ function HabitCard({ habit, onDelete }: { habit: Habit, onDelete: (habitId: stri
   const [heatmapValues, setHeatmapValues] = useState<{ date: string; count: number }[]>([]);
   const [streak, setStreak] = useState(0);
 
-  const habitMarksRef = useMemoFirebase(() => {
+  const habitMarksQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return collection(firestore, `users/${user.uid}/habits/${habit.id}/marks`);
   }, [firestore, user, habit.id]);
 
-  const { data: marks, isLoading: isLoadingMarks } = useCollection<HabitMark>(habitMarksRef);
+  const { data: marks, isLoading: isLoadingMarks } = useCollection<HabitMark>(habitMarksQuery);
 
   useEffect(() => {
     if (marks) {
@@ -103,7 +100,6 @@ function HabitCard({ habit, onDelete }: { habit: Habit, onDelete: (habitId: stri
       const latestDate = new Date(sortedDates[0]);
       latestDate.setHours(0,0,0,0);
 
-      // Check if the streak is current
       if (latestDate.getTime() === today.getTime() || latestDate.getTime() === yesterday.getTime()) {
         currentStreak = 1;
         for (let i = 0; i < sortedDates.length - 1; i++) {
@@ -132,7 +128,7 @@ function HabitCard({ habit, onDelete }: { habit: Habit, onDelete: (habitId: stri
     
     if (existingMark) {
       const markDocRef = doc(firestore, `users/${user.uid}/habits/${habit.id}/marks`, existingMark.id);
-      await deleteDocumentNonBlocking(markDocRef);
+      await deleteDoc(markDocRef);
     } else {
       const markId = `${habit.id}_${date}`;
       const newMark: Omit<HabitMark, 'id'> = {
@@ -142,7 +138,7 @@ function HabitCard({ habit, onDelete }: { habit: Habit, onDelete: (habitId: stri
           completed: true,
       };
       const markDocRef = doc(firestore, `users/${user.uid}/habits/${habit.id}/marks`, markId);
-      await setDocumentNonBlocking(markDocRef, newMark, {});
+      await setDoc(markDocRef, newMark);
     }
   };
 
@@ -223,44 +219,52 @@ export default function HabitsPage() {
     }
     setIsSubmitting(true);
 
-    const newHabit: Omit<Habit, 'id'> = {
-      ...values,
-      userId: user.uid,
-      streak: 0,
-    };
+    try {
+      const newHabit: Omit<Habit, 'id'> = {
+        ...values,
+        userId: user.uid,
+        streak: 0,
+      };
 
-    await addDocumentNonBlocking(habitsCollectionRef, newHabit);
-    
-    toast({
-      title: 'نجاح',
-      description: 'تمت إضافة العادة بنجاح.',
-    });
-
-    setIsSubmitting(false);
-    setIsDialogOpen(false);
-    form.reset();
+      await addDoc(habitsCollectionRef, newHabit);
+      
+      toast({
+        title: 'نجاح',
+        description: 'تمت إضافة العادة بنجاح.',
+      });
+      form.reset();
+      setIsDialogOpen(false);
+    } catch(error) {
+       console.error("Error creating habit: ", error);
+       toast({ variant: 'destructive', title: 'خطأ', description: 'فشل إنشاء العادة.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const handleDeleteHabit = async (habitId: string) => {
     if (!firestore || !user) return;
     
-    // First, delete all marks in the subcollection
-    const marksQuery = query(collection(firestore, `users/${user.uid}/habits/${habitId}/marks`));
-    const marksSnapshot = await getDocs(marksQuery);
-    const batch = writeBatch(firestore);
-    marksSnapshot.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-    await batch.commit();
+    try {
+      const marksQuery = query(collection(firestore, `users/${user.uid}/habits/${habitId}/marks`));
+      const marksSnapshot = await getDocs(marksQuery);
+      const batch = writeBatch(firestore);
+      marksSnapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
 
-    // Then, delete the habit document itself
-    const habitDocRef = doc(firestore, `users/${user.uid}/habits`, habitId);
-    await deleteDocumentNonBlocking(habitDocRef);
-    
-    toast({
-      title: 'تم الحذف',
-      description: 'تم حذف العادة وكل سجلاتها بنجاح.',
-    });
+      const habitDocRef = doc(firestore, `users/${user.uid}/habits`, habitId);
+      await deleteDoc(habitDocRef);
+      
+      toast({
+        title: 'تم الحذف',
+        description: 'تم حذف العادة وكل سجلاتها بنجاح.',
+      });
+    } catch (error) {
+       console.error("Error deleting habit: ", error);
+       toast({ variant: 'destructive', title: 'خطأ', description: 'فشل حذف العادة.' });
+    }
   };
 
   return (

@@ -8,10 +8,8 @@ import {
   useFirestore,
   useCollection,
   useMemoFirebase,
-  addDocumentNonBlocking,
-  deleteDocumentNonBlocking,
 } from '@/firebase';
-import { collection, query, where, serverTimestamp, doc } from 'firebase/firestore';
+import { collection, query, where, serverTimestamp, doc, addDoc, deleteDoc } from 'firebase/firestore';
 import type { Folder, File as FileType } from '@/lib/types';
 import {
   PlusCircle,
@@ -123,50 +121,67 @@ export default function FilesPage() {
   const handleCreateFolder = async (values: z.infer<typeof folderSchema>) => {
     if (!user || !foldersCollectionRef) return;
     setIsSubmitting(true);
-    const newFolder: Omit<Folder, 'id'> = {
-      name: values.name,
-      userId: user.uid,
-      parentId: currentFolderId,
-      createdAt: serverTimestamp(),
-    };
-    await addDocumentNonBlocking(foldersCollectionRef, newFolder);
-    toast({ title: 'نجاح', description: 'تم إنشاء المجلد.' });
-    setIsSubmitting(false);
-    setIsFolderDialogOpen(false);
-    folderForm.reset();
+    try {
+      const newFolder: Omit<Folder, 'id'> = {
+        name: values.name,
+        userId: user.uid,
+        parentId: currentFolderId,
+        createdAt: serverTimestamp(),
+      };
+      await addDoc(foldersCollectionRef, newFolder);
+      toast({ title: 'نجاح', description: 'تم إنشاء المجلد.' });
+      folderForm.reset();
+      setIsFolderDialogOpen(false);
+    } catch (error) {
+      console.error("Error creating folder: ", error);
+      toast({ variant: 'destructive', title: 'خطأ', description: 'فشل إنشاء المجلد.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const handleUploadFile = async (values: z.infer<typeof fileSchema>) => {
     if (!user || !filesCollectionRef) return;
     setIsSubmitting(true);
     
-    const file = values.file[0];
-    
-    // NOTE: This is a placeholder for actual file upload to Firebase Storage.
-    // We are only creating the Firestore document here.
-    const newFile: Omit<FileType, 'id'> = {
-      name: values.name,
-      userId: user.uid,
-      folderId: currentFolderId,
-      storagePath: `users/${user.uid}/files/${file.name}`, // Placeholder path
-      fileType: file.type,
-      createdAt: serverTimestamp(),
-    };
-    
-    await addDocumentNonBlocking(filesCollectionRef, newFile);
-    
-    toast({ title: 'نجاح', description: 'تم رفع معلومات الملف.' });
-    setIsSubmitting(false);
-    setIsFileDialogOpen(false);
-    fileForm.reset();
+    try {
+      const file = values.file[0];
+      
+      // NOTE: This is a placeholder for actual file upload to Firebase Storage.
+      // We are only creating the Firestore document here.
+      const newFile: Omit<FileType, 'id'> = {
+        name: values.name,
+        userId: user.uid,
+        folderId: currentFolderId,
+        storagePath: `users/${user.uid}/files/${file.name}`, // Placeholder path
+        fileType: file.type,
+        createdAt: serverTimestamp(),
+      };
+      
+      await addDoc(filesCollectionRef, newFile);
+      
+      toast({ title: 'نجاح', description: 'تم رفع معلومات الملف.' });
+      fileForm.reset();
+      setIsFileDialogOpen(false);
+    } catch (error) {
+       console.error("Error uploading file info: ", error);
+       toast({ variant: 'destructive', title: 'خطأ', description: 'فشل رفع معلومات الملف.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = (type: 'folder' | 'file', id: string) => {
+  const handleDelete = async (type: 'folder' | 'file', id: string) => {
     if (!user || !firestore) return;
     const ref = doc(firestore, `users/${user.uid}/${type}s`, id);
-    // TODO: Also delete contents of folder or file from storage
-    deleteDocumentNonBlocking(ref);
-    toast({ title: 'تم الحذف', description: `تم حذف الـ ${type === 'folder' ? 'مجلد' : 'ملف'} بنجاح.` });
+    try {
+      // TODO: Also delete contents of folder or file from storage
+      await deleteDoc(ref);
+      toast({ title: 'تم الحذف', description: `تم حذف الـ ${type === 'folder' ? 'مجلد' : 'ملف'} بنجاح.` });
+    } catch (error) {
+       console.error(`Error deleting ${type}: `, error);
+       toast({ variant: 'destructive', title: 'خطأ', description: `فشل حذف الـ ${type === 'folder' ? 'مجلد' : 'ملف'}.`});
+    }
   };
 
   return (
@@ -262,8 +277,7 @@ export default function FilesPage() {
         </div>
       </div>
 
-      {/* TODO: Add Breadcrumbs here */}
-        {currentFolderId && (
+      {currentFolderId && (
             <Button variant="ghost" onClick={() => setCurrentFolderId(null)}>
                 العودة إلى الجذر
             </Button>
@@ -384,5 +398,3 @@ export default function FilesPage() {
     </div>
   );
 }
-
-    
