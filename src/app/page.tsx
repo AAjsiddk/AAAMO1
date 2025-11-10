@@ -1,3 +1,7 @@
+'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -21,6 +25,19 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 const heroImage = PlaceHolderImages.find(img => img.id === 'hero-abstract');
 
 export default function Home() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.replace('/dashboard');
+    }
+  }, [user, isUserLoading, router]);
+
+  if (isUserLoading || user) {
+    return <div className="flex h-screen items-center justify-center">جاري التحميل...</div>;
+  }
+  
   const features = [
     {
       icon: <Sparkles className="h-8 w-8 text-accent" />,

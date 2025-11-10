@@ -1,11 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useAuth, initiateEmailSignIn } from '@/firebase';
+import { useAuth, useUser, initiateEmailSignIn } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -27,8 +27,15 @@ const formSchema = z.object({
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.replace('/dashboard');
+    }
+  }, [user, isUserLoading, router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,14 +49,12 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       if (auth) {
-        // We are not awaiting this to avoid blocking the UI
-        initiateEmailSignIn(auth, values.email, values.password);
+        await initiateEmailSignIn(auth, values.email, values.password);
         toast({
           title: 'جاري تسجيل الدخول...',
           description: 'سيتم توجيهك قريباً.',
         });
-        // The onAuthStateChanged listener in FirebaseProvider will handle the redirect
-        router.push('/');
+        // The onAuthStateChanged listener will handle the redirect via the useEffect
       } else {
         throw new Error('Firebase Auth not available');
       }
@@ -63,6 +68,15 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+  
+  if (isUserLoading || user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p>جاري التحميل...</p>
+      </div>
+    );
+  }
+
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
