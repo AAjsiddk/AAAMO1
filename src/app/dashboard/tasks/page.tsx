@@ -67,6 +67,17 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import type { Task } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const taskSchema = z.object({
   title: z.string().min(1, { message: 'العنوان مطلوب.' }),
@@ -106,7 +117,7 @@ const statusColors: { [key in Task['status']]: string } = {
 };
 
 
-function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: Task; level?: number; onEdit: (task: Task) => void; onDelete: (taskId: string) => void; onAddSubtask: (parentId: string) => void; }) {
+function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: Task & { subtasks?: Task[] }; level?: number; onEdit: (task: Task) => void; onDelete: (taskId: string) => void; onAddSubtask: (parentId: string) => void; }) {
   const [isExpanded, setIsExpanded] = useState(true);
   
   const getSafeDate = (date: any) => {
@@ -120,7 +131,8 @@ function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: T
   const endDate = getSafeDate(task.endDate);
 
   return (
-    <div style={{ marginLeft: level > 0 ? `1rem` : '0' }}>
+    <div style={{ paddingRight: level > 0 ? '1.5rem' : '0' }} className="relative">
+       {level > 0 && <span className="absolute right-[10px] top-0 bottom-0 w-0.5 bg-border -z-10"></span>}
       <Card className="mb-2">
         <CardHeader className="p-4">
           <div className="flex items-center justify-between gap-2">
@@ -140,38 +152,55 @@ function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: T
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(task)}>
                 <Edit className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(task.id)}>
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
+               <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
+                    <AlertDialogDescription>
+                       سيتم حذف هذه المهمة وجميع المهام الفرعية التابعة لها بشكل دائم.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onDelete(task.id)}>متابعة</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
           {task.description && <CardDescription className="pt-2 pl-8">{task.description}</CardDescription>}
         </CardHeader>
-        <CardContent className="p-4 pt-0 pl-8">
-           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-              <div className='flex items-center gap-2'>
-                <span className="font-semibold">الحالة:</span>
-                <Badge variant="outline" className={cn("font-normal", statusColors[task.status])}>
-                   {statusTranslations[task.status]}
-                </Badge>
-              </div>
-              {(startDate || endDate) && (
-                 <div className="flex items-center gap-2">
-                   <CalendarIcon className="h-4 w-4" />
-                   <span>
-                     {startDate ? format(startDate, 'dd/MM/yy') : '...'}
-                   </span>
-                   <span>-</span>
-                   <span>
-                     {endDate ? format(endDate, 'dd/MM/yy') : '...'}
-                   </span>
-                 </div>
-              )}
-            </div>
-        </CardContent>
+        {(task.status || startDate || endDate) &&
+            <CardFooter className="p-4 pt-0 pl-8">
+               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                  <div className='flex items-center gap-2'>
+                    <Badge variant="outline" className={cn("font-normal", statusColors[task.status])}>
+                       {statusTranslations[task.status]}
+                    </Badge>
+                  </div>
+                  {(startDate || endDate) && (
+                     <div className="flex items-center gap-2">
+                       <CalendarIcon className="h-4 w-4" />
+                       <span>
+                         {startDate ? format(startDate, 'dd/MM/yy') : '...'}
+                       </span>
+                       <span>-</span>
+                       <span>
+                         {endDate ? format(endDate, 'dd/MM/yy') : '...'}
+                       </span>
+                     </div>
+                  )}
+                </div>
+            </CardFooter>
+        }
       </Card>
       {isExpanded && task.subtasks && (
-         <div className="pl-4 border-r-2 border-gray-200 dark:border-gray-700">
+         <div className="pr-1">
           {task.subtasks.map(subtask => (
             <TaskItem key={subtask.id} task={subtask} level={level + 1} onEdit={onEdit} onDelete={onDelete} onAddSubtask={onAddSubtask} />
           ))}
@@ -209,20 +238,24 @@ export default function TasksPage() {
 
   const { data: allTasks, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
   
-  const tasks = useMemo(() => {
+  const tasksTree = useMemo(() => {
     if (!allTasks) return [];
     const taskMap = new Map<string, Task & { subtasks: Task[] }>();
-    const rootTasks: Task[] = [];
+    const rootTasks: (Task & { subtasks: Task[] })[] = [];
 
     allTasks.forEach(task => {
         taskMap.set(task.id, { ...task, subtasks: [] });
     });
 
     allTasks.forEach(task => {
-        if (task.parentId && taskMap.has(task.parentId)) {
-            taskMap.get(task.parentId)?.subtasks.push(taskMap.get(task.id)!);
-        } else {
-            rootTasks.push(taskMap.get(task.id)!);
+        const currentTask = taskMap.get(task.id);
+        if (currentTask) {
+            if (task.parentId && taskMap.has(task.parentId)) {
+                const parent = taskMap.get(task.parentId);
+                parent?.subtasks.push(currentTask);
+            } else {
+                rootTasks.push(currentTask);
+            }
         }
     });
 
@@ -266,10 +299,14 @@ export default function TasksPage() {
     setIsSubmitting(true);
     
     try {
-        const taskData: Partial<Task> = {
-            ...values,
+        const taskData: Partial<Omit<Task, 'id'>> = {
             userId: user.uid,
             updatedAt: serverTimestamp(),
+            title: values.title,
+            description: values.description,
+            status: values.status,
+            startDate: values.startDate,
+            endDate: values.endDate,
             parentId: values.parentId,
         };
 
@@ -308,7 +345,7 @@ export default function TasksPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">المهام</h2>
-        <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { if(!open) handleDialogClose()}}>
           <DialogTrigger asChild>
             <Button onClick={() => handleDialogOpen(null)}>
               <PlusCircle className="ml-2 h-4 w-4" />
@@ -429,7 +466,7 @@ export default function TasksPage() {
                 </div>
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button type="button" variant="secondary">إلغاء</Button>
+                    <Button type="button" variant="secondary" onClick={handleDialogClose}>إلغاء</Button>
                   </DialogClose>
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting && (<Loader2 className="ml-2 h-4 w-4 animate-spin" />)}
@@ -448,7 +485,7 @@ export default function TasksPage() {
          </div>
       )}
 
-      {!isLoadingTasks && (!tasks || tasks.length === 0) && (
+      {!isLoadingTasks && (!tasksTree || tasksTree.length === 0) && (
          <Card>
            <CardContent className="flex flex-col items-center justify-center gap-4 p-8 text-center">
               <Inbox className="h-12 w-12 text-muted-foreground" />
@@ -460,9 +497,9 @@ export default function TasksPage() {
          </Card>
       )}
 
-      {!isLoadingTasks && tasks && tasks.length > 0 && (
+      {!isLoadingTasks && tasksTree && tasksTree.length > 0 && (
          <div className="space-y-2">
-          {tasks.map((task) => (
+          {tasksTree.map((task) => (
             <TaskItem key={task.id} task={task} level={0} onEdit={handleDialogOpen} onDelete={handleDeleteTask} onAddSubtask={(parentId) => handleDialogOpen(null, parentId)} />
           ))}
          </div>

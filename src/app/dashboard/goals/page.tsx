@@ -85,14 +85,16 @@ const goalSchema = z.object({
 function GoalCard({ goal, onEdit, onDelete }: { goal: Goal; onEdit: (goal: Goal) => void; onDelete: (goalId: string) => void }) {
     const [isLocked, setIsLocked] = useState(!!goal.passwordHash);
     const [password, setPassword] = useState('');
+    const {toast} = useToast();
     
     const handleUnlock = () => {
         // In a real app, you would verify the password against the hash.
         // This requires a backend function. For this prototype, we'll just check for non-empty.
-        if (password) {
+        if (password === goal.passwordHash) { // Simple check for prototype
             setIsLocked(false);
+            toast({title: "تم الفتح", description: "تم فتح الهدف بنجاح."})
         } else {
-            alert('الرجاء إدخال كلمة المرور.');
+             toast({variant: "destructive", title: "خطأ", description: "كلمة المرور غير صحيحة."})
         }
     }
     
@@ -119,6 +121,7 @@ function GoalCard({ goal, onEdit, onDelete }: { goal: Goal; onEdit: (goal: Goal)
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="text-right"
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleUnlock() }}
                   />
                   <Button onClick={handleUnlock}>فتح</Button>
                 </div>
@@ -131,7 +134,7 @@ function GoalCard({ goal, onEdit, onDelete }: { goal: Goal; onEdit: (goal: Goal)
                 <div className="flex items-center flex-shrink-0">
                     {goal.passwordHash && (
                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setIsLocked(true); setPassword(''); } }>
-                           <Unlock className="h-4 w-4" />
+                           <Lock className="h-4 w-4" />
                          </Button>
                     )}
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(goal)}>
@@ -139,8 +142,8 @@ function GoalCard({ goal, onEdit, onDelete }: { goal: Goal; onEdit: (goal: Goal)
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                         <Button variant="ghost" size="icon" className="h-8 w-8">
-                           <Trash2 className="h-4 w-4 text-destructive" />
+                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                           <Trash2 className="h-4 w-4" />
                          </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -266,26 +269,29 @@ export default function GoalsPage() {
     setIsSubmitting(true);
 
     try {
-        const goalData: Partial<Goal> = {
-            ...values,
+        const goalData: Partial<Omit<Goal, 'id'>> = {
             userId: user.uid,
             updatedAt: serverTimestamp(),
+            name: values.name,
+            description: values.description,
+            motivation: values.motivation,
+            progress: values.progress,
+            startDate: values.startDate,
+            endDate: values.endDate,
         };
 
-        if(editingGoal) {
+        if (editingGoal) {
             const goalDocRef = doc(firestore, `users/${user.uid}/goals`, editingGoal.id);
-            // Don't update password if it's not provided during edit
+            // Only update passwordHash if a new password is provided
             if (values.password) {
-                goalData.passwordHash = "dummy_hash_replace_with_real_one";
+                goalData.passwordHash = values.password; // In a real app, hash this
             }
-            delete goalData.password;
             await updateDoc(goalDocRef, goalData);
             toast({ title: 'نجاح', description: 'تم تحديث الهدف بنجاح.' });
         } else {
              if (values.password) {
-                goalData.passwordHash = "dummy_hash_replace_with_real_one";
+                goalData.passwordHash = values.password; // In a real app, hash this
             }
-            delete goalData.password;
             await addDoc(goalsCollectionRef, goalData);
             toast({ title: 'نجاح', description: 'تمت إضافة الهدف بنجاح.' });
         }
@@ -318,7 +324,7 @@ export default function GoalsPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">الأهداف</h2>
-        <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) handleDialogClose() }}>
           <DialogTrigger asChild>
             <Button onClick={() => handleDialogOpen(null)}>
               <PlusCircle className="ml-2 h-4 w-4" />
@@ -469,7 +475,7 @@ export default function GoalsPage() {
                     <FormItem>
                       <FormLabel>كلمة مرور (اختياري)</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="لقفل الهدف" {...field} />
+                        <Input type="password" placeholder={editingGoal ? "اتركه فارغًا لعدم التغيير" : "لقفل الهدف"} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
