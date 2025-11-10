@@ -70,10 +70,10 @@ export default function Home() {
       <Header />
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-hidden py-20 md:py-32">
+        <section className="relative overflow-hidden bg-background/50 py-20 md:py-32">
           <div
             aria-hidden="true"
-            className="absolute inset-0 grid grid-cols-2 -space-x-52 opacity-40 dark:opacity-20"
+            className="absolute inset-0 grid grid-cols-2 -space-x-52 opacity-20 dark:opacity-20"
           >
             <div className="h-56 bg-gradient-to-br from-primary to-purple-400 blur-[106px] dark:from-blue-700"></div>
             <div className="h-32 bg-gradient-to-r from-cyan-400 to-sky-300 blur-[106px] dark:to-indigo-600"></div>
@@ -107,14 +107,14 @@ export default function Home() {
             </div>
             {heroImage && (
               <div className="mt-16 flow-root sm:mt-24">
-                <div className="-m-2 rounded-xl bg-gray-900/5 p-2 ring-1 ring-inset ring-gray-900/10 lg:-m-4 lg:rounded-2xl lg:p-4">
+                <div className="-m-2 rounded-xl bg-card/50 p-2 ring-1 ring-inset ring-foreground/5 lg:-m-4 lg:rounded-2xl lg:p-4">
                   <Image
                     src={heroImage.imageUrl}
                     alt={heroImage.description}
                     width={1200}
                     height={800}
                     data-ai-hint={heroImage.imageHint}
-                    className="rounded-md shadow-2xl ring-1 ring-gray-900/10"
+                    className="rounded-md shadow-2xl ring-1 ring-foreground/10"
                     priority
                   />
                 </div>
@@ -124,7 +124,7 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="bg-card py-24 sm:py-32">
+        <section id="features" className="bg-background py-24 sm:py-32">
           <div className="container">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -138,7 +138,7 @@ export default function Home() {
               {features.map((feature) => (
                 <Card
                   key={feature.title}
-                  className="transform-gpu transition-all duration-300 hover:-translate-y-2 hover:shadow-xl dark:bg-secondary"
+                  className="transform-gpu bg-card/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl dark:bg-secondary"
                 >
                   <CardHeader className="flex-row items-center gap-4">
                     {feature.icon}
@@ -156,7 +156,7 @@ export default function Home() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-24 sm:py-32">
+        <section className="bg-background/50 py-24 sm:py-32">
           <div className="container text-center">
             <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               هل أنت مستعد لبناء عالمك الذكي؟
