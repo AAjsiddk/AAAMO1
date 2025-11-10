@@ -31,60 +31,65 @@ import {
   Smile,
   BookOpen,
   Clock,
-  Bell,
   Heart,
   ShieldCheck,
-  BrainCircuit,
   Trophy,
-  Palette,
-  Server,
   PlusCircle,
-  HelpCircle,
+  Package,
+  Droplets,
+  TrendingUp,
 } from 'lucide-react'
 
 export function AppSidebar() {
   const pathname = usePathname()
 
   const isActive = (path: string) => {
-    return pathname === path || pathname.startsWith(`${path}/`)
+    return pathname === path || (path !== '/dashboard' && pathname.startsWith(`${path}/`))
   }
 
   const mainSections = [
     { name: 'لوحة التحكم', href: '/dashboard', icon: <LayoutDashboard /> },
-    { name: 'التقويم الذكي', href: '/dashboard/calendar', icon: <Calendar /> },
+    { name: 'التقويم المتكامل', href: '/dashboard/calendar', icon: <Calendar /> },
   ]
-
-  const personalGrowthSections = [
+  
+  const coreSections = [
     { name: 'الأهداف', href: '/dashboard/goals', icon: <Target /> },
     { name: 'المهام', href: '/dashboard/tasks', icon: <ClipboardCheck /> },
     { name: 'العادات', href: '/dashboard/habits', icon: <Repeat /> },
-    { name: 'المشاريع الطويلة', href: '/dashboard/projects', icon: <FolderKanban /> },
-    { name: 'الإنجازات والتحديات', href: '/dashboard/achievements', icon: <Trophy /> },
-  ];
-
-  const organizationSections = [
     { name: 'المجلدات', href: '/dashboard/files', icon: <File /> },
     { name: 'المذكرات', href: '/dashboard/journal', icon: <Book /> },
   ];
-  
+
+  const advancedSections = [
+    { name: 'المشاريع الطويلة', href: '/dashboard/projects', icon: <FolderKanban /> },
+    { name: 'التحليلات العامة', href: '/dashboard/analytics', icon: <BarChart /> },
+    { name: 'الإنجازات والتحديات', href: '/dashboard/achievements', icon: <Trophy /> },
+  ];
+
   const selfReflectionSections = [
       { name: 'مرآة الذات', href: '/dashboard/mood', icon: <Smile /> },
       { name: 'الذكريات', href: '/dashboard/memories', icon: <Camera /> },
       { name: 'رسائل لنفسي', href: '/dashboard/messages', icon: <MessageSquare /> },
       { name: 'صندوق الامتنان', href: '/dashboard/gratitude', icon: <Heart /> },
+      { name: 'يومي الجميل', href: '/dashboard/beautiful-day', icon: <Sparkles /> },
   ];
   
   const toolsSections = [
       { name: 'الذكاء المساعد', href: '/dashboard/ai-assistant', icon: <Sparkles /> },
-      { name: 'التحليلات العامة', href: '/dashboard/analytics', icon: <BarChart /> },
       { name: 'مكتبة التطوير', href: '/dashboard/library', icon: <BookOpen /> },
       { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: <Clock /> },
       { name: 'زاوية الراحة', href: '/dashboard/relax', icon: <Users /> },
+      { name: 'تصدير واستيراد', href: '/dashboard/data-sync', icon: <Package /> },
   ];
 
   const spiritualSection = [
       { name: 'قسم الإيمان', href: '/dashboard/faith', icon: <ShieldCheck /> },
   ]
+  
+  const otherAdvancedSections = [
+    { name: 'الثيمات الديناميكية', href: '/dashboard/dynamic-themes', icon: <Droplets /> },
+    { name: 'الإنجاز التراكمي', href: '/dashboard/cumulative-achievements', icon: <TrendingUp /> },
+  ];
 
 
   return (
@@ -105,7 +110,7 @@ export function AppSidebar() {
             </SidebarMenuItem>
           ))}
           <SidebarSeparator className="my-1" />
-          {personalGrowthSections.map((section) => (
+           {coreSections.map((section) => (
             <SidebarMenuItem key={section.href}>
               <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
                 <Link href={section.href!}>
@@ -116,7 +121,7 @@ export function AppSidebar() {
             </SidebarMenuItem>
           ))}
            <SidebarSeparator className="my-1" />
-           {organizationSections.map((section) => (
+           {advancedSections.map((section) => (
             <SidebarMenuItem key={section.href}>
               <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
                 <Link href={section.href!}>
@@ -139,6 +144,17 @@ export function AppSidebar() {
           ))}
           <SidebarSeparator className="my-1" />
           {toolsSections.map((section) => (
+            <SidebarMenuItem key={section.href}>
+              <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
+                <Link href={section.href!}>
+                  {section.icon}
+                  <span>{section.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+           <SidebarSeparator className="my-1" />
+          {otherAdvancedSections.map((section) => (
             <SidebarMenuItem key={section.href}>
               <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
                 <Link href={section.href!}>
