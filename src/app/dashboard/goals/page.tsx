@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, addDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, addDoc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -55,6 +55,7 @@ import {
   Inbox,
   Lock,
   Unlock,
+  Edit,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Goal } from '@/lib/types';
@@ -72,15 +73,16 @@ import {
 
 const goalSchema = z.object({
   name: z.string().min(1, { message: 'اسم الهدف مطلوب.' }),
-  description: z.string().optional(),
-  motivation: z.string().optional(),
+  description: z.string().optional().default(''),
+  motivation: z.string().optional().default(''),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
-  password: z.string().optional(),
+  password: z.string().optional().default(''),
+  progress: z.number().min(0).max(100).optional().default(0),
 });
 
 
-function GoalCard({ goal, onDelete }: { goal: Goal; onDelete: (goalId: string) => void }) {
+function GoalCard({ goal, onEdit, onDelete }: { goal: Goal; onEdit: (goal: Goal) => void; onDelete: (goalId: string) => void }) {
     const [isLocked, setIsLocked] = useState(!!goal.passwordHash);
     const [password, setPassword] = useState('');
     
@@ -93,6 +95,16 @@ function GoalCard({ goal, onDelete }: { goal: Goal; onDelete: (goalId: string) =
             alert('الرجاء إدخال كلمة المرور.');
         }
     }
+    
+    const getSafeDate = (date: any) => {
+        if (!date) return null;
+        if (date instanceof Date) return date;
+        if (date instanceof Timestamp) return date.toDate();
+        return null;
+    }
+
+    const startDate = getSafeDate(goal.startDate);
+    const endDate = getSafeDate(goal.endDate);
 
     return (
         <Card className="flex flex-col">
@@ -122,6 +134,9 @@ function GoalCard({ goal, onDelete }: { goal: Goal; onDelete: (goalId: string) =
                            <Unlock className="h-4 w-4" />
                          </Button>
                     )}
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(goal)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                          <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -159,22 +174,24 @@ function GoalCard({ goal, onDelete }: { goal: Goal; onDelete: (goalId: string) =
                  <Progress value={goal.progress || 0} />
               </div>
             </CardContent>
-            <CardFooter>
-                 <div className="text-sm text-muted-foreground flex items-center gap-2">
-                   <CalendarIcon className="h-4 w-4" />
-                   <span>
-                     {goal.startDate
-                       ? format(goal.startDate.toDate(), 'dd/MM/yy')
-                       : '...'}
-                   </span>
-                   <span>-</span>
-                   <span>
-                     {goal.endDate
-                       ? format(goal.endDate.toDate(), 'dd/MM/yy')
-                       : '...'}
-                   </span>
-                 </div>
-            </CardFooter>
+            {(startDate || endDate) &&
+                <CardFooter>
+                     <div className="text-sm text-muted-foreground flex items-center gap-2">
+                       <CalendarIcon className="h-4 w-4" />
+                       <span>
+                         {startDate
+                           ? format(startDate, 'dd/MM/yy')
+                           : '...'}
+                       </span>
+                       <span>-</span>
+                       <span>
+                         {endDate
+                           ? format(endDate, 'dd/MM/yy')
+                           : '...'}
+                       </span>
+                     </div>
+                </CardFooter>
+            }
            </>
           )}
         </Card>
@@ -185,6 +202,7 @@ function GoalCard({ goal, onDelete }: { goal: Goal; onDelete: (goalId: string) =
 export default function GoalsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
@@ -196,6 +214,7 @@ export default function GoalsPage() {
       description: '',
       motivation: '',
       password: '',
+      progress: 0,
     },
   });
 
@@ -211,44 +230,70 @@ export default function GoalsPage() {
 
   const { data: goals, isLoading: isLoadingGoals } = useCollection<Goal>(goalsQuery);
 
-  const onSubmit = async (values: z.infer<typeof goalSchema>) => {
-    if (!firestore || !user || !goalsCollectionRef) {
-      toast({
-        variant: 'destructive',
-        title: 'خطأ',
-        description: 'لا يمكن إنشاء الهدف. المستخدم غير مسجل.',
+  const handleDialogOpen = (goal: Goal | null) => {
+    setEditingGoal(goal);
+    if (goal) {
+      form.reset({
+        name: goal.name,
+        description: goal.description || '',
+        motivation: goal.motivation || '',
+        startDate: goal.startDate ? (goal.startDate as Timestamp).toDate() : undefined,
+        endDate: goal.endDate ? (goal.endDate as Timestamp).toDate() : undefined,
+        progress: goal.progress || 0,
+        password: '', // Don't expose password hash
       });
-      return;
+    } else {
+      form.reset({
+        name: '',
+        description: '',
+        motivation: '',
+        password: '',
+        progress: 0,
+        startDate: undefined,
+        endDate: undefined,
+      });
     }
+    setIsDialogOpen(true);
+  };
+  
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setEditingGoal(null);
+  };
+
+  const onSubmit = async (values: z.infer<typeof goalSchema>) => {
+    if (!firestore || !user || !goalsCollectionRef) return;
     setIsSubmitting(true);
 
     try {
-        const passwordHash = values.password ? "dummy_hash_replace_with_real_one" : undefined;
-
-        const newGoalData = {
-          name: values.name,
-          description: values.description || '',
-          motivation: values.motivation || '',
-          startDate: values.startDate || null,
-          endDate: values.endDate || null,
-          passwordHash: passwordHash,
-          userId: user.uid,
-          progress: 0,
-          updatedAt: serverTimestamp(),
+        const goalData: Partial<Goal> = {
+            ...values,
+            userId: user.uid,
+            updatedAt: serverTimestamp(),
         };
 
-        await addDoc(goalsCollectionRef, newGoalData);
+        if(editingGoal) {
+            const goalDocRef = doc(firestore, `users/${user.uid}/goals`, editingGoal.id);
+            // Don't update password if it's not provided during edit
+            if (values.password) {
+                goalData.passwordHash = "dummy_hash_replace_with_real_one";
+            }
+            delete goalData.password;
+            await updateDoc(goalDocRef, goalData);
+            toast({ title: 'نجاح', description: 'تم تحديث الهدف بنجاح.' });
+        } else {
+             if (values.password) {
+                goalData.passwordHash = "dummy_hash_replace_with_real_one";
+            }
+            delete goalData.password;
+            await addDoc(goalsCollectionRef, goalData);
+            toast({ title: 'نجاح', description: 'تمت إضافة الهدف بنجاح.' });
+        }
         
-        toast({
-          title: 'نجاح',
-          description: 'تمت إضافة الهدف بنجاح.',
-        });
-        
-        form.reset();
-        setIsDialogOpen(false);
+        handleDialogClose();
     } catch (error) {
-        console.error("Error creating goal: ", error);
-        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل إنشاء الهدف.' });
+        console.error("Error saving goal: ", error);
+        toast({ variant: 'destructive', title: 'خطأ', description: `فشل ${editingGoal ? 'تحديث' : 'إنشاء'} الهدف.` });
     } finally {
         setIsSubmitting(false);
     }
@@ -273,16 +318,16 @@ export default function GoalsPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">الأهداف</h2>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => handleDialogOpen(null)}>
               <PlusCircle className="ml-2 h-4 w-4" />
               إضافة هدف جديد
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>هدف جديد</DialogTitle>
+              <DialogTitle>{editingGoal ? 'تعديل الهدف' : 'هدف جديد'}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -418,7 +463,7 @@ export default function GoalsPage() {
                 />
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button type="button" variant="secondary">
+                    <Button type="button" variant="secondary" onClick={handleDialogClose}>
                       إلغاء
                     </Button>
                   </DialogClose>
@@ -426,7 +471,7 @@ export default function GoalsPage() {
                     {isSubmitting && (
                       <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                     )}
-                    حفظ الهدف
+                    {editingGoal ? 'حفظ التعديلات' : 'حفظ الهدف'}
                   </Button>
                 </DialogFooter>
               </form>
@@ -449,7 +494,7 @@ export default function GoalsPage() {
               <p className="text-muted-foreground max-w-md">
                 ابدأ بإضافة هدفك الأول لتتبع طموحاتك وتحقيق أحلامك.
               </p>
-               <Button onClick={() => setIsDialogOpen(true)}>
+               <Button onClick={() => handleDialogOpen(null)}>
                   <PlusCircle className="ml-2 h-4 w-4" />
                   إضافة هدف جديد
                </Button>
@@ -460,7 +505,7 @@ export default function GoalsPage() {
       {!isLoadingGoals && goals && goals.length > 0 && (
          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {goals.map((goal) => (
-            <GoalCard key={goal.id} goal={goal} onDelete={handleDeleteGoal} />
+            <GoalCard key={goal.id} goal={goal} onEdit={handleDialogOpen} onDelete={handleDeleteGoal} />
           ))}
          </div>
       )}

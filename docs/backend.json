@@ -212,6 +212,10 @@
           "type": "string",
           "format": "date-time",
           "description": "Timestamp of the last modification."
+        },
+        "parentId": {
+            "type": ["string", "null"],
+            "description": "The ID of the parent task. Null for main tasks."
         }
       },
       "required": [

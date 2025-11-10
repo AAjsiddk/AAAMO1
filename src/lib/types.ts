@@ -7,11 +7,14 @@ export type Task = {
   description?: string;
   status: 'pending' | 'in_progress' | 'completed' | 'deferred' | 'cancelled' | 'waiting_for' | 'archived';
   progress?: number;
-  startDate?: Timestamp;
-  endDate?: Timestamp;
+  startDate?: Timestamp | Date;
+  endDate?: Timestamp | Date;
   relatedGoalId?: string;
   relatedHabitId?: string;
   updatedAt: FieldValue;
+  parentId?: string | null;
+  // Client-side only
+  subtasks?: Task[];
 };
 
 export type Habit = {
@@ -37,8 +40,8 @@ export type Goal = {
     name: string;
     description?: string;
     motivation?: string;
-    startDate?: Timestamp;
-    endDate?: Timestamp;
+    startDate?: Timestamp | Date;
+    endDate?: Timestamp | Date;
     progress?: number;
     passwordHash?: string;
     updatedAt: FieldValue;

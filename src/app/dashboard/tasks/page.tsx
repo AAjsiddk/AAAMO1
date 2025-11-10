@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, addDoc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -31,7 +31,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -60,6 +59,10 @@ import {
   Trash2,
   Loader2,
   Inbox,
+  Edit,
+  Plus,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Task } from '@/lib/types';
@@ -67,7 +70,7 @@ import { Badge } from '@/components/ui/badge';
 
 const taskSchema = z.object({
   title: z.string().min(1, { message: 'العنوان مطلوب.' }),
-  description: z.string().optional(),
+  description: z.string().optional().default(''),
   status: z.enum([
     'pending',
     'in_progress',
@@ -79,6 +82,7 @@ const taskSchema = z.object({
   ]),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
+  parentId: z.string().nullable().optional(),
 });
 
 const statusTranslations: { [key in Task['status']]: string } = {
@@ -101,20 +105,98 @@ const statusColors: { [key in Task['status']]: string } = {
   archived: 'bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20',
 };
 
+
+function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: Task; level?: number; onEdit: (task: Task) => void; onDelete: (taskId: string) => void; onAddSubtask: (parentId: string) => void; }) {
+  const [isExpanded, setIsExpanded] = useState(true);
+  
+  const getSafeDate = (date: any) => {
+    if (!date) return null;
+    if (date instanceof Date) return date;
+    if (date instanceof Timestamp) return date.toDate();
+    return null;
+  }
+
+  const startDate = getSafeDate(task.startDate);
+  const endDate = getSafeDate(task.endDate);
+
+  return (
+    <div style={{ marginLeft: `${level * 2}rem` }}>
+      <Card className="mb-2">
+        <CardHeader className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 flex-grow">
+               {task.subtasks && task.subtasks.length > 0 && (
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsExpanded(!isExpanded)}>
+                  {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </Button>
+              )}
+               {!(task.subtasks && task.subtasks.length > 0) && <div className="w-6 h-6" />}
+              <CardTitle className="text-lg font-semibold">{task.title}</CardTitle>
+            </div>
+            <div className="flex items-center flex-shrink-0">
+               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onAddSubtask(task.id)}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(task)}>
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(task.id)}>
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          </div>
+          {task.description && <CardDescription className="pt-2 pr-8">{task.description}</CardDescription>}
+        </CardHeader>
+        <CardContent className="p-4 pt-0 pr-8">
+           <div className="text-sm text-muted-foreground space-y-2">
+              <div className='flex items-center gap-2'>
+                <span className="font-semibold">الحالة:</span>
+                <Badge variant="outline" className={cn("font-normal", statusColors[task.status])}>
+                   {statusTranslations[task.status]}
+                </Badge>
+              </div>
+            </div>
+        </CardContent>
+         {(startDate || endDate) && (
+            <CardFooter className="p-4 pt-0 pr-8">
+                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                   <CalendarIcon className="h-4 w-4" />
+                   <span>
+                     {startDate ? format(startDate, 'dd/MM/yy') : '...'}
+                   </span>
+                   <span>-</span>
+                   <span>
+                     {endDate ? format(endDate, 'dd/MM/yy') : '...'}
+                   </span>
+                 </div>
+            </CardFooter>
+          )}
+      </Card>
+      {isExpanded && task.subtasks && (
+         <div className="pl-4 border-r-2 border-gray-200 dark:border-gray-700">
+          {task.subtasks.map(subtask => (
+            <TaskItem key={subtask.id} task={subtask} level={level} onEdit={onEdit} onDelete={onDelete} onAddSubtask={onAddSubtask} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 export default function TasksPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [parentTask, setParentTask] = useState<string | null>(null);
+
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
 
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      status: 'pending',
-    },
+    defaultValues: { title: '', description: '', status: 'pending', parentId: null },
   });
 
   const tasksCollectionRef = useMemoFirebase(() => {
@@ -127,38 +209,86 @@ export default function TasksPage() {
     return query(tasksCollectionRef);
   }, [tasksCollectionRef]);
 
-  const { data: tasks, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
+  const { data: allTasks, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
+  
+  const tasks = useMemo(() => {
+    if (!allTasks) return [];
+    const taskMap = new Map<string, Task>();
+    const rootTasks: Task[] = [];
+
+    allTasks.forEach(task => {
+        task.subtasks = [];
+        taskMap.set(task.id, task);
+    });
+
+    allTasks.forEach(task => {
+        if (task.parentId && taskMap.has(task.parentId)) {
+            taskMap.get(task.parentId)?.subtasks?.push(task);
+        } else {
+            rootTasks.push(task);
+        }
+    });
+
+    return rootTasks;
+  }, [allTasks]);
+
+
+  const handleDialogOpen = (task: Task | null, parentId: string | null = null) => {
+    setEditingTask(task);
+    setParentTask(parentId);
+    if (task) {
+      form.reset({
+        title: task.title,
+        description: task.description || '',
+        status: task.status,
+        startDate: task.startDate ? (task.startDate as Timestamp).toDate() : undefined,
+        endDate: task.endDate ? (task.endDate as Timestamp).toDate() : undefined,
+        parentId: task.parentId
+      });
+    } else {
+      form.reset({
+        title: '',
+        description: '',
+        status: 'pending',
+        startDate: undefined,
+        endDate: undefined,
+        parentId: parentId,
+      });
+    }
+    setIsDialogOpen(true);
+  };
+  
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setEditingTask(null);
+    setParentTask(null);
+  }
 
   const onSubmit = async (values: z.infer<typeof taskSchema>) => {
-    if (!firestore || !user || !tasksCollectionRef) {
-      toast({
-        variant: 'destructive',
-        title: 'خطأ',
-        description: 'لا يمكن إنشاء المهمة. المستخدم غير مسجل.',
-      });
-      return;
-    }
+    if (!firestore || !user || !tasksCollectionRef) return;
     setIsSubmitting(true);
     
     try {
-        const newTask: Omit<Task, 'id'> = {
-          ...values,
-          description: values.description || '',
-          userId: user.uid,
-          updatedAt: serverTimestamp(),
+        const taskData: Partial<Task> = {
+            ...values,
+            userId: user.uid,
+            updatedAt: serverTimestamp(),
+            parentId: values.parentId,
         };
 
-        await addDoc(tasksCollectionRef, newTask);
+        if (editingTask) {
+            const taskDocRef = doc(firestore, `users/${user.uid}/tasks`, editingTask.id);
+            await updateDoc(taskDocRef, taskData);
+            toast({ title: 'نجاح', description: 'تم تحديث المهمة بنجاح.' });
+        } else {
+            await addDoc(tasksCollectionRef, taskData);
+            toast({ title: 'نجاح', description: 'تمت إضافة المهمة بنجاح.' });
+        }
         
-        toast({
-          title: 'نجاح',
-          description: 'تمت إضافة المهمة بنجاح.',
-        });
-        form.reset();
-        setIsDialogOpen(false);
+        handleDialogClose();
     } catch(error) {
         console.error("Error creating task: ", error);
-        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل إنشاء المهمة.' });
+        toast({ variant: 'destructive', title: 'خطأ', description: `فشل ${editingTask ? 'تحديث' : 'إنشاء'} المهمة.` });
     } finally {
         setIsSubmitting(false);
     }
@@ -166,13 +296,11 @@ export default function TasksPage() {
   
   const handleDeleteTask = async (taskId: string) => {
     if (!firestore || !user) return;
+    // TODO: Add logic to delete subtasks as well
     const taskDocRef = doc(firestore, `users/${user.uid}/tasks`, taskId);
     try {
         await deleteDoc(taskDocRef);
-        toast({
-          title: 'تم الحذف',
-          description: 'تم حذف المهمة بنجاح.',
-        });
+        toast({ title: 'تم الحذف', description: 'تم حذف المهمة بنجاح.' });
     } catch (error) {
         console.error("Error deleting task: ", error);
         toast({ variant: 'destructive', title: 'خطأ', description: 'فشل حذف المهمة.' });
@@ -183,16 +311,16 @@ export default function TasksPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">المهام</h2>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => handleDialogOpen(null)}>
               <PlusCircle className="ml-2 h-4 w-4" />
-              إضافة مهمة جديدة
+              إضافة مهمة رئيسية
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>مهمة جديدة</DialogTitle>
+              <DialogTitle>{editingTask ? 'تعديل المهمة' : (parentTask ? 'مهمة فرعية جديدة' : 'مهمة جديدة')}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -228,11 +356,7 @@ export default function TasksPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>الحالة</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        dir="rtl"
-                      >
+                      <Select onValueChange={field.onChange} defaultValue={field.value} dir="rtl" >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="اختر الحالة" />
@@ -264,27 +388,15 @@ export default function TasksPage() {
                             <FormControl>
                               <Button
                                 variant={'outline'}
-                                className={cn(
-                                  'w-full pl-3 text-left font-normal',
-                                  !field.value && 'text-muted-foreground'
-                                )}
+                                className={cn('w-full pl-3 text-left font-normal',!field.value && 'text-muted-foreground')}
                               >
-                                {field.value ? (
-                                  format(field.value, 'PPP')
-                                ) : (
-                                  <span>اختر تاريخ</span>
-                                )}
+                                {field.value ? (format(field.value, 'PPP')) : (<span>اختر تاريخ</span>)}
                                 <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              initialFocus
-                            />
+                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
                           </PopoverContent>
                         </Popover>
                         <FormMessage />
@@ -302,27 +414,15 @@ export default function TasksPage() {
                             <FormControl>
                               <Button
                                 variant={'outline'}
-                                className={cn(
-                                  'w-full pl-3 text-left font-normal',
-                                  !field.value && 'text-muted-foreground'
-                                )}
+                                className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
                               >
-                                {field.value ? (
-                                  format(field.value, 'PPP')
-                                ) : (
-                                  <span>اختر تاريخ</span>
-                                )}
+                                {field.value ? (format(field.value, 'PPP')) : (<span>اختر تاريخ</span>)}
                                 <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              initialFocus
-                            />
+                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/>
                           </PopoverContent>
                         </Popover>
                         <FormMessage />
@@ -332,15 +432,11 @@ export default function TasksPage() {
                 </div>
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button type="button" variant="secondary">
-                      إلغاء
-                    </Button>
+                    <Button type="button" variant="secondary">إلغاء</Button>
                   </DialogClose>
                   <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && (
-                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                    )}
-                    حفظ المهمة
+                    {isSubmitting && (<Loader2 className="ml-2 h-4 w-4 animate-spin" />)}
+                    {editingTask ? 'حفظ التعديلات' : 'حفظ المهمة'}
                   </Button>
                 </DialogFooter>
               </form>
@@ -368,47 +464,9 @@ export default function TasksPage() {
       )}
 
       {!isLoadingTasks && tasks && tasks.length > 0 && (
-         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+         <div className="space-y-2">
           {tasks.map((task) => (
-            <Card key={task.id} className="flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex justify-between items-start">
-                   <span className='w-full'>{task.title}</span>
-                   <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => handleDeleteTask(task.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                   </Button>
-                </CardTitle>
-                <CardDescription>{task.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                 <div className="text-sm text-muted-foreground space-y-2">
-                  <div className='flex items-center gap-2'>
-                    <span className="font-semibold">الحالة:</span>
-                    <Badge variant="outline" className={cn("font-normal", statusColors[task.status])}>
-                       {statusTranslations[task.status]}
-                    </Badge>
-                  </div>
-                 </div>
-              </CardContent>
-              {(task.startDate || task.endDate) && (
-                <CardFooter>
-                    <div className="text-sm text-muted-foreground flex items-center gap-2">
-                       <CalendarIcon className="h-4 w-4" />
-                       <span>
-                         {task.startDate
-                           ? format(task.startDate.toDate(), 'dd/MM/yy')
-                           : '...'}
-                       </span>
-                       <span>-</span>
-                       <span>
-                         {task.endDate
-                           ? format(task.endDate.toDate(), 'dd/MM/yy')
-                           : '...'}
-                       </span>
-                     </div>
-                </CardFooter>
-              )}
-            </Card>
+            <TaskItem key={task.id} task={task} onEdit={handleDialogOpen} onDelete={handleDeleteTask} onAddSubtask={(parentId) => handleDialogOpen(null, parentId)} />
           ))}
          </div>
       )}

@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, where, getDocs, writeBatch, addDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, where, getDocs, writeBatch, addDoc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -43,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Trash2, Loader2, Repeat, Inbox } from 'lucide-react';
+import { PlusCircle, Trash2, Loader2, Edit, Inbox } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Habit, HabitMark } from '@/lib/types';
 import CalendarHeatmap from 'react-calendar-heatmap';
@@ -56,7 +56,7 @@ const habitSchema = z.object({
   type: z.enum(['acquire', 'quit']),
 });
 
-function HabitCard({ habit, onDelete }: { habit: Habit, onDelete: (habitId: string) => void }) {
+function HabitCard({ habit, onEdit, onDelete }: { habit: Habit, onEdit: (habit: Habit) => void, onDelete: (habitId: string) => void }) {
   const firestore = useFirestore();
   const { user } = useUser();
   const [heatmapValues, setHeatmapValues] = useState<{ date: string; count: number }[]>([]);
@@ -64,10 +64,10 @@ function HabitCard({ habit, onDelete }: { habit: Habit, onDelete: (habitId: stri
 
   const habitMarksQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return collection(firestore, `users/${user.uid}/habits/${habit.id}/marks`);
+    return query(collection(firestore, `users/${user.uid}/habits/${habit.id}/marks`));
   }, [firestore, user, habit.id]);
 
-  const { data: marks, isLoading: isLoadingMarks } = useCollection<HabitMark>(habitMarksQuery);
+  const { data: marks } = useCollection<HabitMark>(habitMarksQuery);
 
   useEffect(() => {
     if (marks) {
@@ -149,9 +149,14 @@ function HabitCard({ habit, onDelete }: { habit: Habit, onDelete: (habitId: stri
       <CardHeader>
         <CardTitle className="flex justify-between items-start">
           <span className="w-full">{habit.name}</span>
-          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => onDelete(habit.id)}>
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
+          <div className="flex-shrink-0 flex items-center">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(habit)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(habit.id)}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
         </CardTitle>
         <CardDescription>
           النوع: {habit.type === 'acquire' ? 'اكتساب' : 'ترك'} | سلسلة النجاح: {streak} {streak > 2 ? 'أيام' : 'يوم'}
@@ -189,16 +194,14 @@ function HabitCard({ habit, onDelete }: { habit: Habit, onDelete: (habitId: stri
 export default function HabitsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
 
   const form = useForm<z.infer<typeof habitSchema>>({
     resolver: zodResolver(habitSchema),
-    defaultValues: {
-      name: '',
-      type: 'acquire',
-    },
+    defaultValues: { name: '', type: 'acquire' },
   });
 
   const habitsCollectionRef = useMemoFirebase(() => {
@@ -208,35 +211,37 @@ export default function HabitsPage() {
 
   const { data: habits, isLoading: isLoadingHabits } = useCollection<Habit>(habitsCollectionRef);
 
+  const openEditDialog = (habit: Habit) => {
+    setEditingHabit(habit);
+    form.setValue('name', habit.name);
+    form.setValue('type', habit.type);
+    setIsDialogOpen(true);
+  };
+  
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setEditingHabit(null);
+    form.reset({ name: '', type: 'acquire' });
+  };
+
   const onSubmit = async (values: z.infer<typeof habitSchema>) => {
-    if (!firestore || !user || !habitsCollectionRef) {
-      toast({
-        variant: 'destructive',
-        title: 'خطأ',
-        description: 'لا يمكن إنشاء العادة. المستخدم غير مسجل.',
-      });
-      return;
-    }
+    if (!firestore || !user || !habitsCollectionRef) return;
     setIsSubmitting(true);
 
     try {
-      const newHabit: Omit<Habit, 'id'> = {
-        ...values,
-        userId: user.uid,
-        streak: 0,
-      };
-
-      await addDoc(habitsCollectionRef, newHabit);
-      
-      toast({
-        title: 'نجاح',
-        description: 'تمت إضافة العادة بنجاح.',
-      });
-      form.reset();
-      setIsDialogOpen(false);
+      if (editingHabit) {
+        const habitDocRef = doc(firestore, `users/${user.uid}/habits`, editingHabit.id);
+        await updateDoc(habitDocRef, values);
+        toast({ title: 'نجاح', description: 'تم تحديث العادة بنجاح.' });
+      } else {
+        const newHabit: Omit<Habit, 'id'> = { ...values, userId: user.uid, streak: 0 };
+        await addDoc(habitsCollectionRef, newHabit);
+        toast({ title: 'نجاح', description: 'تمت إضافة العادة بنجاح.' });
+      }
+      handleDialogClose();
     } catch(error) {
-       console.error("Error creating habit: ", error);
-       toast({ variant: 'destructive', title: 'خطأ', description: 'فشل إنشاء العادة.' });
+       console.error("Error saving habit: ", error);
+       toast({ variant: 'destructive', title: 'خطأ', description: `فشل ${editingHabit ? 'تحديث' : 'إنشاء'} العادة.` });
     } finally {
       setIsSubmitting(false);
     }
@@ -271,7 +276,7 @@ export default function HabitsPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">العادات</h2>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) handleDialogClose(); else setIsDialogOpen(true); }}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="ml-2 h-4 w-4" />
@@ -280,7 +285,7 @@ export default function HabitsPage() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>عادة جديدة</DialogTitle>
+              <DialogTitle>{editingHabit ? 'تعديل عادة' : 'عادة جديدة'}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -332,7 +337,7 @@ export default function HabitsPage() {
                     {isSubmitting && (
                       <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                     )}
-                    حفظ العادة
+                    {editingHabit ? 'حفظ التعديلات' : 'حفظ العادة'}
                   </Button>
                 </DialogFooter>
               </form>
@@ -362,7 +367,7 @@ export default function HabitsPage() {
       {!isLoadingHabits && habits && habits.length > 0 && (
          <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-2">
           {habits.map((habit) => (
-            <HabitCard key={habit.id} habit={habit} onDelete={handleDeleteHabit} />
+            <HabitCard key={habit.id} habit={habit} onEdit={openEditDialog} onDelete={handleDeleteHabit} />
           ))}
          </div>
       )}
