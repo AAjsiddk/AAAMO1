@@ -263,6 +263,11 @@ export default function FilesPage() {
       </div>
 
       {/* TODO: Add Breadcrumbs here */}
+        {currentFolderId && (
+            <Button variant="ghost" onClick={() => setCurrentFolderId(null)}>
+                العودة إلى الجذر
+            </Button>
+        )}
 
       {isLoading && (
         <div className="flex items-center justify-center py-16">
