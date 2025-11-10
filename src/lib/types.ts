@@ -22,3 +22,11 @@ export type Habit = {
   frequency?: string;
   streak?: number;
 };
+
+export type HabitMark = {
+  id: string;
+  habitId: string;
+  userId: string;
+  date: Date | Timestamp;
+  completed: boolean;
+};

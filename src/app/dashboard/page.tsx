@@ -67,9 +67,11 @@ export default function DashboardPage() {
               <Target className="h-8 w-8 mb-2 text-primary" />
               <span>هدف</span>
             </Button>
-            <Button variant="outline" className="flex flex-col h-24">
-              <Repeat className="h-8 w-8 mb-2 text-primary" />
-              <span>عادة</span>
+             <Button asChild variant="outline" className="flex flex-col h-24">
+              <Link href="/dashboard/habits">
+                <Repeat className="h-8 w-8 mb-2 text-primary" />
+                <span>عادة</span>
+              </Link>
             </Button>
             <Button asChild variant="outline" className="flex flex-col h-24">
               <Link href="/dashboard/tasks">

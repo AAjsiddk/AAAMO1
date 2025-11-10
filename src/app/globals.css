@@ -83,3 +83,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* react-calendar-heatmap styles */
+.react-calendar-heatmap .color-empty {
+  fill: hsl(var(--muted) / 0.5);
+}
+.react-calendar-heatmap .color-scale-1 {
+  fill: hsl(var(--primary));
+}
+.dark .react-calendar-heatmap .color-empty {
+  fill: hsl(var(--muted) / 0.2);
+}
