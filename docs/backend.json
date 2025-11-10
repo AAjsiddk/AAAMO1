@@ -416,6 +416,7 @@
         },
         "mood": {
           "type": "string",
+          "enum": ["happy", "sad", "neutral", "excited", "anxious"],
           "description": "The analyzed mood of the entry (e.g., happy, sad, neutral)."
         },
         "imageUrl": {

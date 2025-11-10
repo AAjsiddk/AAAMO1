@@ -144,7 +144,7 @@ export default function Home() {
               {features.map((feature) => (
                 <Card
                   key={feature.title}
-                  className="transform-gpu bg-card/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl dark:bg-secondary"
+                  className="transform-gpu bg-card/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl dark:bg-card"
                 >
                   <CardHeader className="flex-row items-center gap-4">
                     {feature.icon}

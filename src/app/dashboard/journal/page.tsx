@@ -250,7 +250,7 @@ export default function JournalPage() {
               <CardContent>
                 {entry.imageUrl && (
                     <div className="mb-4 relative aspect-video max-w-lg overflow-hidden rounded-md">
-                        <Image src={entry.imageUrl} alt={entry.title} layout="fill" className="object-cover" />
+                        <Image src={entry.imageUrl} alt={entry.title} fill className="object-cover" />
                     </div>
                 )}
                 <p className="whitespace-pre-wrap">{entry.content}</p>
