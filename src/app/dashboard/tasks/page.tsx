@@ -117,7 +117,7 @@ const statusColors: { [key in Task['status']]: string } = {
 };
 
 
-function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: Task & { subtasks?: Task[] }; level?: number; onEdit: (task: Task) => void; onDelete: (taskId: string) => void; onAddSubtask: (parentId: string) => void; }) {
+function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: Task; level?: number; onEdit: (task: Task) => void; onDelete: (taskId: string) => void; onAddSubtask: (parentId: string) => void; }) {
   const [isExpanded, setIsExpanded] = useState(true);
   
   const getSafeDate = (date: any) => {
@@ -142,7 +142,8 @@ function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: T
                   {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               )}
-               {level > 0 && <div className="w-1" />}
+               {level > 0 && task.subtasks?.length === 0 && <div className="w-6" />}
+               {level > 0 && !task.subtasks && <div className="w-6" />}
               <CardTitle className={cn("text-lg font-semibold truncate", task.status === 'completed' && 'line-through text-muted-foreground')}>
                 {task.title}
               </CardTitle>
@@ -237,8 +238,8 @@ export default function TasksPage() {
   
   const tasksTree = useMemo(() => {
     if (!allTasks) return [];
-    const taskMap = new Map<string, Task & { subtasks: Task[] }>();
-    const rootTasks: (Task & { subtasks: Task[] })[] = [];
+    const taskMap = new Map<string, Task>();
+    const rootTasks: Task[] = [];
 
     allTasks.forEach(task => {
         taskMap.set(task.id, { ...task, subtasks: [] });
@@ -249,7 +250,7 @@ export default function TasksPage() {
         if (currentTask) {
             if (task.parentId && taskMap.has(task.parentId)) {
                 const parent = taskMap.get(task.parentId);
-                parent?.subtasks.push(currentTask);
+                parent?.subtasks?.push(currentTask);
             } else {
                 rootTasks.push(currentTask);
             }
@@ -296,7 +297,7 @@ export default function TasksPage() {
     setIsSubmitting(true);
     
     try {
-        const taskData: Partial<Omit<Task, 'id'>> = {
+        const taskData: Partial<Omit<Task, 'id' | 'subtasks'>> = {
             userId: user.uid,
             updatedAt: serverTimestamp(),
             title: values.title,
@@ -326,16 +327,16 @@ export default function TasksPage() {
   };
   
   const handleDeleteTask = async (taskId: string) => {
-    if (!firestore || !user) return;
+    if (!firestore || !user || !allTasks) return;
     
     const tasksToDelete = new Set<string>([taskId]);
     const tasksToCheck = [taskId];
     
     // Find all subtasks recursively
     while (tasksToCheck.length > 0) {
-      const currentTaskId = tasksToCheck.pop();
-      const subtasks = allTasks?.filter(t => t.parentId === currentTaskId);
-      subtasks?.forEach(sub => {
+      const currentTaskId = tasksToCheck.pop()!;
+      const subtasks = allTasks.filter(t => t.parentId === currentTaskId);
+      subtasks.forEach(sub => {
         tasksToDelete.add(sub.id);
         tasksToCheck.push(sub.id);
       });

@@ -88,6 +88,13 @@ const SidebarProvider = React.forwardRef<
       },
       [setOpenProp, open]
     )
+    
+     const closeMobileSidebar = () => {
+        if (isMobile) {
+            setOpenMobile(false);
+        }
+    }
+
 
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
@@ -146,6 +153,11 @@ const SidebarProvider = React.forwardRef<
             )}
             ref={ref}
             {...props}
+            onClick={(e) => {
+                if(e.target instanceof HTMLAnchorElement) {
+                    closeMobileSidebar();
+                }
+            }}
           >
             {children}
           </div>
