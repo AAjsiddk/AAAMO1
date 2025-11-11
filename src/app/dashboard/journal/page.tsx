@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, orderBy, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, orderBy, addDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -131,7 +131,7 @@ export default function JournalPage() {
     try {
         const mood = analyzeMood(values.content);
 
-        const newEntry: Omit<JournalEntry, 'id' | 'createdAt'> = {
+        const newEntry: Omit<JournalEntry, 'id'> = {
           title: values.title,
           content: values.content,
           userId: user.uid,
@@ -240,8 +240,8 @@ export default function JournalPage() {
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </CardTitle>
-                <CardDescription className="flex items-center gap-4 text-xs">
-                    <span className="flex items-center gap-1"><Calendar className="h-4 w-4" /> {format(entry.createdAt.toDate(), 'PPP p')}</span>
+                <CardDescription className="flex items-center gap-4 text-xs pt-1">
+                    <span className="flex items-center gap-1"><Calendar className="h-4 w-4" /> {format((entry.createdAt as Timestamp).toDate(), 'PPP p')}</span>
                     {entry.mood && moodIcons[entry.mood] && (
                         <span className="flex items-center gap-1">
                             {moodIcons[entry.mood]}
@@ -253,7 +253,7 @@ export default function JournalPage() {
               <CardContent>
                 {entry.imageUrl && (
                     <div className="mb-4 relative aspect-video max-w-lg overflow-hidden rounded-md">
-                        <Image src={entry.imageUrl} alt={entry.title} layout="fill" className="object-cover" />
+                        <Image src={entry.imageUrl} alt={entry.title} fill={true} className="object-cover" />
                     </div>
                 )}
                 <p className="whitespace-pre-wrap">{entry.content}</p>

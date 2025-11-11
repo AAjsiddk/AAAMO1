@@ -23,14 +23,14 @@ export type Habit = {
   name: string;
   type: 'acquire' | 'quit';
   frequency?: string;
-  streak?: number;
+  streak: number;
 };
 
 export type HabitMark = {
   id: string;
   habitId: string;
   userId: string;
-  date: Date | Timestamp;
+  date: Timestamp;
   completed: boolean;
 };
 

@@ -20,7 +20,7 @@ import { TimeWidget } from '@/components/dashboard/time-widget';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import Link from 'next/link';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import type { JournalEntry, Task } from '@/lib/types';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -73,8 +73,8 @@ function LatestJournalEntries() {
       {entries.map((entry) => (
         <div key={entry.id} className="flex items-center">
           <div className="flex flex-col items-center justify-center bg-muted text-muted-foreground rounded-lg p-2 h-16 w-16 mr-4">
-            <span className="text-sm font-bold">{format(entry.createdAt.toDate(), 'MMM')}</span>
-            <span className="text-2xl font-bold">{format(entry.createdAt.toDate(), 'dd')}</span>
+            <span className="text-sm font-bold">{format((entry.createdAt as Timestamp).toDate(), 'MMM')}</span>
+            <span className="text-2xl font-bold">{format((entry.createdAt as Timestamp).toDate(), 'dd')}</span>
           </div>
           <div className="space-y-1">
             <Link href="/dashboard/journal" className="font-medium hover:underline">{entry.title}</Link>
@@ -198,7 +198,7 @@ export default function DashboardPage() {
              <CardDescription>
               رسالتك اليومية للتحفيز والإلهام.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
              <p className="text-center text-muted-foreground py-8">"لا تؤجل عمل اليوم إلى الغد."</p>
           </CardContent>

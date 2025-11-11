@@ -49,7 +49,8 @@ import type { Habit, HabitMark } from '@/lib/types';
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
-import { subYears, format } from 'date-fns';
+import { subYears, format, isSameDay, isYesterday, startOfDay } from 'date-fns';
+
 
 const habitSchema = z.object({
   name: z.string().min(1, { message: 'اسم العادة مطلوب.' }),
@@ -71,10 +72,12 @@ function HabitCard({ habit, onEdit, onDelete }: { habit: Habit, onEdit: (habit: 
 
   useEffect(() => {
     if (marks) {
-      const values = marks.map(mark => ({
-        date: format(mark.date.toDate(), 'yyyy-MM-dd'),
-        count: mark.completed ? 1 : 0,
-      }));
+      const values = marks
+        .filter(mark => mark.date) // Ensure date exists
+        .map(mark => ({
+            date: format(mark.date.toDate(), 'yyyy-MM-dd'),
+            count: mark.completed ? 1 : 0,
+        }));
       setHeatmapValues(values);
       calculateStreak(values);
     }
@@ -83,7 +86,7 @@ function HabitCard({ habit, onEdit, onDelete }: { habit: Habit, onEdit: (habit: 
   const calculateStreak = (values: { date: string; count: number }[]) => {
       const sortedDates = values
         .filter(v => v.count > 0)
-        .map(v => new Date(v.date))
+        .map(v => startOfDay(new Date(v.date)))
         .sort((a, b) => b.getTime() - a.getTime());
 
       if (sortedDates.length === 0) {
@@ -91,56 +94,58 @@ function HabitCard({ habit, onEdit, onDelete }: { habit: Habit, onEdit: (habit: 
         return;
       }
       
-      let currentStreak = 0;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
+      const today = startOfDay(new Date());
+      const yesterday = startOfDay(new Date(today.getTime() - 86400000));
+      const latestDate = sortedDates[0];
+
+      if (!isSameDay(latestDate, today) && !isSameDay(latestDate, yesterday)) {
+          setStreak(0);
+          return;
+      }
       
-      const latestDate = new Date(sortedDates[0]);
-      latestDate.setHours(0,0,0,0);
-
-      if (latestDate.getTime() === today.getTime() || latestDate.getTime() === yesterday.getTime()) {
-        currentStreak = 1;
-        for (let i = 0; i < sortedDates.length - 1; i++) {
-          const currentDate = new Date(sortedDates[i]);
-          const previousDate = new Date(sortedDates[i+1]);
-          const diffTime = currentDate.getTime() - previousDate.getTime();
-          const diffDays = diffTime / (1000 * 3600 * 24);
-
-          if (diffDays === 1) {
-            currentStreak++;
-          } else {
-            break;
-          }
+      let currentStreak = 1;
+      for (let i = 0; i < sortedDates.length - 1; i++) {
+        const currentDate = sortedDates[i];
+        const previousDate = sortedDates[i+1];
+        const diffTime = currentDate.getTime() - previousDate.getTime();
+        
+        if (diffTime === 86400000) { // Exactly one day difference
+          currentStreak++;
+        } else if (diffTime > 86400000) {
+          break; // Gap in the streak
         }
       }
       setStreak(currentStreak);
   }
 
   const handleDayClick = async (value: { date: string; count: number } | null) => {
-    if (!value || !firestore || !user) return;
+    if (!value || !value.date || !firestore || !user) return;
     
     const { date } = value;
     const markDate = new Date(date);
     
     const existingMark = marks?.find(m => format(m.date.toDate(), 'yyyy-MM-dd') === date);
     
-    if (existingMark) {
-      const markDocRef = doc(firestore, `users/${user.uid}/habits/${habit.id}/marks`, existingMark.id);
-      await deleteDoc(markDocRef);
-    } else {
-      const markId = `${habit.id}_${date}`;
-      const newMark: Omit<HabitMark, 'id'> = {
-          habitId: habit.id,
-          userId: user.uid,
-          date: markDate,
-          completed: true,
-      };
-      const markDocRef = doc(firestore, `users/${user.uid}/habits/${habit.id}/marks`, markId);
-      await setDoc(markDocRef, newMark);
+    try {
+      if (existingMark) {
+        const markDocRef = doc(firestore, `users/${user.uid}/habits/${habit.id}/marks`, existingMark.id);
+        await deleteDoc(markDocRef);
+      } else {
+        const markId = `${habit.id}_${date}`;
+        const newMark: Omit<HabitMark, 'id'> = {
+            habitId: habit.id,
+            userId: user.uid,
+            date: markDate,
+            completed: true,
+        };
+        const markDocRef = doc(firestore, `users/${user.uid}/habits/${habit.id}/marks`, markId);
+        await setDoc(markDocRef, newMark);
+      }
+    } catch (e) {
+      console.error("Error handling day click:", e);
     }
   };
+
 
   const today = new Date();
 
@@ -234,7 +239,7 @@ export default function HabitsPage() {
         await updateDoc(habitDocRef, values);
         toast({ title: 'نجاح', description: 'تم تحديث العادة بنجاح.' });
       } else {
-        const newHabit: Omit<Habit, 'id'> = { ...values, userId: user.uid, streak: 0 };
+        const newHabit: Omit<Habit, 'id' | 'streak'> = { ...values, userId: user.uid };
         await addDoc(habitsCollectionRef, newHabit);
         toast({ title: 'نجاح', description: 'تمت إضافة العادة بنجاح.' });
       }
