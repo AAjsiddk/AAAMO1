@@ -297,15 +297,15 @@ export default function TasksPage() {
     setIsSubmitting(true);
     
     try {
-        const taskData: Partial<Omit<Task, 'id' | 'subtasks'>> = {
+        const taskData: Omit<Task, 'id' | 'subtasks' | 'updatedAt'> & { updatedAt: FieldValue } = {
             userId: user.uid,
             updatedAt: serverTimestamp(),
             title: values.title,
             description: values.description,
             status: values.status,
-            startDate: values.startDate,
-            endDate: values.endDate,
-            parentId: values.parentId,
+            startDate: values.startDate || null,
+            endDate: values.endDate || null,
+            parentId: values.parentId || null,
         };
 
         if (editingTask) {

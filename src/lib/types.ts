@@ -7,8 +7,8 @@ export type Task = {
   description?: string;
   status: 'pending' | 'in_progress' | 'completed' | 'deferred' | 'cancelled' | 'waiting_for' | 'archived';
   progress?: number;
-  startDate?: Timestamp | Date;
-  endDate?: Timestamp | Date;
+  startDate?: Timestamp | Date | null;
+  endDate?: Timestamp | Date | null;
   relatedGoalId?: string;
   relatedHabitId?: string;
   updatedAt: FieldValue;
@@ -40,10 +40,10 @@ export type Goal = {
     name: string;
     description?: string;
     motivation?: string;
-    startDate?: Timestamp | Date;
-    endDate?: Timestamp | Date;
+    startDate?: Timestamp | Date | null;
+    endDate?: Timestamp | Date | null;
     progress?: number;
-    passwordHash?: string;
+    passwordHash?: string | null;
     updatedAt: FieldValue;
 };
 

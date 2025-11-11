@@ -269,15 +269,16 @@ export default function GoalsPage() {
     setIsSubmitting(true);
 
     try {
-        const goalData: Partial<Omit<Goal, 'id'>> = {
+        const goalData: Omit<Goal, 'id' | 'updatedAt'> & { updatedAt: FieldValue } = {
             userId: user.uid,
             updatedAt: serverTimestamp(),
             name: values.name,
-            description: values.description,
-            motivation: values.motivation,
-            progress: values.progress,
-            startDate: values.startDate,
-            endDate: values.endDate,
+            description: values.description || '',
+            motivation: values.motivation || '',
+            progress: values.progress || 0,
+            startDate: values.startDate || null,
+            endDate: values.endDate || null,
+            passwordHash: values.password ? values.password : (editingGoal?.passwordHash || null), // In real app, hash this
         };
 
         if (editingGoal) {
@@ -285,6 +286,8 @@ export default function GoalsPage() {
             // Only update passwordHash if a new password is provided
             if (values.password) {
                 goalData.passwordHash = values.password; // In a real app, hash this
+            } else {
+                goalData.passwordHash = editingGoal.passwordHash || null;
             }
             await updateDoc(goalDocRef, goalData);
             toast({ title: 'نجاح', description: 'تم تحديث الهدف بنجاح.' });
