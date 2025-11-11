@@ -62,11 +62,26 @@
           "type": "string",
           "description": "Reference to User. (Relationship: User 1:N File).  Encrypted user ID for data isolation."
         },
-        "storageLocation": {
+        "folderId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The ID of the parent folder. Null for root files."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the file."
+        },
+        "storagePath": {
           "type": "string",
           "description": "The location of the file in the storage system."
         },
-        "uploadTimestamp": {
+        "fileType": {
+          "type": "string",
+          "description": "The MIME type of the file."
+        },
+        "createdAt": {
           "type": "string",
           "description": "Timestamp of when the file was uploaded.",
           "format": "date-time"
@@ -75,8 +90,10 @@
       "required": [
         "id",
         "userId",
-        "storageLocation",
-        "uploadTimestamp"
+        "name",
+        "storagePath",
+        "fileType",
+        "createdAt"
       ]
     },
     "Folder": {

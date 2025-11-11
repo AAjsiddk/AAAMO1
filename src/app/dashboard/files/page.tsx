@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, query, where, serverTimestamp, doc, addDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, serverTimestamp, doc, addDoc, deleteDoc, updateDoc, writeBatch, getDocs } from 'firebase/firestore';
 import type { Folder, File as FileType } from '@/lib/types';
 import {
   PlusCircle,
@@ -20,6 +20,7 @@ import {
   Trash2,
   Edit,
   UploadCloud,
+  ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -75,12 +76,16 @@ export default function FilesPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [path, setPath] = useState<{ id: string | null; name: string }[]>([{ id: null, name: 'الجذر' }]);
+  const currentFolderId = path[path.length - 1]?.id || null;
+
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
   const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
+  
+  const [itemToDelete, setItemToDelete] = useState<{ type: 'folder' | 'file'; id: string } | null>(null);
 
   const folderForm = useForm<z.infer<typeof folderSchema>>({
     resolver: zodResolver(folderSchema),
@@ -187,22 +192,92 @@ export default function FilesPage() {
       setIsSubmitting(false);
     }
   };
+  
+  const handleDeleteItem = async () => {
+    if (!user || !firestore || !itemToDelete) return;
 
-  const handleDelete = async (type: 'folder' | 'file', id: string) => {
-    if (!user || !firestore) return;
-    const ref = doc(firestore, `users/${user.uid}/${type}s`, id);
     try {
-      // TODO: Also delete contents of folder or file from storage
-      await deleteDoc(ref);
-      toast({ title: 'تم الحذف', description: `تم حذف الـ ${type === 'folder' ? 'مجلد' : 'ملف'} بنجاح.` });
+        if (itemToDelete.type === 'folder') {
+            const foldersToDelete = new Set<string>([itemToDelete.id]);
+            const foldersToCheck = [itemToDelete.id];
+
+            // Recursively find all sub-folders to delete
+            while (foldersToCheck.length > 0) {
+                const currentId = foldersToCheck.pop()!;
+                const subFoldersQuery = query(collection(firestore, `users/${user.uid}/folders`), where('parentId', '==', currentId));
+                const subFoldersSnapshot = await getDocs(subFoldersQuery);
+                subFoldersSnapshot.forEach(doc => {
+                    foldersToDelete.add(doc.id);
+                    foldersToCheck.push(doc.id);
+                });
+            }
+
+            const batch = writeBatch(firestore);
+
+            // Delete all files within these folders
+            for (const folderId of foldersToDelete) {
+                const filesInFolderQuery = query(collection(firestore, `users/${user.uid}/files`), where('folderId', '==', folderId));
+                const filesSnapshot = await getDocs(filesInFolderQuery);
+                filesSnapshot.forEach(doc => batch.delete(doc.ref));
+            }
+            
+            // Delete all the folders
+            foldersToDelete.forEach(id => {
+                const folderRef = doc(firestore, `users/${user.uid}/folders`, id);
+                batch.delete(folderRef);
+            });
+
+            await batch.commit();
+            toast({ title: 'تم الحذف', description: 'تم حذف المجلد وكل محتوياته بنجاح.' });
+
+        } else { // Deleting a file
+            const fileRef = doc(firestore, `users/${user.uid}/files`, itemToDelete.id);
+            // TODO: Also delete file from Firebase Storage
+            await deleteDoc(fileRef);
+            toast({ title: 'تم الحذف', description: 'تم حذف الملف بنجاح.' });
+        }
     } catch (error) {
-       console.error(`Error deleting ${type}: `, error);
-       toast({ variant: 'destructive', title: 'خطأ', description: `فشل حذف الـ ${type === 'folder' ? 'مجلد' : 'ملف'}.`});
+        console.error(`Error deleting ${itemToDelete.type}: `, error);
+        toast({ variant: 'destructive', title: 'خطأ', description: `فشل حذف الـ ${itemToDelete.type === 'folder' ? 'مجلد' : 'ملف'}.` });
+    } finally {
+        setItemToDelete(null);
     }
+  };
+
+
+  const navigateToFolder = (folderId: string | null, folderName: string) => {
+     if (folderId === null) {
+        setPath([{ id: null, name: 'الجذر' }]);
+        return;
+      }
+      const index = path.findIndex(p => p.id === folderId);
+      if (index !== -1) {
+        setPath(path.slice(0, index + 1));
+      } else {
+        setPath([...path, { id: folderId, name: folderName }]);
+      }
   };
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+       <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              {itemToDelete?.type === 'folder' 
+                ? 'هذا الإجراء سيحذف المجلد وكل محتوياته من مجلدات فرعية وملفات. لا يمكن التراجع عن هذا الإجراء.'
+                : 'هذا الإجراء سيحذف الملف بشكل دائم ولا يمكن التراجع عنه.'
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setItemToDelete(null)}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteItem}>متابعة</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">الملفات والمجلدات</h2>
         <div className="flex items-center space-x-2">
@@ -293,12 +368,18 @@ export default function FilesPage() {
 
         </div>
       </div>
-
-      {currentFolderId && (
-            <Button variant="ghost" onClick={() => setCurrentFolderId(null)}>
-                العودة إلى الجذر
+      
+       <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        {path.map((p, i) => (
+            <React.Fragment key={p.id || 'root'}>
+            <Button variant="link" className="p-0 h-auto" onClick={() => navigateToFolder(p.id, p.name)}>
+                {p.name}
             </Button>
-        )}
+            {i < path.length - 1 && <ArrowRight className="h-4 w-4 transform scale-x-[-1]" />}
+            </React.Fragment>
+        ))}
+      </div>
+
 
       {isLoading && (
         <div className="flex items-center justify-center py-16">
@@ -324,7 +405,7 @@ export default function FilesPage() {
             <Card
               key={folder.id}
               className="group relative cursor-pointer hover:shadow-lg transition-shadow"
-              onDoubleClick={() => setCurrentFolderId(folder.id)}
+              onDoubleClick={() => navigateToFolder(folder.id, folder.name)}
             >
               <CardContent className="flex flex-col items-center justify-center p-6">
                 <FolderIcon className="h-16 w-16 text-primary" />
@@ -342,26 +423,10 @@ export default function FilesPage() {
                       <Edit className="ml-2 h-4 w-4" />
                       <span>إعادة تسمية</span>
                     </DropdownMenuItem>
-                     <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
-                             <Trash2 className="ml-2 h-4 w-4" />
-                             <span>حذف</span>
-                           </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>هل أنت متأكد من حذف المجلد؟</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              هذا الإجراء سيحذف المجلد وكل محتوياته ولا يمكن التراجع عنه.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete('folder', folder.id)}>متابعة</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                    <DropdownMenuItem onSelect={() => setItemToDelete({ type: 'folder', id: folder.id })} className="text-destructive">
+                        <Trash2 className="ml-2 h-4 w-4" />
+                        <span>حذف</span>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -385,26 +450,10 @@ export default function FilesPage() {
                       <Edit className="ml-2 h-4 w-4" />
                       <span>إعادة تسمية</span>
                     </DropdownMenuItem>
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
-                             <Trash2 className="ml-2 h-4 w-4" />
-                             <span>حذف</span>
-                           </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>هل أنت متأكد من حذف الملف؟</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              هذا الإجراء لا يمكن التراجع عنه.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete('file', file.id)}>متابعة</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                     <DropdownMenuItem onSelect={() => setItemToDelete({ type: 'file', id: file.id })} className="text-destructive">
+                        <Trash2 className="ml-2 h-4 w-4" />
+                        <span>حذف</span>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
