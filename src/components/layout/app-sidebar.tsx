@@ -56,7 +56,7 @@ export function AppSidebar() {
     { name: 'الأهداف', href: '/dashboard/goals', icon: <Target /> },
     { name: 'المهام', href: '/dashboard/tasks', icon: <ClipboardCheck /> },
     { name: 'العادات', href: '/dashboard/habits', icon: <Repeat /> },
-    { name: 'المجلدات', href: '/dashboard/files', icon: <File /> },
+    { name: 'الملفات', href: '/dashboard/files', icon: <File /> },
     { name: 'المذكرات', href: '/dashboard/journal', icon: <Book /> },
   ];
 
