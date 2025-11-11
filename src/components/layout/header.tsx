@@ -14,7 +14,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, LayoutDashboard } from 'lucide-react';
+import {
+  LogOut,
+  LayoutDashboard,
+  Smile,
+  Frown,
+  Meh,
+  Sparkles as ExcitedIcon,
+  Annoyed,
+} from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
@@ -45,7 +53,7 @@ export function Header() {
       <div className="container flex h-16 max-w-screen-2xl items-center">
         <div className="flex items-center gap-2">
            {user && <SidebarTrigger />}
-          <div className="hidden md:flex">
+          <div className="md:flex">
              <Link href={user ? "/dashboard" : "/"} aria-label="Home">
                 <Logo />
              </Link>
@@ -72,36 +80,74 @@ export function Header() {
           </nav>
           <div className="flex items-center gap-2">
             {isUserLoading ? (
-              <Skeleton className="h-8 w-8 rounded-full" />
+               <>
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+               </>
             ) : user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
-                      <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-                  <DropdownMenuLabel className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push('/dashboard')}>
-                    <LayoutDashboard className="ml-2 h-4 w-4" />
-                    <span>لوحة التحكم</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="ml-2 h-4 w-4" />
-                    <span>تسجيل الخروج</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <>
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Smile className="h-5 w-5" />
+                        <span className="sr-only">تغيير الحالة المزاجية</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>ما هي حالتك المزاجية اليوم؟</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        <Smile className="ml-2 h-4 w-4 text-green-500" />
+                        <span>سعيد</span>
+                      </DropdownMenuItem>
+                       <DropdownMenuItem>
+                        <ExcitedIcon className="ml-2 h-4 w-4 text-yellow-500" />
+                        <span>متحمس</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Meh className="ml-2 h-4 w-4 text-gray-500" />
+                        <span>محايد</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Frown className="ml-2 h-4 w-4 text-blue-500" />
+                        <span>حزين</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Annoyed className="ml-2 h-4 w-4 text-purple-500" />
+                        <span>قلق</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
+                        <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end">
+                    <DropdownMenuLabel className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                      <LayoutDashboard className="ml-2 h-4 w-4" />
+                      <span>لوحة التحكم</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="ml-2 h-4 w-4" />
+                      <span>تسجيل الخروج</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             ) : (
               <>
                 <Button asChild variant="ghost">

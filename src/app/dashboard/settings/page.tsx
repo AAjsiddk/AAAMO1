@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { useState, useEffect } from 'react';
+import { useUser, useFirestore } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import {
   Card,
@@ -15,28 +15,30 @@ import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function SettingsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  // Initialize with fallback values if CSS variables are not immediately available
-  const [primaryColor, setPrimaryColor] = useState('231 48% 54%');
-  const [backgroundColor, setBackgroundColor] = useState('234 43% 94%');
-  const [accentColor, setAccentColor] = useState('261 35% 58%');
+  const [primaryColor, setPrimaryColor] = useState('');
+  const [backgroundColor, setBackgroundColor] = useState('');
+  const [accentColor, setAccentColor] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-        setPrimaryColor(getComputedStyle(document.documentElement).getPropertyValue('--primary').trim());
-        setBackgroundColor(getComputedStyle(document.documentElement).getPropertyValue('--background').trim());
-        setAccentColor(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
+        const computedStyle = getComputedStyle(document.documentElement);
+        setPrimaryColor(computedStyle.getPropertyValue('--primary').trim());
+        setBackgroundColor(computedStyle.getPropertyValue('--background').trim());
+        setAccentColor(computedStyle.getPropertyValue('--accent').trim());
     }
-  });
+  }, []);
 
 
-  const handleColorChange = (colorSetter: Function, cssVar: string, value: string) => {
+  const handleColorChange = (colorSetter: React.Dispatch<React.SetStateAction<string>>, cssVar: string, value: string) => {
     colorSetter(value);
     document.documentElement.style.setProperty(cssVar, value);
   };
@@ -50,20 +52,27 @@ export default function SettingsPage() {
     
     const userDocRef = doc(firestore, 'users', user.uid);
     const themeData = {
-        primaryColor: primaryColor,
-        backgroundColor: backgroundColor,
-        accentColor: accentColor
+        primaryColor,
+        backgroundColor,
+        accentColor
     };
 
-    try {
-        await setDoc(userDocRef, themeData, { merge: true });
-        toast({ title: "تم الحفظ", description: "تم حفظ إعدادات المظهر بنجاح." });
-    } catch(e) {
-        console.error(e);
-        toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ المظهر." });
-    } finally {
+    setDoc(userDocRef, themeData, { merge: true }).catch((error) => {
+        console.error("Error saving theme:", error);
+        const permissionError = new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'update',
+            requestResourceData: themeData
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ المظهر. قد تكون هناك مشكلة في الأذونات." });
+    }).then(() => {
+        if(!errorEmitter) {
+           toast({ title: "تم الحفظ", description: "تم حفظ إعدادات المظهر بنجاح." });
+        }
+    }).finally(() => {
         setIsSaving(false);
-    }
+    });
   }
 
   return (
