@@ -7,7 +7,7 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { useCollection, useUser, useMemoFirebase } from '@/firebase'
-import type { Task, Habit, HabitMark } from '@/lib/types'
+import type { Task } from '@/lib/types'
 import { collection, query, where, Timestamp } from 'firebase/firestore'
 import { useFirestore } from '@/firebase'
 import {
@@ -26,7 +26,18 @@ import {
 import { Loader2 } from 'lucide-react'
 import { useMemo } from 'react'
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE', '#00C49F'];
+const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE', '#00C49F', '#FFBB28'];
+
+const statusTranslations: { [key in Task['status']]: string } = {
+  pending: 'قيد الانتظار',
+  in_progress: 'قيد التنفيذ',
+  completed: 'مكتملة',
+  deferred: 'مؤجلة',
+  cancelled: 'ملغاة',
+  waiting_for: 'في انتظار طرف آخر',
+  archived: 'مؤرشفة',
+};
+
 
 export default function AnalyticsPage() {
   const { user } = useUser()
@@ -36,14 +47,8 @@ export default function AnalyticsPage() {
     () => (user ? collection(firestore, `users/${user.uid}/tasks`) : null),
     [user, firestore]
   )
-  const habitsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
-    [user, firestore]
-  )
-
+ 
   const { data: tasks, isLoading: loadingTasks } = useCollection<Task>(tasksQuery)
-  const { data: habits, isLoading: loadingHabits } =
-    useCollection<Habit>(habitsQuery)
 
   const taskStatusData = useMemo(() => {
     if (!tasks) return []
@@ -52,8 +57,8 @@ export default function AnalyticsPage() {
       return acc
     }, {} as { [key: string]: number })
 
-    return Object.entries(statusCounts).map(([name, value]) => ({
-      name,
+    return Object.entries(statusCounts).map(([status, value]) => ({
+      name: statusTranslations[status as Task['status']] || status,
       value,
     }))
   }, [tasks])
@@ -61,13 +66,13 @@ export default function AnalyticsPage() {
   const tasksCompletedWeeklyData = useMemo(() => {
      if (!tasks) return [];
       const weekCounts = Array(7).fill(0).map((_, i) => ({
-          name: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i],
+          name: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'][i],
           completed: 0,
       }));
 
       tasks.forEach(task => {
-          if (task.status === 'completed' && task.updatedAt instanceof Timestamp) {
-              const completedDate = task.updatedAt.toDate();
+          if (task.status === 'completed' && task.updatedAt && 'toDate' in task.updatedAt) {
+              const completedDate = (task.updatedAt as Timestamp).toDate();
               const dayOfWeek = completedDate.getDay();
               weekCounts[dayOfWeek].completed++;
           }
@@ -76,7 +81,7 @@ export default function AnalyticsPage() {
   }, [tasks]);
 
 
-  const isLoading = loadingTasks || loadingHabits
+  const isLoading = loadingTasks
 
   if (isLoading) {
     return (
@@ -94,6 +99,9 @@ export default function AnalyticsPage() {
         <Card className="col-span-1 lg:col-span-4">
           <CardHeader>
             <CardTitle>توزيع حالات المهام</CardTitle>
+             <CardDescription>
+                نظرة شاملة على كيفية توزيع مهامك الحالية.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
@@ -117,7 +125,7 @@ export default function AnalyticsPage() {
                     />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value) => `${value} مهمة`}/>
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -129,7 +137,7 @@ export default function AnalyticsPage() {
              <CardDescription>
                 نظرة على إنتاجيتك خلال الأيام السبعة الماضية.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
              <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={tasksCompletedWeeklyData}>

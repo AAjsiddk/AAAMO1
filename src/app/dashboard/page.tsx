@@ -21,9 +21,10 @@ import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import Link from 'next/link';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
-import type { JournalEntry } from '@/lib/types';
+import type { JournalEntry, Task } from '@/lib/types';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useMemo } from 'react';
 
 function LatestJournalEntries() {
   const { user } = useUser();
@@ -90,7 +91,19 @@ function LatestJournalEntries() {
 
 export default function DashboardPage() {
   const { user } = useUser();
-  const dailyProgress = 66; // Placeholder value
+  const firestore = useFirestore();
+
+  const tasksQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/tasks`) : null),
+    [user, firestore]
+  );
+  const { data: tasks, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
+  
+  const dailyProgress = useMemo(() => {
+    if (!tasks || tasks.length === 0) return 0;
+    const completedTasks = tasks.filter(task => task.status === 'completed').length;
+    return Math.round((completedTasks / tasks.length) * 100);
+  }, [tasks]);
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -105,11 +118,15 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              مؤشر الإنجاز اليومي
+              مؤشر الإنجاز العام
             </CardTitle>
+             <CardDescription>
+              {tasks?.length || 0} مهمة
+            </CardDescription>
           </CardHeader>
           <CardContent>
              <div className="mx-auto w-32 h-32">
+              { isLoadingTasks ? <Skeleton className="h-full w-full rounded-full" /> : (
                 <CircularProgressbar
                   value={dailyProgress}
                   text={`${dailyProgress}%`}
@@ -120,6 +137,7 @@ export default function DashboardPage() {
                     textSize: '16px',
                   })}
                 />
+              )}
               </div>
           </CardContent>
         </Card>
@@ -180,7 +198,7 @@ export default function DashboardPage() {
              <CardDescription>
               رسالتك اليومية للتحفيز والإلهام.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
              <p className="text-center text-muted-foreground py-8">"لا تؤجل عمل اليوم إلى الغد."</p>
           </CardContent>

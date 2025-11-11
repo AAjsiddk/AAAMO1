@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, addDoc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, addDoc, deleteDoc, updateDoc, Timestamp, writeBatch, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -133,7 +133,7 @@ function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: T
   return (
     <div style={{ paddingRight: level > 0 ? '1.5rem' : '0' }} className="relative">
        {level > 0 && <span className="absolute right-[10px] top-0 bottom-0 w-0.5 bg-border -z-10"></span>}
-      <Card className="mb-2">
+      <Card className={cn("mb-2", task.status === 'completed' && 'bg-muted/50')}>
         <CardHeader className="p-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 flex-grow min-w-0">
@@ -143,7 +143,9 @@ function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: T
                 </Button>
               )}
                {level > 0 && <div className="w-1" />}
-              <CardTitle className="text-lg font-semibold truncate">{task.title}</CardTitle>
+              <CardTitle className={cn("text-lg font-semibold truncate", task.status === 'completed' && 'line-through text-muted-foreground')}>
+                {task.title}
+              </CardTitle>
             </div>
             <div className="flex items-center flex-shrink-0">
                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onAddSubtask(task.id)}>
@@ -231,12 +233,7 @@ export default function TasksPage() {
     return collection(firestore, `users/${user.uid}/tasks`);
   }, [firestore, user]);
 
-  const tasksQuery = useMemoFirebase(() => {
-    if (!tasksCollectionRef) return null;
-    return query(tasksCollectionRef);
-  }, [tasksCollectionRef]);
-
-  const { data: allTasks, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
+  const { data: allTasks, isLoading: isLoadingTasks } = useCollection<Task>(tasksCollectionRef);
   
   const tasksTree = useMemo(() => {
     if (!allTasks) return [];
@@ -330,11 +327,29 @@ export default function TasksPage() {
   
   const handleDeleteTask = async (taskId: string) => {
     if (!firestore || !user) return;
-    // TODO: Add logic to delete subtasks as well
-    const taskDocRef = doc(firestore, `users/${user.uid}/tasks`, taskId);
+    
+    const tasksToDelete = new Set<string>([taskId]);
+    const tasksToCheck = [taskId];
+    
+    // Find all subtasks recursively
+    while (tasksToCheck.length > 0) {
+      const currentTaskId = tasksToCheck.pop();
+      const subtasks = allTasks?.filter(t => t.parentId === currentTaskId);
+      subtasks?.forEach(sub => {
+        tasksToDelete.add(sub.id);
+        tasksToCheck.push(sub.id);
+      });
+    }
+
     try {
-        await deleteDoc(taskDocRef);
-        toast({ title: 'تم الحذف', description: 'تم حذف المهمة بنجاح.' });
+        const batch = writeBatch(firestore);
+        tasksToDelete.forEach(id => {
+            const taskDocRef = doc(firestore, `users/${user.uid}/tasks`, id);
+            batch.delete(taskDocRef);
+        });
+        await batch.commit();
+
+        toast({ title: 'تم الحذف', description: 'تم حذف المهمة وجميع المهام الفرعية بنجاح.' });
     } catch (error) {
         console.error("Error deleting task: ", error);
         toast({ variant: 'destructive', title: 'خطأ', description: 'فشل حذف المهمة.' });
