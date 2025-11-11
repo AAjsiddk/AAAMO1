@@ -198,7 +198,7 @@ export default function DashboardPage() {
              <CardDescription>
               رسالتك اليومية للتحفيز والإلهام.
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
              <p className="text-center text-muted-foreground py-8">"لا تؤجل عمل اليوم إلى الغد."</p>
           </CardContent>
