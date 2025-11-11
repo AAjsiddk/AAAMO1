@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { Header } from '@/components/layout/header';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Loader2 } from 'lucide-react';
 
@@ -34,10 +34,12 @@ export default function DashboardLayout({
 
   return (
      <SidebarProvider>
-        <AppSidebar />
-        <div className="flex flex-1 flex-col">
-            <Header />
-            <main className="flex-1 bg-background/95">{children}</main>
+        <div className="flex-1 rtl:flex-row-reverse">
+             <AppSidebar />
+            <div className="flex flex-1 flex-col">
+                <Header />
+                <main className="flex-1 bg-background/95">{children}</main>
+            </div>
         </div>
     </SidebarProvider>
   );

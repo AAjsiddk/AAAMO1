@@ -16,6 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, LayoutDashboard } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export function Header() {
   const { user, isUserLoading } = useUser();
@@ -42,10 +43,13 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
-        <div className="flex-1 md:flex-none">
-          <Link href={user ? "/dashboard" : "/"} aria-label="Home">
-            <Logo />
-          </Link>
+        <div className="flex items-center gap-2">
+           {user && <SidebarTrigger />}
+          <div className="hidden md:flex">
+             <Link href={user ? "/dashboard" : "/"} aria-label="Home">
+                <Logo />
+             </Link>
+          </div>
         </div>
         <div className="flex flex-1 items-center justify-end gap-4">
            <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
