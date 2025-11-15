@@ -64,20 +64,20 @@ export default function AnalyticsPage() {
   }, [tasks])
 
   const tasksCompletedWeeklyData = useMemo(() => {
-     if (!tasks) return [];
-      const weekCounts = Array(7).fill(0).map((_, i) => ({
-          name: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'][i],
-          completed: 0,
-      }));
+    if (!tasks) return [];
+    const weekCounts = Array(7).fill(0).map((_, i) => ({
+        name: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'][i],
+        completed: 0,
+    }));
 
-      tasks.forEach(task => {
-          if (task.status === 'completed' && task.updatedAt && typeof (task.updatedAt as Timestamp).toDate === 'function') {
-              const completedDate = (task.updatedAt as Timestamp).toDate();
-              const dayOfWeek = completedDate.getDay();
-              weekCounts[dayOfWeek].completed++;
-          }
-      });
-      return weekCounts;
+    tasks.forEach(task => {
+        if (task.status === 'completed' && task.updatedAt && typeof (task.updatedAt as Timestamp).toDate === 'function') {
+            const completedDate = (task.updatedAt as Timestamp).toDate();
+            const dayOfWeek = completedDate.getDay();
+            weekCounts[dayOfWeek].completed++;
+        }
+    });
+    return weekCounts;
   }, [tasks]);
 
 
