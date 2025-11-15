@@ -52,6 +52,20 @@ service cloud.firestore {
     }
 
     /**
+     * @description Security rules for the /users/{userId}/tasks/{taskId} collection.
+     * @path /users/{userId}/tasks/{taskId}
+     * @principle Enforces user-ownership for tasks.
+     */
+    match /users/{userId}/tasks/{taskId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
      * @description Security rules for the /users/{userId}/files/{fileId} collection.
      * @path /users/{userId}/files/{fileId}
      * @allow (create) User 'alice' (auth.uid: 'alice') can create a file under their profile with matching userId.
