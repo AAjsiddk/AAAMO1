@@ -1,9 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Using React.memo to prevent re-renders when parent components update
-export const TimeWidget = () => {
+const TimeWidgetInternal = () => {
   const [gregorianDate, setGregorianDate] = useState('');
   const [hijriDate, setHijriDate] = useState('');
   const [time, setTime] = useState('');
@@ -44,4 +44,5 @@ export const TimeWidget = () => {
   );
 };
 
+export const TimeWidget = memo(TimeWidgetInternal);
 TimeWidget.displayName = 'TimeWidget';

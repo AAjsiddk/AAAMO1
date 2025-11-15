@@ -30,7 +30,7 @@ service cloud.firestore {
      * @principle Combines the ownership check with the existence check.
      */
     function isExistingOwner(userId) {
-      return isOwner(userId) && exists(resource);
+      return isOwner(userId) && exists(/databases/$(database)/documents/users/$(userId));
     }
 
     /**
@@ -47,8 +47,8 @@ service cloud.firestore {
       allow list: if false;
 
       allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
     /**
@@ -57,12 +57,7 @@ service cloud.firestore {
      * @principle Enforces user-ownership for tasks.
      */
     match /users/{userId}/tasks/{taskId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow read, write, list, create, update, delete: if isOwner(userId);
     }
 
     /**
@@ -75,12 +70,7 @@ service cloud.firestore {
      * @principle Enforces user-ownership for file data.
      */
     match /users/{userId}/files/{fileId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow read, write, list, create, update, delete: if isOwner(userId);
     }
     
     /**
@@ -89,12 +79,7 @@ service cloud.firestore {
      * @principle Enforces user-ownership for journal entries.
      */
     match /users/{userId}/journalEntries/{journalEntryId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow read, write, list, create, update, delete: if isOwner(userId);
     }
 
     /**
@@ -103,44 +88,43 @@ service cloud.firestore {
      * @principle Enforces user-ownership for audit log data.
      */
     match /users/{userId}/audit_logs/{auditLogId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow read, write, list, create, update, delete: if isOwner(userId);
     }
     
     match /users/{userId}/futureMessages/{messageId} {
-      allow read, list, create, update, delete: if isOwner(userId);
+      allow read, write, list, create, update, delete: if isOwner(userId);
     }
     
     match /users/{userId}/libraryItems/{itemId} {
-       allow read, list, create, update, delete: if isOwner(userId);
+       allow read, write, list, create, update, delete: if isOwner(userId);
     }
 
     match /users/{userId}/worshipActs/{actId} {
-       allow read, list, create, update, delete: if isOwner(userId);
+       allow read, write, list, create, update, delete: if isOwner(userId);
     }
 
     match /users/{userId}/relaxationActivities/{activityId} {
-        allow read, list, create, update, delete: if isOwner(userId);
+        allow read, write, list, create, update, delete: if isOwner(userId);
     }
 
     match /users/{userId}/goals/{goalId} {
-        allow read, list, create, update, delete: if isOwner(userId);
+        allow read, write, list, create, update, delete: if isOwner(userId);
     }
 
     match /users/{userId}/folders/{folderId} {
-        allow read, list, create, update, delete: if isOwner(userId);
+        allow read, write, list, create, update, delete: if isOwner(userId);
     }
 
     match /users/{userId}/habits/{habitId} {
-        allow read, list, create, update, delete: if isOwner(userId);
+        allow read, write, list, create, update, delete: if isOwner(userId);
     }
     
     match /users/{userId}/habits/{habitId}/marks/{markId} {
-       allow read, list, create, update, delete: if isOwner(userId);
+       allow read, write, list, create, update, delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/projects/{projectId} {
+       allow read, write, list, create, update, delete: if isOwner(userId);
     }
   }
 }

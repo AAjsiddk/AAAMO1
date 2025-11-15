@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/card'
 import { useCollection, useUser, useMemoFirebase } from '@/firebase'
 import type { Task } from '@/lib/types'
-import { collection, query, where, Timestamp } from 'firebase/firestore'
+import { collection } from 'firebase/firestore'
 import { useFirestore } from '@/firebase'
 import {
   BarChart,
@@ -71,8 +71,8 @@ export default function AnalyticsPage() {
     }));
 
     tasks.forEach(task => {
-        if (task.status === 'completed' && task.updatedAt && typeof (task.updatedAt as Timestamp).toDate === 'function') {
-            const completedDate = (task.updatedAt as Timestamp).toDate();
+        if (task.status === 'completed' && task.updatedAt && typeof (task.updatedAt as any).toDate === 'function') {
+            const completedDate = (task.updatedAt as any).toDate();
             const dayOfWeek = completedDate.getDay();
             weekCounts[dayOfWeek].completed++;
         }
