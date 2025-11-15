@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
         }
     });
     return weekCounts;
-  }, [tasks])
+  }, [tasks]);
 
 
   const isLoading = loadingTasks
