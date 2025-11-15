@@ -11,11 +11,7 @@
  * - /users/{userId}: Stores user profile information.
  * - /users/{userId}/files/{fileId}: Stores files uploaded by the user.
  * - /users/{userId}/audit_logs/{auditLogId}: Stores audit logs for the user.
- *
- * Key Security Decisions:
- * - User listing is disallowed.
- * - All write operations are protected by authorization checks.
- * - Data consistency between the path and document data is enforced on create and update.
+ * - /users/{userId}/journalEntries/{journalEntryId}: Stores journal entries for the user.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -65,6 +61,20 @@ service cloud.firestore {
      * @principle Enforces user-ownership for file data.
      */
     match /users/{userId}/files/{fileId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+    
+    /**
+     * @description Security rules for the /users/{userId}/journalEntries/{journalEntryId} collection.
+     * @path /users/{userId}/journalEntries/{journalEntryId}
+     * @principle Enforces user-ownership for journal entries.
+     */
+    match /users/{userId}/journalEntries/{journalEntryId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
 
