@@ -12,9 +12,9 @@ export default function RelaxPage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
           <Users className="h-16 w-16 text-muted-foreground" />
-          <h3 className="text-xl font-semibold">قيد الإنشاء</h3>
+          <h3 className="text-xl font-semibold">استرخ وجدد طاقتك</h3>
           <p className="text-muted-foreground max-w-md">
-            هذا القسم سيقترح عليك فترات راحة مع تمارين تنفس وأصوات مهدئة. سيتم بناء هذه الميزة قريبًا!
+            هذا القسم سيقترح عليك فترات راحة مع تمارين تنفس، أصوات طبيعية مهدئة، وتأملات موجهة لمساعدتك على تقليل التوتر.
           </p>
         </CardContent>
       </Card>

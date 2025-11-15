@@ -152,12 +152,12 @@ const SidebarProvider = React.forwardRef<
               className
             )}
             ref={ref}
-            {...props}
-            onClick={(e) => {
-                if(e.target instanceof HTMLAnchorElement) {
+            onClickCapture={(e) => {
+                if (isMobile && e.target instanceof HTMLAnchorElement && e.target.href) {
                     closeMobileSidebar();
                 }
             }}
+            {...props}
           >
             {children}
           </div>

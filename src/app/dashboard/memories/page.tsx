@@ -12,9 +12,9 @@ export default function MemoriesPage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
           <Camera className="h-16 w-16 text-muted-foreground" />
-          <h3 className="text-xl font-semibold">قيد الإنشاء</h3>
+          <h3 className="text-xl font-semibold">استرجع لحظاتك الجميلة</h3>
           <p className="text-muted-foreground max-w-md">
-            هذا القسم سيعرض لك الصور والمقتطفات القديمة تلقائيًا لربطك بذكرياتك وتحفيزك. سيتم بناء هذه الميزة قريبًا!
+            هذا القسم سيعرض لك الصور والمقتطفات القديمة تلقائيًا لربطك بذكرياتك وتحفيزك. يمكنك ربطه بمكتبة الصور والمذكرات.
           </p>
         </CardContent>
       </Card>

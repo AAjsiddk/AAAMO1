@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, addDoc, deleteDoc, updateDoc, Timestamp, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, addDoc, deleteDoc, updateDoc, Timestamp, writeBatch, getDocs, type FieldValue } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -310,10 +310,18 @@ export default function TasksPage() {
 
         if (editingTask) {
             const taskDocRef = doc(firestore, `users/${user.uid}/tasks`, editingTask.id);
-            await updateDoc(taskDocRef, taskData);
+            await updateDoc(taskDocRef, {
+              ...taskData,
+              startDate: values.startDate || null,
+              endDate: values.endDate || null,
+            });
             toast({ title: 'نجاح', description: 'تم تحديث المهمة بنجاح.' });
         } else {
-            await addDoc(tasksCollectionRef, taskData);
+            await addDoc(tasksCollectionRef, {
+              ...taskData,
+              startDate: values.startDate || null,
+              endDate: values.endDate || null,
+            });
             toast({ title: 'نجاح', description: 'تمت إضافة المهمة بنجاح.' });
         }
         

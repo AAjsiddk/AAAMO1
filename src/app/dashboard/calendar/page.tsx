@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
 
 export default function CalendarPage() {
   return (
@@ -11,10 +11,10 @@ export default function CalendarPage() {
       </div>
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
-          <Calendar className="h-16 w-16 text-muted-foreground" />
-          <h3 className="text-xl font-semibold">قيد الإنشاء</h3>
+          <CalendarIcon className="h-16 w-16 text-muted-foreground" />
+          <h3 className="text-xl font-semibold">التقويم المتكامل</h3>
           <p className="text-muted-foreground max-w-md">
-            هذا القسم مخصص لعرض التقويم الكامل مع جميع مهامك وعاداتك وأحداثك. سيتم بناء هذه الميزة قريبًا!
+            هذا القسم سيعرض جميع مهامك وأهدافك وعاداتك وأحداثك في تقويم واحد ذكي يجمع بين التاريخين الهجري والميلادي.
           </p>
         </CardContent>
       </Card>

@@ -12,9 +12,9 @@ export default function BeautifulDayPage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
           <Sparkles className="h-16 w-16 text-muted-foreground" />
-          <h3 className="text-xl font-semibold">قيد الإنشاء</h3>
+          <h3 className="text-xl font-semibold">لحظة إيجابية كل يوم</h3>
           <p className="text-muted-foreground max-w-md">
-            هذا القسم سيمكنك من تسجيل لحظة إيجابية واحدة كل يوم لبناء عادة التفكير الإيجابي. سيتم بناء هذه الميزة قريبًا!
+            هذا القسم سيمكنك من تسجيل لحظة إيجابية واحدة كل يوم لبناء عادة التفكير الإيجابي. سيتم عرض هذه اللحظات في لوحة الامتنان الخاصة بك.
           </p>
         </CardContent>
       </Card>

@@ -12,9 +12,9 @@ export default function CumulativeAchievementsPage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
           <TrendingUp className="h-16 w-16 text-muted-foreground" />
-          <h3 className="text-xl font-semibold">قيد الإنشاء</h3>
+          <h3 className="text-xl font-semibold">نظرة شاملة على تقدمك</h3>
           <p className="text-muted-foreground max-w-md">
-            هذا القسم سيعرض مدى تقدمك العام في جميع جوانب حياتك بناءً على بياناتك. سيتم بناء هذه الميزة قريبًا!
+            هذا القسم سيعرض مدى تقدمك العام في جميع جوانب حياتك بناءً على بياناتك في الأهداف والعادات والمشاريع، مع رسوم بيانية توضح نموك بمرور الوقت.
           </p>
         </CardContent>
       </Card>

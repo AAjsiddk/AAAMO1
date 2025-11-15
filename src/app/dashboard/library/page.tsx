@@ -12,9 +12,9 @@ export default function LibraryPage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
           <BookOpen className="h-16 w-16 text-muted-foreground" />
-          <h3 className="text-xl font-semibold">قيد الإنشاء</h3>
+          <h3 className="text-xl font-semibold">مصادر معرفية ملهمة</h3>
           <p className="text-muted-foreground max-w-md">
-            هذا القسم سيحتوي على مقالات واقتباسات ومقاطع فيديو تحفيزية تُقترح عليك بذكاء. سيتم بناء هذه الميزة قريبًا!
+            هذا القسم سيحتوي على مقالات واقتباسات ومقاطع فيديو تحفيزية تُقترح عليك بذكاء لتساعدك في رحلة تطوير ذاتك.
           </p>
         </CardContent>
       </Card>

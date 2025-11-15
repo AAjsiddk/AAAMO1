@@ -12,9 +12,9 @@ export default function MessagesPage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
           <MessageSquare className="h-16 w-16 text-muted-foreground" />
-          <h3 className="text-xl font-semibold">قيد الإنشاء</h3>
+          <h3 className="text-xl font-semibold">رسائل إلى المستقبل</h3>
           <p className="text-muted-foreground max-w-md">
-            هذا القسم سيمكنك من كتابة رسالة لنفسك وتحديد موعد لإرسالها في المستقبل. سيتم بناء هذه الميزة قريبًا!
+            هذا القسم سيمكنك من كتابة رسالة لنفسك وتحديد موعد لإرسالها في المستقبل. أرسل حكمة أو نصيحة أو أمنية لنفسك المستقبلية.
           </p>
         </CardContent>
       </Card>

@@ -12,9 +12,9 @@ export default function DataSyncPage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
           <Package className="h-16 w-16 text-muted-foreground" />
-          <h3 className="text-xl font-semibold">قيد الإنشاء</h3>
+          <h3 className="text-xl font-semibold">تحكم كامل في بياناتك</h3>
           <p className="text-muted-foreground max-w-md">
-            هذا القسم سيتيح لك تحميل بياناتك بالكامل أو استعادتها لضمان عدم فقدانها. سيتم بناء هذه الميزة قريبًا!
+            هذا القسم سيتيح لك تحميل بياناتك بالكامل كنسخة احتياطية أو استعادتها لضمان عدم فقدانها أبدًا والتحكم الكامل بها.
           </p>
         </CardContent>
       </Card>

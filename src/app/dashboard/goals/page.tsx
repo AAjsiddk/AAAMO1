@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, addDoc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, addDoc, deleteDoc, updateDoc, Timestamp, type FieldValue } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -289,13 +289,21 @@ export default function GoalsPage() {
             } else {
                 goalData.passwordHash = editingGoal.passwordHash || null;
             }
-            await updateDoc(goalDocRef, goalData);
+            await updateDoc(goalDocRef, {
+                ...goalData,
+                startDate: values.startDate || null,
+                endDate: values.endDate || null
+            });
             toast({ title: 'نجاح', description: 'تم تحديث الهدف بنجاح.' });
         } else {
              if (values.password) {
                 goalData.passwordHash = values.password; // In a real app, hash this
             }
-            await addDoc(goalsCollectionRef, goalData);
+            await addDoc(goalsCollectionRef, {
+                ...goalData,
+                startDate: values.startDate || null,
+                endDate: values.endDate || null
+            });
             toast({ title: 'نجاح', description: 'تمت إضافة الهدف بنجاح.' });
         }
         

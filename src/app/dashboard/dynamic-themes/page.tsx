@@ -12,9 +12,9 @@ export default function DynamicThemesPage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
           <Droplets className="h-16 w-16 text-muted-foreground" />
-          <h3 className="text-xl font-semibold">قيد الإنشاء</h3>
+          <h3 className="text-xl font-semibold">مظهر يتكيف معك</h3>
           <p className="text-muted-foreground max-w-md">
-            هذا القسم سيسمح للموقع بتغيير ألوانه تلقائيًا بناءً على حالتك النفسية أو وقت اليوم. سيتم بناء هذه الميزة قريبًا!
+            هذا القسم سيسمح للموقع بتغيير ألوانه تلقائيًا بناءً على حالتك النفسية المسجلة، وقت اليوم، أو حتى الطقس، لتجربة غامرة وفريدة.
           </p>
         </CardContent>
       </Card>

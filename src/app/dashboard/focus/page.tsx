@@ -12,9 +12,9 @@ export default function FocusPage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
           <Clock className="h-16 w-16 text-muted-foreground" />
-          <h3 className="text-xl font-semibold">قيد الإنشاء</h3>
+          <h3 className="text-xl font-semibold">عزز تركيزك وإنتاجيتك</h3>
           <p className="text-muted-foreground max-w-md">
-            هذا القسم سيساعدك على التركيز عن طريق قفل الإشعارات وبدء عداد للتركيز. سيتم بناء هذه الميزة قريبًا!
+            هذا القسم سيساعدك على التركيز عن طريق قفل الإشعارات وبدء عداد للتركيز بتقنية البومودورو، مع أصوات مهدئة لمساعدتك على الدخول في حالة من التدفق.
           </p>
         </CardContent>
       </Card>
