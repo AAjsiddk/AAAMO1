@@ -37,6 +37,10 @@ import {
   Package,
   Droplets,
   TrendingUp,
+  BrainCircuit,
+  Coffee,
+  Library,
+  HandHeart,
 } from 'lucide-react'
 
 export function AppSidebar() {
@@ -62,7 +66,7 @@ export function AppSidebar() {
   const advancedSections = [
     { name: 'المشاريع الطويلة', href: '/dashboard/projects', icon: <FolderKanban /> },
     { name: 'التحليلات العامة', href: '/dashboard/analytics', icon: <BarChart /> },
-    { name: 'الإنجازات والتحديات', href: '/dashboard/achievements', icon: <Trophy /> },
+    { name: 'الإنجاز التراكمي', href: '/dashboard/cumulative-achievements', icon: <TrendingUp /> },
   ];
 
   const selfReflectionSections = [
@@ -74,20 +78,20 @@ export function AppSidebar() {
   ];
   
   const toolsSections = [
-      { name: 'الذكاء المساعد', href: '/dashboard/ai-assistant', icon: <Sparkles /> },
-      { name: 'مكتبة التطوير', href: '/dashboard/library', icon: <BookOpen /> },
+      { name: 'الذكاء المساعد', href: '/dashboard/ai-assistant', icon: <BrainCircuit /> },
+      { name: 'مكتبتي المعرفية', href: '/dashboard/library', icon: <Library /> },
       { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: <Clock /> },
-      { name: 'زاوية الراحة', href: '/dashboard/relax', icon: <Users /> },
+      { name: 'مخطط الترفيه', href: '/dashboard/relax', icon: <Coffee /> },
       { name: 'تصدير واستيراد', href: '/dashboard/data-sync', icon: <Package /> },
   ];
 
   const spiritualSection = [
-      { name: 'قسم الإيمان', href: '/dashboard/faith', icon: <ShieldCheck /> },
+      { name: 'ركن العبادات', href: '/dashboard/faith', icon: <HandHeart /> },
   ]
   
   const otherAdvancedSections = [
     { name: 'الثيمات الديناميكية', href: '/dashboard/dynamic-themes', icon: <Droplets /> },
-    { name: 'الإنجاز التراكمي', href: '/dashboard/cumulative-achievements', icon: <TrendingUp /> },
+    { name: 'الإنجازات والتحديات', href: '/dashboard/achievements', icon: <Trophy /> },
   ];
 
 

@@ -100,10 +100,6 @@ service cloud.firestore {
     /**
      * @description Security rules for the /users/{userId}/audit_logs/{auditLogId} collection.
      * @path /users/{userId}/audit_logs/{auditLogId}
-     * @allow (create) User 'alice' (auth.uid: 'alice') can create an audit log under their profile with matching userId.
-     * @deny (create) User 'bob' (auth.uid: 'bob') cannot create an audit log under 'alice's profile.
-     * @allow (get) User 'alice' (auth.uid: 'alice') can read an audit log under their profile.
-     * @deny (get) User 'bob' (auth.uid: 'bob') cannot read an audit log under 'alice's profile.
      * @principle Enforces user-ownership for audit log data.
      */
     match /users/{userId}/audit_logs/{auditLogId} {
@@ -113,6 +109,38 @@ service cloud.firestore {
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
+    }
+    
+    match /users/{userId}/futureMessages/{messageId} {
+      allow read, list, create, update, delete: if isOwner(userId);
+    }
+    
+    match /users/{userId}/libraryItems/{itemId} {
+       allow read, list, create, update, delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/worshipActs/{actId} {
+       allow read, list, create, update, delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/relaxationActivities/{activityId} {
+        allow read, list, create, update, delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/goals/{goalId} {
+        allow read, list, create, update, delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/folders/{folderId} {
+        allow read, list, create, update, delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/habits/{habitId} {
+        allow read, list, create, update, delete: if isOwner(userId);
+    }
+    
+    match /users/{userId}/habits/{habitId}/marks/{markId} {
+       allow read, list, create, update, delete: if isOwner(userId);
     }
   }
 }

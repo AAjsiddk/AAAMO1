@@ -76,3 +76,41 @@ export type JournalEntry = {
     imageUrl?: string;
     createdAt: FieldValue;
 }
+
+export type FutureMessage = {
+  id: string;
+  userId: string;
+  message: string;
+  createdAt: FieldValue;
+  // In a real app, you would add a `sendAt: Timestamp` field
+};
+
+export type LibraryItem = {
+  id: string;
+  userId: string;
+  title: string;
+  type: 'book' | 'article' | 'video' | 'link';
+  source: string; // URL for link/video, name for book
+  imageUrl?: string;
+  description?: string;
+  createdAt: FieldValue;
+};
+
+export type WorshipAct = {
+  id: string;
+  userId: string;
+  name: string;
+  count?: number;
+  notes?: string;
+  date: string; // YYYY-MM-DD
+  createdAt: FieldValue;
+}
+
+export type RelaxationActivity = {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  category: string;
+  createdAt: FieldValue;
+}
