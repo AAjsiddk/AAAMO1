@@ -22,16 +22,18 @@ export type Habit = {
   userId: string;
   name: string;
   type: 'acquire' | 'quit';
+  startDate: Timestamp | Date;
+  endDate: Timestamp | Date;
   frequency?: string;
-  streak: number;
+  streak?: number;
 };
 
 export type HabitMark = {
-  id: string;
+  id: string; // Typically habitId_dateString
   habitId: string;
   userId: string;
-  date: Timestamp;
-  completed: boolean;
+  date: string; // YYYY-MM-DD
+  status: 'completed' | 'not_completed' | 'partially_completed';
 };
 
 export type Goal = {

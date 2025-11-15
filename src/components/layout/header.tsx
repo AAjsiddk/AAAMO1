@@ -184,7 +184,7 @@ export function Header() {
           <div className="flex items-center gap-2">
             {user && <SidebarTrigger />}
             <div className="md:flex">
-              <Link href={user ? "/dashboard" : "/"} aria-label="Home">
+              <Link href={user ? "/dashboard" : "/"} aria-label="الرئيسية">
                   <Logo />
               </Link>
             </div>
@@ -253,7 +253,7 @@ export function Header() {
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
+                          <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'مستخدم'} />
                           <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                         </Avatar>
                       </Button>

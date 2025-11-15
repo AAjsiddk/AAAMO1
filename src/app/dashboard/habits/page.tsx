@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, where, getDocs, writeBatch, addDoc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, where, getDocs, writeBatch, addDoc, setDoc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -43,112 +43,113 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Trash2, Loader2, Edit, Inbox } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { PlusCircle, Trash2, Loader2, Edit, Inbox, CalendarIcon, Check, X, Minus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Habit, HabitMark } from '@/lib/types';
-import CalendarHeatmap from 'react-calendar-heatmap';
-import 'react-calendar-heatmap/dist/styles.css';
-import { Tooltip as ReactTooltip } from 'react-tooltip';
-import { subYears, format, isSameDay, isYesterday, startOfDay } from 'date-fns';
-
+import { cn } from '@/lib/utils';
+import { format, eachDayOfInterval, startOfDay } from 'date-fns';
 
 const habitSchema = z.object({
   name: z.string().min(1, { message: 'اسم العادة مطلوب.' }),
   type: z.enum(['acquire', 'quit']),
+  startDate: z.date({ required_error: "تاريخ البدء مطلوب." }),
+  endDate: z.date({ required_error: "تاريخ الانتهاء مطلوب." }),
 });
 
-function HabitCard({ habit, onEdit, onDelete }: { habit: Habit, onEdit: (habit: Habit) => void, onDelete: (habitId: string) => void }) {
-  const firestore = useFirestore();
-  const { user } = useUser();
-  const [heatmapValues, setHeatmapValues] = useState<{ date: string; count: number }[]>([]);
-  const [streak, setStreak] = useState(0);
+function HabitDayTracker({ habit }: { habit: Habit }) {
+    const firestore = useFirestore();
+    const { user } = useUser();
+    const { toast } = useToast();
 
-  const habitMarksQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, `users/${user.uid}/habits/${habit.id}/marks`));
-  }, [firestore, user, habit.id]);
+    const marksQuery = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return query(collection(firestore, `users/${user.uid}/habits/${habit.id}/marks`));
+    }, [firestore, user, habit.id]);
 
-  const { data: marks } = useCollection<HabitMark>(habitMarksQuery);
+    const { data: marks, isLoading } = useCollection<HabitMark>(marksQuery);
 
-  useEffect(() => {
-    if (marks) {
-      const values = marks
-        .filter(mark => mark.date) // Ensure date exists
-        .map(mark => ({
-            date: format(mark.date.toDate(), 'yyyy-MM-dd'),
-            count: mark.completed ? 1 : 0,
-        }));
-      setHeatmapValues(values);
-      calculateStreak(values);
-    }
-  }, [marks]);
-  
-  const calculateStreak = (values: { date: string; count: number }[]) => {
-      const sortedDates = values
-        .filter(v => v.count > 0)
-        .map(v => startOfDay(new Date(v.date)))
-        .sort((a, b) => b.getTime() - a.getTime());
-
-      if (sortedDates.length === 0) {
-        setStreak(0);
-        return;
-      }
-      
-      const today = startOfDay(new Date());
-      const yesterday = startOfDay(new Date(today.getTime() - 86400000));
-      const latestDate = sortedDates[0];
-
-      if (!isSameDay(latestDate, today) && !isSameDay(latestDate, yesterday)) {
-          setStreak(0);
-          return;
-      }
-      
-      let currentStreak = 1;
-      for (let i = 0; i < sortedDates.length - 1; i++) {
-        const currentDate = sortedDates[i];
-        const previousDate = sortedDates[i+1];
-        const diffTime = currentDate.getTime() - previousDate.getTime();
+    const handleMarkUpdate = async (date: Date, status: HabitMark['status']) => {
+        if (!firestore || !user) return;
+        const dateString = format(date, 'yyyy-MM-dd');
+        const markId = `${habit.id}_${dateString}`;
+        const markRef = doc(firestore, `users/${user.uid}/habits/${habit.id}/marks`, markId);
         
-        if (diffTime === 86400000) { // Exactly one day difference
-          currentStreak++;
-        } else if (diffTime > 86400000) {
-          break; // Gap in the streak
+        const existingMark = marks?.find(m => m.date === dateString);
+
+        try {
+            if (existingMark && existingMark.status === status) {
+                 // If the user clicks the same status again, delete the mark (un-set it)
+                 await deleteDoc(markRef);
+            } else {
+                 const newMark: Omit<HabitMark, 'id'> = {
+                    habitId: habit.id,
+                    userId: user.uid,
+                    date: dateString,
+                    status: status,
+                 };
+                 await setDoc(markRef, newMark);
+            }
+        } catch (e) {
+            console.error("Error updating habit mark:", e);
+            toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحديث حالة اليوم.' });
         }
-      }
-      setStreak(currentStreak);
-  }
-
-  const handleDayClick = async (value: { date: string; count: number } | null) => {
-    if (!value || !value.date || !firestore || !user) return;
+    };
     
-    const { date } = value;
-    const markDate = new Date(date);
-    
-    const existingMark = marks?.find(m => format(m.date.toDate(), 'yyyy-MM-dd') === date);
-    
-    try {
-      if (existingMark) {
-        const markDocRef = doc(firestore, `users/${user.uid}/habits/${habit.id}/marks`, existingMark.id);
-        await deleteDoc(markDocRef);
-      } else {
-        const markId = `${habit.id}_${date}`;
-        const newMark: Omit<HabitMark, 'id'> = {
-            habitId: habit.id,
-            userId: user.uid,
-            date: markDate,
-            completed: true,
-        };
-        const markDocRef = doc(firestore, `users/${user.uid}/habits/${habit.id}/marks`, markId);
-        await setDoc(markDocRef, newMark);
-      }
-    } catch (e) {
-      console.error("Error handling day click:", e);
-    }
-  };
+    const days = eachDayOfInterval({
+        start: (habit.startDate as Timestamp).toDate(),
+        end: (habit.endDate as Timestamp).toDate(),
+    });
 
+    const marksMap = useMemo(() => {
+        if (!marks) return new Map<string, HabitMark['status']>();
+        return new Map(marks.map(mark => [mark.date, mark.status]));
+    }, [marks]);
 
-  const today = new Date();
+    return (
+        <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+            {isLoading ? <Loader2 className="animate-spin" /> : days.map(day => {
+                const dateString = format(day, 'yyyy-MM-dd');
+                const currentStatus = marksMap.get(dateString);
 
+                return (
+                    <div key={dateString} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                        <span className="text-sm font-medium">{format(day, 'EEEE, d MMMM yyyy')}</span>
+                        <div className="flex gap-1">
+                            <Button 
+                                size="icon" 
+                                variant={currentStatus === 'completed' ? 'default' : 'ghost'} 
+                                className="h-8 w-8"
+                                onClick={() => handleMarkUpdate(day, 'completed')}
+                            >
+                                <Check className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                                size="icon" 
+                                variant={currentStatus === 'not_completed' ? 'destructive' : 'ghost'} 
+                                className="h-8 w-8"
+                                onClick={() => handleMarkUpdate(day, 'not_completed')}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                                size="icon" 
+                                variant={currentStatus === 'partially_completed' ? 'secondary' : 'ghost'} 
+                                className="h-8 w-8"
+                                onClick={() => handleMarkUpdate(day, 'partially_completed')}
+                            >
+                                <Minus className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                )
+            })}
+        </div>
+    );
+}
+
+function HabitCard({ habit, onEdit, onDelete }: { habit: Habit; onEdit: (habit: Habit) => void; onDelete: (habitId: string) => void }) {
   return (
     <Card className="flex flex-col">
       <CardHeader>
@@ -164,37 +165,15 @@ function HabitCard({ habit, onEdit, onDelete }: { habit: Habit, onEdit: (habit: 
           </div>
         </CardTitle>
         <CardDescription>
-          النوع: {habit.type === 'acquire' ? 'اكتساب' : 'ترك'} | سلسلة النجاح: {streak} {streak > 2 ? 'أيام' : 'يوم'}
+          النوع: {habit.type === 'acquire' ? 'اكتساب' : 'ترك'}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
-        <div dir="ltr">
-         <CalendarHeatmap
-            startDate={subYears(today, 1)}
-            endDate={today}
-            values={heatmapValues}
-            classForValue={(value) => {
-              if (!value) {
-                return 'color-empty';
-              }
-              return `color-scale-${value.count}`;
-            }}
-            tooltipDataAttrs={(value: { date: string, count: number }) => {
-                if(!value || !value.date) return null;
-                return {
-                    'data-tooltip-id': 'heatmap-tooltip',
-                    'data-tooltip-content': `${format(new Date(value.date), 'yyyy-MM-dd')}: ${value.count > 0 ? 'مكتمل' : 'غير مكتمل'}`,
-                };
-            }}
-            onClick={handleDayClick}
-          />
-          <ReactTooltip id="heatmap-tooltip" />
-        </div>
+        <HabitDayTracker habit={habit} />
       </CardContent>
     </Card>
   )
 }
-
 
 export default function HabitsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -206,8 +185,14 @@ export default function HabitsPage() {
 
   const form = useForm<z.infer<typeof habitSchema>>({
     resolver: zodResolver(habitSchema),
-    defaultValues: { name: '', type: 'acquire' },
   });
+  
+  useEffect(() => {
+    if (!isDialogOpen) {
+      form.reset({ name: '', type: 'acquire', startDate: undefined, endDate: undefined });
+      setEditingHabit(null);
+    }
+  }, [isDialogOpen, form]);
 
   const habitsCollectionRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -218,15 +203,17 @@ export default function HabitsPage() {
 
   const openEditDialog = (habit: Habit) => {
     setEditingHabit(habit);
-    form.setValue('name', habit.name);
-    form.setValue('type', habit.type);
+    form.reset({
+      name: habit.name,
+      type: habit.type,
+      startDate: habit.startDate ? (habit.startDate as Timestamp).toDate() : new Date(),
+      endDate: habit.endDate ? (habit.endDate as Timestamp).toDate() : new Date(),
+    });
     setIsDialogOpen(true);
   };
   
   const handleDialogClose = () => {
     setIsDialogOpen(false);
-    setEditingHabit(null);
-    form.reset({ name: '', type: 'acquire' });
   };
 
   const onSubmit = async (values: z.infer<typeof habitSchema>) => {
@@ -234,13 +221,19 @@ export default function HabitsPage() {
     setIsSubmitting(true);
 
     try {
+      const habitData = {
+          ...values,
+          userId: user.uid,
+          startDate: Timestamp.fromDate(values.startDate),
+          endDate: Timestamp.fromDate(values.endDate)
+      };
+
       if (editingHabit) {
         const habitDocRef = doc(firestore, `users/${user.uid}/habits`, editingHabit.id);
-        await updateDoc(habitDocRef, values);
+        await updateDoc(habitDocRef, habitData);
         toast({ title: 'نجاح', description: 'تم تحديث العادة بنجاح.' });
       } else {
-        const newHabit: Omit<Habit, 'id' | 'streak'> = { ...values, userId: user.uid };
-        await addDoc(habitsCollectionRef, newHabit);
+        await addDoc(habitsCollectionRef, habitData);
         toast({ title: 'نجاح', description: 'تمت إضافة العادة بنجاح.' });
       }
       handleDialogClose();
@@ -262,10 +255,11 @@ export default function HabitsPage() {
       marksSnapshot.forEach(doc => {
         batch.delete(doc.ref);
       });
-      await batch.commit();
-
+      
       const habitDocRef = doc(firestore, `users/${user.uid}/habits`, habitId);
-      await deleteDoc(habitDocRef);
+      batch.delete(habitDocRef);
+
+      await batch.commit();
       
       toast({
         title: 'تم الحذف',
@@ -281,7 +275,7 @@ export default function HabitsPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">العادات</h2>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) handleDialogClose(); else setIsDialogOpen(true); }}>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="ml-2 h-4 w-4" />
@@ -332,6 +326,60 @@ export default function HabitsPage() {
                     </FormItem>
                   )}
                 />
+                 <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>تاريخ البدء</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={'outline'}
+                                className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                              >
+                                {field.value ? format(field.value, 'PPP') : <span>اختر تاريخ</span>}
+                                <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>تاريخ الانتهاء</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={'outline'}
+                                className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                              >
+                                {field.value ? format(field.value, 'PPP') : <span>اختر تاريخ</span>}
+                                <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <DialogFooter>
                   <DialogClose asChild>
                     <Button type="button" variant="secondary">
