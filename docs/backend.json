@@ -342,8 +342,13 @@
           "type": "string",
           "format": "date"
         },
-        "completed": {
-          "type": "boolean"
+        "status": {
+          "type": "string",
+          "enum": [
+            "completed",
+            "not_completed",
+            "partially_completed"
+          ]
         }
       },
       "required": [
@@ -351,7 +356,7 @@
         "habitId",
         "userId",
         "date",
-        "completed"
+        "status"
       ]
     },
     "Goal": {

@@ -34,7 +34,6 @@ import {
   Heart,
   ShieldCheck,
   Trophy,
-  PlusCircle,
   Package,
   Droplets,
   TrendingUp,
@@ -179,12 +178,6 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-           <SidebarMenuItem>
-            <Button variant="outline" className="w-full justify-start">
-               <PlusCircle className="ml-2" />
-               <span>إضافة قسم جديد</span>
-            </Button>
-           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
