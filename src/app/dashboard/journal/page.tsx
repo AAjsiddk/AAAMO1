@@ -116,7 +116,8 @@ export default function JournalPage() {
   const today = new Date();
   const entries = showOnThisDay 
     ? allEntries?.filter(entry => {
-        const entryDate = entry.createdAt.toDate();
+        if (!entry.createdAt) return false;
+        const entryDate = (entry.createdAt as Timestamp).toDate();
         // Exclude entries from today
         return !isSameDay(entryDate, today) && 
                entryDate.getDate() === today.getDate() && 
@@ -167,6 +168,14 @@ export default function JournalPage() {
         toast({ variant: 'destructive', title: 'خطأ', description: 'فشل حذف التدوينة.' });
     }
   };
+
+  const formatDate = (timestamp: JournalEntry['createdAt']) => {
+    if (!timestamp || !(timestamp instanceof Timestamp)) {
+      return 'الآن...';
+    }
+    return format(timestamp.toDate(), 'PPP p');
+  };
+
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -241,7 +250,7 @@ export default function JournalPage() {
                   </Button>
                 </CardTitle>
                 <CardDescription className="flex items-center gap-4 text-xs pt-1">
-                    <span className="flex items-center gap-1"><Calendar className="h-4 w-4" /> {format((entry.createdAt as Timestamp).toDate(), 'PPP p')}</span>
+                    <span className="flex items-center gap-1"><Calendar className="h-4 w-4" /> {formatDate(entry.createdAt)}</span>
                     {entry.mood && moodIcons[entry.mood] && (
                         <span className="flex items-center gap-1">
                             {moodIcons[entry.mood]}
