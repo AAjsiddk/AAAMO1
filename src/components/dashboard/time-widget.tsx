@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export function TimeWidget() {
+// Using React.memo to prevent re-renders when parent components update
+export const TimeWidget = () => {
   const [gregorianDate, setGregorianDate] = useState('');
   const [hijriDate, setHijriDate] = useState('');
   const [time, setTime] = useState('');
@@ -41,4 +42,6 @@ export function TimeWidget() {
       </CardContent>
     </Card>
   );
-}
+};
+
+TimeWidget.displayName = 'TimeWidget';

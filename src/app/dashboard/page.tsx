@@ -24,7 +24,7 @@ import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore
 import type { JournalEntry, Task } from '@/lib/types';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 function LatestJournalEntries() {
   const { user } = useUser();
@@ -73,11 +73,11 @@ function LatestJournalEntries() {
       {entries.map((entry) => (
         <div key={entry.id} className="flex items-center">
           <div className="flex flex-col items-center justify-center bg-muted text-muted-foreground rounded-lg p-2 h-16 w-16 mr-4">
-            <span className="text-sm font-bold">{format((entry.createdAt as Timestamp).toDate(), 'MMM')}</span>
-            <span className="text-2xl font-bold">{format((entry.createdAt as Timestamp).toDate(), 'dd')}</span>
+            <span className="text-sm font-bold">{entry.createdAt ? format((entry.createdAt as Timestamp).toDate(), 'MMM') : ''}</span>
+            <span className="text-2xl font-bold">{entry.createdAt ? format((entry.createdAt as Timestamp).toDate(), 'dd') : ''}</span>
           </div>
-          <div className="space-y-1">
-            <Link href="/dashboard/journal" className="font-medium hover:underline">{entry.title}</Link>
+          <div className="space-y-1 overflow-hidden">
+            <Link href="/dashboard/journal" className="font-medium hover:underline truncate">{entry.title}</Link>
             <p className="text-sm text-muted-foreground truncate">
               {entry.content.substring(0, 100)}...
             </p>
@@ -89,7 +89,7 @@ function LatestJournalEntries() {
 }
 
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const { user } = useUser();
   const firestore = useFirestore();
 
@@ -207,3 +207,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+export default React.memo(DashboardPageContent);
