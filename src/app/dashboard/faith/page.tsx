@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, where, addDoc, deleteDoc, updateDoc, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, where, addDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,

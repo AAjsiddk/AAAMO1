@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Query,
   onSnapshot,
@@ -58,7 +58,7 @@ export function useCollection<T = any>(
   type StateDataType = ResultItemType[] | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
@@ -86,10 +86,10 @@ export function useCollection<T = any>(
       },
       (error: FirestoreError) => {
         // This logic extracts the path from either a ref or a query
-        const path: string =
+        const path =
           memoizedTargetRefOrQuery.type === 'collection'
             ? (memoizedTargetRefOrQuery as CollectionReference).path
-            : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
+            : (memoizedTargetRefOrQuery as InternalQuery)._query.path.toString();
 
         const contextualError = new FirestorePermissionError({
           operation: 'list',
@@ -107,8 +107,15 @@ export function useCollection<T = any>(
 
     return () => unsubscribe();
   }, [memoizedTargetRefOrQuery]); // Re-run if the target query/reference changes.
-  if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
-    throw new Error(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase');
+  
+  const isMemoized = useMemo(() => {
+    if (!memoizedTargetRefOrQuery) return true; // No ref, no problem
+    return (memoizedTargetRefOrQuery as any).__memo === true;
+  }, [memoizedTargetRefOrQuery]);
+
+  if (!isMemoized) {
+      console.warn("A Firestore query/reference passed to useCollection was not memoized with useMemoFirebase. This can lead to performance issues and infinite loops.", memoizedTargetRefOrQuery);
   }
+
   return { data, isLoading, error };
 }
