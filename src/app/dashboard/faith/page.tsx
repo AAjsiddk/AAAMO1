@@ -32,7 +32,7 @@ import { Plus, Trash2, Loader2, BookOpen, Link as LinkIcon, HandHeart, Minus, Ch
 import { useToast } from '@/hooks/use-toast';
 import type { WorshipAct } from '@/lib/types';
 import CalendarHeatmap from 'react-calendar-heatmap';
-import 'react-calendar-heatmap/style.css';
+import 'react-calendar-heatmap/dist/styles.css';
 import { Tooltip as ReactTooltip } from 'react-tooltip'
 import { subYears, format } from 'date-fns';
 import Link from 'next/link';

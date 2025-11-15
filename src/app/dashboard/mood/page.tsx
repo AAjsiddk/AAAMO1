@@ -7,7 +7,7 @@ import type { JournalEntry } from '@/lib/types';
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import CalendarHeatmap from 'react-calendar-heatmap';
-import 'react-calendar-heatmap/style.css';
+import 'react-calendar-heatmap/dist/styles.css';
 import { Tooltip as ReactTooltip } from 'react-tooltip'
 import { subYears, format } from 'date-fns';
 
@@ -134,11 +134,11 @@ export default function MoodPage() {
                     />
                     <ReactTooltip id="heatmap-tooltip" />
                     <style>{`
-                        .color-mood-happy { fill: ${heatmapColors.happy}; }
-                        .color-mood-excited { fill: ${heatmapColors.excited}; }
-                        .color-mood-neutral { fill: ${heatmapColors.neutral}; }
-                        .color-mood-anxious { fill: ${heatmapColors.anxious}; }
-                        .color-mood-sad { fill: ${heatmapColors.sad}; }
+                        .react-calendar-heatmap .color-mood-happy { fill: ${heatmapColors.happy}; }
+                        .react-calendar-heatmap .color-mood-excited { fill: ${heatmapColors.excited}; }
+                        .react-calendar-heatmap .color-mood-neutral { fill: ${heatmapColors.neutral}; }
+                        .react-calendar-heatmap .color-mood-anxious { fill: ${heatmapColors.anxious}; }
+                        .react-calendar-heatmap .color-mood-sad { fill: ${heatmapColors.sad}; }
                     `}</style>
                 </CardContent>
             </Card>
