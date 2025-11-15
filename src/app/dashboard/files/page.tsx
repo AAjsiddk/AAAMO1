@@ -20,7 +20,7 @@ import {
   Trash2,
   Edit,
   UploadCloud,
-  ArrowRight,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -280,7 +280,7 @@ export default function FilesPage() {
 
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">الملفات والمجلدات</h2>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 space-x-reverse">
           <Dialog open={isFolderDialogOpen} onOpenChange={(open) => { setIsFolderDialogOpen(open); if (!open) { setEditingFolder(null); folderForm.reset(); } }}>
             <DialogTrigger asChild>
               <Button onClick={() => setIsFolderDialogOpen(true)}>
@@ -369,13 +369,13 @@ export default function FilesPage() {
         </div>
       </div>
       
-       <div className="flex items-center gap-2 text-sm text-muted-foreground">
+       <div className="flex items-center gap-2 text-sm text-muted-foreground rtl">
         {path.map((p, i) => (
             <React.Fragment key={p.id || 'root'}>
             <Button variant="link" className="p-0 h-auto" onClick={() => navigateToFolder(p.id, p.name)}>
                 {p.name}
             </Button>
-            {i < path.length - 1 && <ArrowRight className="h-4 w-4 transform scale-x-[-1]" />}
+            {i < path.length - 1 && <ChevronRight className="h-4 w-4 transform scale-x-[-1]" />}
             </React.Fragment>
         ))}
       </div>
@@ -423,7 +423,7 @@ export default function FilesPage() {
                       <Edit className="ml-2 h-4 w-4" />
                       <span>إعادة تسمية</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setItemToDelete({ type: 'folder', id: folder.id })} className="text-destructive">
+                    <DropdownMenuItem onSelect={() => setItemToDelete({ type: 'folder', id: folder.id })} className="text-destructive focus:text-destructive focus:bg-destructive/10">
                         <Trash2 className="ml-2 h-4 w-4" />
                         <span>حذف</span>
                     </DropdownMenuItem>
@@ -450,7 +450,7 @@ export default function FilesPage() {
                       <Edit className="ml-2 h-4 w-4" />
                       <span>إعادة تسمية</span>
                     </DropdownMenuItem>
-                     <DropdownMenuItem onSelect={() => setItemToDelete({ type: 'file', id: file.id })} className="text-destructive">
+                     <DropdownMenuItem onSelect={() => setItemToDelete({ type: 'file', id: file.id })} className="text-destructive focus:text-destructive focus:bg-destructive/10">
                         <Trash2 className="ml-2 h-4 w-4" />
                         <span>حذف</span>
                     </DropdownMenuItem>

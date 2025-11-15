@@ -71,7 +71,7 @@ export default function AnalyticsPage() {
       }));
 
       tasks.forEach(task => {
-          if (task.status === 'completed' && task.updatedAt && 'toDate' in task.updatedAt) {
+          if (task.status === 'completed' && task.updatedAt && typeof (task.updatedAt as Timestamp).toDate === 'function') {
               const completedDate = (task.updatedAt as Timestamp).toDate();
               const dayOfWeek = completedDate.getDay();
               weekCounts[dayOfWeek].completed++;
