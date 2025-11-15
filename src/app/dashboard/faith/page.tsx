@@ -17,6 +17,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import {
   Form,
@@ -28,7 +29,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, Loader2, BookOpen, Link as LinkIcon, HandHeart, Minus, CheckSquare } from 'lucide-react';
+import { Plus, Trash2, Loader2, BookOpen, Link as LinkIcon, HandHeart, Minus, CheckSquare, Edit, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { WorshipAct } from '@/lib/types';
 import CalendarHeatmap from 'react-calendar-heatmap';
@@ -36,6 +37,13 @@ import 'react-calendar-heatmap/dist/styles.css';
 import { Tooltip as ReactTooltip } from 'react-tooltip'
 import { subYears, format } from 'date-fns';
 import Link from 'next/link';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+
 
 const actSchema = z.object({
   name: z.string().min(1, { message: 'اسم العمل مطلوب.' }),
@@ -138,82 +146,109 @@ export default function FaithPage() {
         <h2 className="text-3xl font-bold tracking-tight">ركن العبادات</h2>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-                <CardTitle>أعمال اليوم</CardTitle>
-                <CardDescription>سجل العبادات التي قمت بها اليوم.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="flex gap-2">
-                      <FormField control={form.control} name="name" render={({ field }) => (
-                          <FormItem className="flex-grow">
-                              <FormLabel className="sr-only">اسم العمل</FormLabel>
-                              <FormControl>
-                                  <Input placeholder="مثال: قراءة سورة الكهف، صدقة..." {...field} />
-                              </FormControl>
-                              <FormMessage />
-                          </FormItem>
-                      )} />
-                      <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                      </Button>
+      <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>أعمال اليوم</CardTitle>
+                    <CardDescription>سجل العبادات التي قمت بها اليوم وأضف ملاحظاتك.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField control={form.control} name="name" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>اسم العمل</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="مثال: قراءة سورة الكهف، صدقة..." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        <FormField control={form.control} name="notes" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>ملاحظات (اختياري)</FormLabel>
+                                <FormControl>
+                                    <Textarea placeholder="اكتب خواطرك، دعاء، أو تفاصيل أخرى..." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Plus className="h-4 w-4 ml-2" />}
+                            إضافة عمل
+                        </Button>
+                    </form>
+                    </Form>
+                    <div className="mt-6 space-y-2">
+                        {isLoadingToday ? <div className="flex justify-center"><Loader2 className="animate-spin" /></div> : 
+                        (todayActs && todayActs.length > 0) ? (
+                            <Accordion type="multiple" className="w-full">
+                                {todayActs.map(act => (
+                                    <AccordionItem value={act.id} key={act.id}>
+                                        <div className="flex items-center justify-between p-2 rounded-md">
+                                             <AccordionTrigger className="flex-grow text-right mr-4 hover:no-underline">
+                                                <span className="font-medium">{act.name}</span>
+                                            </AccordionTrigger>
+                                            <div className="flex items-center gap-1 flex-shrink-0">
+                                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleActUpdate(act, 1)}><Plus className="h-4 w-4"/></Button>
+                                                <span className="font-bold text-primary w-6 text-center">{act.count || 1}</span>
+                                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleActUpdate(act, -1)}><Minus className="h-4 w-4"/></Button>
+                                                <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => handleDeleteAct(act.id)}><Trash2 className="h-4 w-4"/></Button>
+                                            </div>
+                                        </div>
+                                        {act.notes && (
+                                            <AccordionContent>
+                                                <p className="text-sm text-muted-foreground whitespace-pre-wrap px-4 pb-2 border-r-2 mr-6 border-border">
+                                                    {act.notes}
+                                                </p>
+                                            </AccordionContent>
+                                        )}
+                                    </AccordionItem>
+                                ))}
+                             </Accordion>
+                        ) : <p className="text-center text-sm text-muted-foreground pt-4">لم تسجل أي أعمال اليوم.</p>
+                        }
                     </div>
-                  </form>
-                </Form>
-                <div className="mt-6 space-y-2">
-                    {isLoadingToday ? <div className="flex justify-center"><Loader2 className="animate-spin" /></div> : 
-                     (todayActs && todayActs.length > 0) ? todayActs.map(act => (
-                        <div key={act.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                            <span className="font-medium">{act.name}</span>
-                            <div className="flex items-center gap-2">
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleActUpdate(act, 1)}><Plus className="h-4 w-4"/></Button>
-                                <span className="font-bold text-primary">{act.count || 1}</span>
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleActUpdate(act, -1)}><Minus className="h-4 w-4"/></Button>
-                                <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => handleDeleteAct(act.id)}><Trash2 className="h-4 w-4"/></Button>
-                            </div>
-                        </div>
-                     )) : <p className="text-center text-sm text-muted-foreground pt-4">لم تسجل أي أعمال اليوم.</p>
+                </CardContent>
+            </Card>
+          </div>
+          <div className="space-y-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>خريطة العبادات</CardTitle>
+                    <CardDescription>نظرة على التزامك خلال العام الماضي.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {isLoadingAll ? <div className="flex justify-center"><Loader2 className="animate-spin" /></div> : 
+                        <>
+                            <CalendarHeatmap
+                                startDate={subYears(new Date(), 1)}
+                                endDate={new Date()}
+                                values={heatmapData}
+                                classForValue={(value) => {
+                                    if (!value) { return 'color-empty'; }
+                                    return `color-scale-${Math.min(value.count, 4)}`;
+                                }}
+                                tooltipDataAttrs={(value: {date: string, count: number}) => {
+                                    return {
+                                    'data-tooltip-id': 'heatmap-tooltip',
+                                    'data-tooltip-content': `${value.date}: ${value.count} عمل`,
+                                    };
+                                }}
+                            />
+                            <ReactTooltip id="heatmap-tooltip" />
+                        </>
                     }
-                </div>
-            </CardContent>
-          </Card>
-          <Card>
-             <CardHeader>
-                <CardTitle>خريطة العبادات</CardTitle>
-                <CardDescription>نظرة على التزامك خلال العام الماضي.</CardDescription>
-            </CardHeader>
-             <CardContent>
-                {isLoadingAll ? <div className="flex justify-center"><Loader2 className="animate-spin" /></div> : 
-                    <>
-                        <CalendarHeatmap
-                            startDate={subYears(new Date(), 1)}
-                            endDate={new Date()}
-                            values={heatmapData}
-                            classForValue={(value) => {
-                                if (!value) { return 'color-empty'; }
-                                return `color-scale-1`;
-                            }}
-                            tooltipDataAttrs={(value: {date: string, count: number}) => {
-                                return {
-                                'data-tooltip-id': 'heatmap-tooltip',
-                                'data-tooltip-content': `${value.date}: ${value.count} عمل`,
-                                };
-                            }}
-                        />
-                        <ReactTooltip id="heatmap-tooltip" />
-                    </>
-                }
-                 <Button asChild className="w-full mt-4" variant="outline">
-                    <Link href="https://remembrances-1.vercel.app/" target="_blank">
-                        <BookOpen className="ml-2 h-4 w-4" />
-                        موقع أذكار وأدعية (نجاتك بيدك)
-                    </Link>
-                </Button>
-            </CardContent>
-          </Card>
+                </CardContent>
+            </Card>
+            <Button asChild className="w-full" variant="outline">
+                <Link href="https://remembrances-1.vercel.app/" target="_blank">
+                    <BookOpen className="ml-2 h-4 w-4" />
+                    موقع أذكار وأدعية (نجاتك بيدك)
+                </Link>
+            </Button>
+          </div>
       </div>
 
     </div>
