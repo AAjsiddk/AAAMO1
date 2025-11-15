@@ -7,9 +7,7 @@ import { Send, Loader2, Sparkles, User, Bot } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-// Note: In a real app, you would have a Genkit flow for this.
-// We are simulating the call here.
-// import { chatWithBot } from '@/ai/flows/chat-flow';
+import { chatWithBot } from '@/ai/flows/chat-flow';
 
 type Message = {
   role: 'user' | 'bot';
@@ -43,15 +41,8 @@ export default function AiAssistantPage() {
     setIsLoading(true);
 
     try {
-      // ** SIMULATED GENKIT CALL **
-      // In a real app, you would call your Genkit flow:
-      // const response = await chatWithBot({ query: input });
-      // const botMessageContent = response.answer;
-      
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
-      const botMessageContent = `هذا رد تمت محاكاته من مساعد الذكاء الاصطناعي. في تطبيق حقيقي، سيتم ربط هذا مع Gemini. لقد سألت عن: "${userMessage.content}"`;
-
-      const botMessage: Message = { role: 'bot', content: botMessageContent };
+      const response = await chatWithBot({ query: input });
+      const botMessage: Message = { role: 'bot', content: response.answer };
       setMessages((prev) => [...prev, botMessage]);
 
     } catch (error) {
