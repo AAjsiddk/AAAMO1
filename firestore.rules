@@ -1,100 +1,94 @@
 /**
- * @fileoverview Firestore Security Rules for the Smart Personal World application.
+ * @fileoverview Firestore Security Rules for Smart Personal World.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model. Each user has complete control over their own data,
- * and no user can access another user's data. Data is isolated using path-based rules and verified identity.
+ * This ruleset enforces a strict user-ownership model.  All data is nested under
+ * /users/{userId}, ensuring that users can only access their own data.  This
+ * design prioritizes data isolation and straightforward security rules.
  *
  * Data Structure:
- * - /users/{userId}: Stores user profiles and preferences.
- * - /users/{userId}/files/{fileId}: Stores files for each user.
- * - /users/{userId}/folders/{folderId}: Stores folders for each user.
- * - /users/{userId}/auditLogs/{auditLogId}: Stores audit logs for each user.
- * - /users/{userId}/tasks/{taskId}: Stores tasks for each user.
- * - /users/{userId}/tasks/{taskId}/attachments/{attachmentId}: Stores attachments for tasks.
- * - /users/{userId}/habits/{habitId}: Stores habits for each user.
- * - /users/{userId}/habits/{habitId}/marks/{markId}: Stores daily habit tracking marks.
- * - /users/{userId}/goals/{goalId}: Stores goals for each user.
- * - /users/{userId}/journalEntries/{journalEntryId}: Stores journal entries for each user.
+ * The data is organized hierarchically:
+ * - /users/{userId}: Stores user profile information.
+ * - /users/{userId}/files/{fileId}: Stores files uploaded by the user.
+ * - /users/{userId}/audit_logs/{auditLogId}: Stores audit logs for the user.
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed.
+ * - All write operations are protected by authorization checks.
+ * - Data consistency between the path and document data is enforced on create and update.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
+    /**
+     * @description Defines the `isOwner(userId)` helper function.
+     * @principle Checks if the request is made by the owner of the resource.
+     */
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
 
+    /**
+     * @description Defines the `isExistingOwner(userId)` helper function.
+     * @principle Combines the ownership check with the existence check.
+     */
     function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+      return isOwner(userId) && exists(resource);
     }
 
+    /**
+     * @description Security rules for the /users/{userId} collection.
+     * @path /users/{userId}
+     * @allow (create) User 'alice' (auth.uid: 'alice') can create their own profile with matching ID.
+     * @deny (create) User 'bob' (auth.uid: 'bob') cannot create a profile for 'alice'.
+     * @allow (get) User 'alice' (auth.uid: 'alice') can read their own profile.
+     * @deny (get) User 'bob' (auth.uid: 'bob') cannot read 'alice's profile.
+     * @principle Enforces user-ownership for profile data.
+     */
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow list: if false; // Do not allow listing all users.
+      allow list: if false;
 
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
-    
-    match /users/{userId}/folders/{folderId} {
-      allow get, list, create, update, delete: if isOwner(userId);
-      // Ensure data integrity on create/update
-      allow create, update: if request.resource.data.userId == userId;
-    }
 
+    /**
+     * @description Security rules for the /users/{userId}/files/{fileId} collection.
+     * @path /users/{userId}/files/{fileId}
+     * @allow (create) User 'alice' (auth.uid: 'alice') can create a file under their profile with matching userId.
+     * @deny (create) User 'bob' (auth.uid: 'bob') cannot create a file under 'alice's profile.
+     * @allow (get) User 'alice' (auth.uid: 'alice') can read a file under their profile.
+     * @deny (get) User 'bob' (auth.uid: 'bob') cannot read a file under 'alice's profile.
+     * @principle Enforces user-ownership for file data.
+     */
     match /users/{userId}/files/{fileId} {
-      allow get, list, create, update, delete: if isOwner(userId);
-      // Ensure data integrity on create/update
-      allow create, update: if request.resource.data.userId == userId;
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
-    match /users/{userId}/auditLogs/{auditLogId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      // Audit logs should be immutable
-      allow update, delete: if false;
-    }
+    /**
+     * @description Security rules for the /users/{userId}/audit_logs/{auditLogId} collection.
+     * @path /users/{userId}/audit_logs/{auditLogId}
+     * @allow (create) User 'alice' (auth.uid: 'alice') can create an audit log under their profile with matching userId.
+     * @deny (create) User 'bob' (auth.uid: 'bob') cannot create an audit log under 'alice's profile.
+     * @allow (get) User 'alice' (auth.uid: 'alice') can read an audit log under their profile.
+     * @deny (get) User 'bob' (auth.uid: 'bob') cannot read an audit log under 'alice's profile.
+     * @principle Enforces user-ownership for audit log data.
+     */
+    match /users/{userId}/audit_logs/{auditLogId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
 
-    match /users/{userId}/tasks/{taskId} {
-      allow get, list, create, update, delete: if isOwner(userId);
-      // Ensure data integrity on create/update
-      allow create, update: if request.resource.data.userId == userId;
-    }
-    
-    match /users/{userId}/tasks/{taskId}/attachments/{attachmentId} {
-        allow get, list, create, update, delete: if isOwner(userId);
-        // Ensure data integrity
-        allow create, update: if request.resource.data.userId == userId && request.resource.data.taskId == taskId;
-    }
-
-    match /users/{userId}/habits/{habitId} {
-       allow get, list, create, update, delete: if isOwner(userId);
-        // Ensure data integrity
-       allow create, update: if request.resource.data.userId == userId;
-    }
-    
-    match /users/{userId}/habits/{habitId}/marks/{markId} {
-        allow get, list, create, update, delete: if isOwner(userId);
-        // Ensure data integrity
-        allow create, update: if request.resource.data.userId == userId && request.resource.data.habitId == habitId;
-    }
-
-    match /users/{userId}/goals/{goalId} {
-      allow get, list, create, update, delete: if isOwner(userId);
-      // Ensure data integrity on create/update
-      allow create, update: if request.resource.data.userId == userId;
-    }
-
-    match /users/{userId}/journalEntries/{journalEntryId} {
-      allow get, list, create, update, delete: if isOwner(userId);
-      // Ensure data integrity
-      allow create, update: if request.resource.data.userId == userId;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
   }
 }

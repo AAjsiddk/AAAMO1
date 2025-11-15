@@ -8,44 +8,30 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the User entity, matches Firebase Auth UID."
+          "description": "Unique identifier for the user entity."
         },
-        "displayName": {
+        "username": {
           "type": "string",
-          "description": "The user's display name."
+          "description": "The user's username."
         },
         "email": {
           "type": "string",
-          "format": "email",
-          "description": "The user's email address."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the user account was created."
+          "description": "The user's email address.",
+          "format": "email"
         },
         "theme": {
           "type": "string",
-          "description": "The user's preferred theme (e.g., 'light', 'dark')."
-        },
-        "primaryColor": {
-          "type": "string",
-          "description": "The user's primary color preference."
-        },
-        "backgroundColor": {
-          "type": "string",
-          "description": "The user's background color preference."
+          "description": "The user's preferred theme (e.g., day, night)."
         },
         "accentColor": {
           "type": "string",
-          "description": "The user's accent color preference."
+          "description": "The user's preferred accent color."
         }
       },
       "required": [
         "id",
-        "displayName",
-        "email",
-        "createdAt"
+        "username",
+        "email"
       ]
     },
     "File": {
@@ -56,109 +42,80 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the File entity."
+          "description": "Unique identifier for the file entity."
         },
         "userId": {
           "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N File).  Encrypted user ID for data isolation."
+          "description": "Reference to the User who owns the file. (Relationship: User 1:N File)"
         },
-        "folderId": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The ID of the parent folder. Null for root files."
-        },
-        "name": {
+        "filename": {
           "type": "string",
-          "description": "The name of the file."
+          "description": "The original filename."
         },
         "storagePath": {
           "type": "string",
-          "description": "The location of the file in the storage system."
+          "description": "The path to the file in the centralized storage."
+        },
+        "uploadDate": {
+          "type": "string",
+          "description": "The date and time when the file was uploaded.",
+          "format": "date-time"
         },
         "fileType": {
           "type": "string",
-          "description": "The MIME type of the file."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp of when the file was uploaded.",
-          "format": "date-time"
+          "description": "The type of file uploaded"
         }
       },
       "required": [
         "id",
         "userId",
-        "name",
+        "filename",
         "storagePath",
-        "fileType",
-        "createdAt"
-      ]
-    },
-    "Folder": {
-      "title": "Folder",
-      "type": "object",
-      "description": "Represents a folder in the file system.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the folder."
-        },
-        "userId": {
-          "type": "string",
-          "description": "The ID of the user who owns the folder."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the folder."
-        },
-        "parentId": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The ID of the parent folder. Null for root folders."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of when the folder was created."
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "name",
-        "createdAt"
+        "uploadDate"
       ]
     },
     "AuditLog": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AuditLog",
       "type": "object",
-      "description": "Represents an audit log entry for data modifications.",
+      "description": "Represents a log entry for a data modification.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the AuditLog entry."
+          "description": "Unique identifier for the audit log entry."
         },
         "userId": {
           "type": "string",
-          "description": "Reference to User. Encrypted user ID for data isolation."
+          "description": "Reference to the User who made the change. (Relationship: User 1:N AuditLog)"
         },
         "timestamp": {
           "type": "string",
-          "description": "Timestamp of the modification.",
+          "description": "The date and time of the modification.",
           "format": "date-time"
         },
         "deviceId": {
           "type": "string",
-          "description": "The ID of the device used for the modification."
+          "description": "The ID of the device used to make the modification."
         },
-        "description": {
+        "entityType": {
           "type": "string",
-          "description": "Description of the change."
+          "description": "The type of entity that was modified (e.g., User, File)."
+        },
+        "entityId": {
+          "type": "string",
+          "description": "The ID of the entity that was modified."
+        },
+        "changeType": {
+          "type": "string",
+          "description": "The type of change that was made (e.g., create, update, delete)."
+        },
+        "oldValue": {
+          "type": "string",
+          "description": "The value of the field before the change."
+        },
+        "newValue": {
+          "type": "string",
+          "description": "The value of the field after the change."
         }
       },
       "required": [
@@ -166,297 +123,9 @@
         "userId",
         "timestamp",
         "deviceId",
-        "description"
-      ]
-    },
-    "Task": {
-      "title": "Task",
-      "type": "object",
-      "description": "Represents a user's task with detailed properties.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the task."
-        },
-        "userId": {
-          "type": "string",
-          "description": "The ID of the user who owns the task."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the task."
-        },
-        "description": {
-          "type": "string",
-          "description": "A detailed description of the task."
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "pending",
-            "in_progress",
-            "completed",
-            "deferred",
-            "cancelled",
-            "waiting_for",
-            "archived"
-          ],
-          "description": "The current status of the task."
-        },
-        "progress": {
-          "type": "number",
-          "description": "Progress of the task from 0 to 100."
-        },
-        "startDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The start date and time of the task."
-        },
-        "endDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The end date and time of the task."
-        },
-        "relatedGoalId": {
-          "type": "string",
-          "description": "ID of a related goal."
-        },
-        "relatedHabitId": {
-          "type": "string",
-          "description": "ID of a related habit."
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of the last modification."
-        },
-        "parentId": {
-            "type": ["string", "null"],
-            "description": "The ID of the parent task. Null for main tasks."
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "title",
-        "status",
-        "updatedAt"
-      ]
-    },
-    "Attachment": {
-      "title": "Attachment",
-      "type": "object",
-      "description": "Represents a file attached to a task.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the attachment."
-        },
-        "taskId": {
-          "type": "string",
-          "description": "The ID of the task this attachment belongs to."
-        },
-        "userId": {
-          "type": "string",
-          "description": "The ID of the user who owns the task and attachment."
-        },
-        "fileName": {
-          "type": "string",
-          "description": "The name of the attached file."
-        },
-        "fileUrl": {
-          "type": "string",
-          "description": "The URL to access the file in storage."
-        },
-        "uploadedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of when the file was uploaded."
-        }
-      },
-      "required": [
-        "id",
-        "taskId",
-        "userId",
-        "fileName",
-        "fileUrl",
-        "uploadedAt"
-      ]
-    },
-    "Habit": {
-      "title": "Habit",
-      "type": "object",
-      "description": "Represents a user's habit to acquire or quit.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the habit."
-        },
-        "userId": {
-          "type": "string",
-          "description": "The ID of the user who owns the habit."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the habit."
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "acquire",
-            "quit"
-          ],
-          "description": "The type of habit."
-        },
-        "frequency": {
-          "type": "string",
-          "description": "The repetition schedule (e.g., daily, weekly)."
-        },
-        "streak": {
-          "type": "number",
-          "description": "Current number of consecutive days the habit was maintained."
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "name",
-        "type"
-      ]
-    },
-    "HabitMark": {
-      "title": "Habit Mark",
-      "type": "object",
-      "description": "Represents a single day's record for a habit.",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "habitId": {
-          "type": "string"
-        },
-        "userId": {
-          "type": "string"
-        },
-        "date": {
-          "type": "string",
-          "format": "date"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "completed",
-            "not_completed",
-            "partially_completed"
-          ]
-        }
-      },
-      "required": [
-        "id",
-        "habitId",
-        "userId",
-        "date",
-        "status"
-      ]
-    },
-    "Goal": {
-      "title": "Goal",
-      "type": "object",
-      "description": "Represents a user's goal with detailed properties.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the goal."
-        },
-        "userId": {
-          "type": "string",
-          "description": "The ID of the user who owns the goal."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the goal."
-        },
-        "description": {
-          "type": "string",
-          "description": "A detailed description of the goal."
-        },
-        "motivation": {
-          "type": "string",
-          "description": "The motivation behind the goal."
-        },
-        "startDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The start date and time of the goal."
-        },
-        "endDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The end date and time of the goal."
-        },
-        "progress": {
-          "type": "number",
-          "description": "Progress of the goal from 0 to 100."
-        },
-        "passwordHash": {
-          "type": "string",
-          "description": "An optional password hash to lock the goal."
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of the last modification."
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "name",
-        "updatedAt"
-      ]
-    },
-    "JournalEntry": {
-      "title": "Journal Entry",
-      "type": "object",
-      "description": "Represents a single entry in the user's journal.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the journal entry."
-        },
-        "userId": {
-          "type": "string",
-          "description": "The ID of the user who owns the entry."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the journal entry."
-        },
-        "content": {
-          "type": "string",
-          "description": "The main text content of the journal entry."
-        },
-        "mood": {
-          "type": "string",
-          "enum": ["happy", "sad", "neutral", "excited", "anxious"],
-          "description": "The analyzed mood of the entry (e.g., happy, sad, neutral)."
-        },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL of an image attached to the entry."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of when the entry was created."
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "title",
-        "content",
-        "createdAt"
+        "entityType",
+        "entityId",
+        "changeType"
       ]
     }
   },
@@ -475,11 +144,11 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profiles.  `userId` corresponds to the authenticated user's UID.",
+          "description": "Stores user profiles. Each user has a unique ID.  The userId is used for path-based ownership for data isolation.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user."
+              "description": "The unique identifier for the user."
             }
           ]
         }
@@ -491,110 +160,40 @@
           "schema": {
             "$ref": "#/backend/entities/File"
           },
-          "description": "Stores files for each user. Enforces user-specific file storage. `userId` must match the authenticated user's UID.",
+          "description": "Stores files uploaded by each user. The userId is used for path-based ownership for data isolation.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user."
+              "description": "The unique identifier for the user."
             },
             {
               "name": "fileId",
-              "description": "The unique identifier of the file."
+              "description": "The unique identifier for the file."
             }
           ]
         }
       },
       {
-        "path": "/users/{userId}/folders/{folderId}",
-        "definition": {
-          "entityName": "Folder",
-          "schema": {
-            "$ref": "#/backend/entities/Folder"
-          },
-          "description": "Stores folders for each user. Enforces user-specific folder storage. `userId` must match the authenticated user's UID."
-        }
-      },
-      {
-        "path": "/users/{userId}/auditLogs/{auditLogId}",
+        "path": "/users/{userId}/audit_logs/{auditLogId}",
         "definition": {
           "entityName": "AuditLog",
           "schema": {
             "$ref": "#/backend/entities/AuditLog"
           },
-          "description": "Stores audit logs for each user. Enforces user-specific logging. `userId` must match the authenticated user's UID.",
+          "description": "Stores audit logs for each user. The userId is used for path-based ownership for data isolation.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user."
+              "description": "The unique identifier for the user."
             },
             {
               "name": "auditLogId",
-              "description": "The unique identifier of the audit log entry."
+              "description": "The unique identifier for the audit log entry."
             }
           ]
         }
-      },
-      {
-        "path": "/users/{userId}/tasks/{taskId}",
-        "definition": {
-          "entityName": "Task",
-          "schema": {
-            "$ref": "#/backend/entities/Task"
-          },
-          "description": "Stores tasks for each user. `userId` must match the authenticated user's UID."
-        }
-      },
-      {
-        "path": "/users/{userId}/tasks/{taskId}/attachments/{attachmentId}",
-        "definition": {
-          "entityName": "Attachment",
-          "schema": {
-            "$ref": "#/backend/entities/Attachment"
-          },
-          "description": "Stores attachments for a specific task. `userId` must match the authenticated user's UID."
-        }
-      },
-      {
-        "path": "/users/{userId}/habits/{habitId}",
-        "definition": {
-          "entityName": "Habit",
-          "schema": {
-            "$ref": "#/backend/entities/Habit"
-          },
-          "description": "Stores habits for each user. `userId` must match the authenticated user's UID."
-        }
-      },
-      {
-        "path": "/users/{userId}/habits/{habitId}/marks/{markId}",
-        "definition": {
-          "entityName": "HabitMark",
-          "schema": {
-            "$ref": "#/backend/entities/HabitMark"
-          },
-          "description": "Stores daily completion marks for a specific habit. `userId` must match the authenticated user's UID."
-        }
-      },
-      {
-        "path": "/users/{userId}/goals/{goalId}",
-        "definition": {
-          "entityName": "Goal",
-          "schema": {
-            "$ref": "#/backend/entities/Goal"
-          },
-          "description": "Stores goals for each user. `userId` must match the authenticated user's UID."
-        }
-      },
-      {
-        "path": "/users/{userId}/journalEntries/{journalEntryId}",
-        "definition": {
-          "entityName": "JournalEntry",
-          "schema": {
-            "$ref": "#/backend/entities/JournalEntry"
-          },
-          "description": "Stores journal entries for each user. `userId` must match the authenticated user's UID."
-        }
       }
     ],
-    "reasoning": "This Firestore structure is designed to support the 'Smart Personal World' application, focusing on data isolation, audit logging, centralized storage, theme customization, and AI assistance. The structure emphasizes Authorization Independence, DBAC (Database-Based Access Control), and simplifies security rules for `list` operations (QAPs). It achieves these goals through denormalization of authorization data and structural segregation.\n\n**Authorization Independence:** User-owned data is stored under `/users/{userId}`, enabling simple path-based rules. Data requiring more complex authorization (collaborative documents, etc.) would necessitate denormalization of membership information directly into the documents. Since the provided data model is exclusively user-owned, this denormalization is not currently implemented but would be crucial for collaborative features.\n\n**Data Isolation:**  Each user's data (files, audit logs, and the user document itself) is stored under their specific user ID (`/users/{userId}`). This ensures complete data isolation, as Firestore security rules can easily restrict access based on the authenticated user's ID.\n\n**QAPs (Rules are not Filters):**  The path-based ownership model enables secure `list` operations. Rules can allow a user to list only documents within their `/users/{userId}` path, preventing unauthorized access to other users' data.\n\n**Audit Logs:** Audit logs are stored as subcollections under each user's document (`/users/{userId}/auditLogs`). This aligns the logs with the user whose actions they represent and simplifies security rules.\n\n**Centralized File Storage:** While the data structure itself doesn't directly manage the centralized storage, the `File` entity includes a `storageLocation` field.  The security rules must ensure that only the corresponding user can read or modify the storage location for their files.\n\n**Theme Customization:** The user's theme preferences are stored directly in the `/users/{userId}` document, making them easily accessible and modifiable.\n\n**Considerations for Future Features:**\n*   If collaborative features are added (e.g., shared files or notes), the `Membership Map` pattern should be implemented.  This would involve adding a `members` map field to the collaborative document, containing user IDs and their roles.  The security rules would then check this map to determine access rights.\n*   For AI-powered assistance features, consider adding a subcollection to store AI-generated data, applying the same ownership and data isolation principles."
+    "reasoning": "The Firestore structure is designed to ensure data isolation, audit logging, and centralized storage as per the application's requirements.  User data is isolated using path-based ownership (`/users/{userId}`).  File and AuditLog entities are structured as subcollections under each user, reinforcing this isolation and making security rules straightforward. This structure leverages Authorization Independence via denormalization by storing authorization context directly within documents, avoiding the need for `get()` calls in security rules. The path-based ownership model also inherently supports secure `list` operations (QAPs), as a user can only list resources under their own user ID."
   }
 }
