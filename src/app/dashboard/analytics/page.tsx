@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
         }
     });
     return weekCounts;
-  }, [tasks]);
+  }, [tasks])
 
 
   const isLoading = loadingTasks
@@ -137,7 +137,7 @@ export default function AnalyticsPage() {
              <CardDescription>
                 نظرة على إنتاجيتك خلال الأيام السبعة الماضية.
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
              <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={tasksCompletedWeeklyData}>
