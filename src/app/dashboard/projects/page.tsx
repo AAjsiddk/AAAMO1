@@ -33,7 +33,16 @@ export default function ProjectsPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <div className="flex items-center justify-between space-y-2">
+            <h2 className="text-3xl font-bold tracking-tight">المشاريع الطويلة</h2>
+            <DialogTrigger asChild>
+                 <Button onClick={() => setIsDialogOpen(true)}>
+                    <PlusCircle className="ml-2 h-4 w-4" />
+                    مشروع جديد
+                </Button>
+            </DialogTrigger>
+          </div>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>إنشاء مشروع جديد</DialogTitle>
@@ -60,15 +69,6 @@ export default function ProjectsPage() {
           </DialogContent>
         </Dialog>
 
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">المشاريع الطويلة</h2>
-        <DialogTrigger asChild>
-             <Button onClick={() => setIsDialogOpen(true)}>
-                <PlusCircle className="ml-2 h-4 w-4" />
-                مشروع جديد
-            </Button>
-        </DialogTrigger>
-      </div>
 
       {projects.length === 0 ? (
         <Card>
@@ -78,12 +78,10 @@ export default function ProjectsPage() {
             <p className="text-muted-foreground max-w-md">
               ابدأ بتخطيط مشروعك الكبير الأول. قسمه إلى مراحل ومهام لتحقيق أهدافك الطموحة.
             </p>
-             <DialogTrigger asChild>
-                <Button className="mt-4" onClick={() => setIsDialogOpen(true)}>
-                    <PlusCircle className="ml-2 h-4 w-4" />
-                    إنشاء مشروع جديد
-                </Button>
-            </DialogTrigger>
+             <Button className="mt-4" onClick={() => setIsDialogOpen(true)}>
+                <PlusCircle className="ml-2 h-4 w-4" />
+                إنشاء مشروع جديد
+            </Button>
           </CardContent>
         </Card>
       ) : (
