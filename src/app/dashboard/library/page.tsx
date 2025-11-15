@@ -143,7 +143,7 @@ export default function LibraryPage() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>إضافة عنصر جديد למكتبتك</DialogTitle>
+              <DialogTitle>إضافة عنصر جديد لمكتبتك</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -218,7 +218,7 @@ export default function LibraryPage() {
               <CardContent className="flex flex-col flex-grow">
                 {item.imageUrl && (
                     <div className="relative aspect-video w-full mb-4 overflow-hidden rounded-md">
-                        <Image src={item.imageUrl} alt={item.title} layout="fill" objectFit="cover" />
+                        <Image src={item.imageUrl} alt={item.title} fill={true} className="object-cover" />
                     </div>
                 )}
                 {item.description && <p className="text-sm text-muted-foreground flex-grow mb-4">{item.description}</p>}
