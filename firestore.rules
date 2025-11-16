@@ -92,7 +92,10 @@ service cloud.firestore {
      * @principle Enforces user-ownership for notes.
      */
     match /users/{userId}/notes/{noteId} {
-      allow read, write, create, update, delete, list: if isOwner(userId);
+      allow read, write, create, update, delete: if isOwner(userId);
+    }
+    match /users/{userId}/notes {
+        allow list: if isOwner(userId);
     }
 
     /**
