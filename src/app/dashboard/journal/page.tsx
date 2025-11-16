@@ -367,7 +367,7 @@ export default function JournalPage() {
                  {entry.imageUrls && entry.imageUrls.length > 0 && (
                   <div className="mb-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                     {entry.imageUrls.map((url, index) => (
-                      <div key={index} className="relative aspect-square w-full overflow-hidden rounded-md">
+                      <div key={index} className="relative aspect-video w-full overflow-hidden rounded-md">
                         <Image src={url} alt={`${entry.title} - ${index + 1}`} fill className="object-cover" />
                       </div>
                     ))}
