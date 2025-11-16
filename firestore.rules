@@ -57,8 +57,12 @@ service cloud.firestore {
      * @principle Enforces user-ownership for tasks.
      */
     match /users/{userId}/tasks/{taskId} {
-      allow read, write, create, update, delete, list: if isOwner(userId);
+      allow read, write, create, update, delete: if isOwner(userId);
     }
+     match /users/{userId}/tasks/{taskId} {
+      allow list: if isOwner(userId);
+    }
+
 
     /**
      * @description Security rules for the /users/{userId}/files/{fileId} collection.

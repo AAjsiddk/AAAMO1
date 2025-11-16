@@ -9,7 +9,8 @@ import { format, isSameDay } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
-import type { DayProps } from 'react-day-picker';
+import type { DayPicker, DayProps } from 'react-day-picker';
+import { Button } from '@/components/ui/button';
 
 export default function CalendarPage() {
     const { user } = useUser();
@@ -45,16 +46,36 @@ export default function CalendarPage() {
         return tasksByDate.get(dateString) || [];
     }, [selectedDate, tasksByDate]);
     
-    const DayWithTasks = (props: DayProps) => {
-        const { date, children } = props;
-        const dateString = format(date, 'yyyy-MM-dd');
-        const tasksForDay = tasksByDate.get(dateString);
+    const DayWithTasks = (dayProps: DayProps) => {
+        const { date, displayMonth } = dayProps;
+        const tasksForDay = tasksByDate.get(format(date, 'yyyy-MM-dd'));
+        
+        // Remove props that are not valid for DOM elements
+        const buttonProps: React.HTMLAttributes<HTMLButtonElement> & { 'aria-label'?: string | undefined, disabled?: boolean | undefined } = {
+            ...dayProps,
+            children: undefined, 
+        };
+        // This is a bit of a hack to get around the fact that DayPicker passes down
+        // props that are not valid for DOM elements.
+        delete (buttonProps as any).displayMonth;
+        delete (buttonProps as any).date;
+        delete (buttonProps as any).modifiers;
         
         return (
-            <div className="relative">
-                {children}
+             <div className="relative">
+                <Button 
+                    {...buttonProps}
+                    name="day"
+                    variant={dayProps.modifiers.selected ? 'default' : dayProps.modifiers.today ? 'outline' : 'ghost'} 
+                    className={cn(
+                        'h-9 w-9 p-0 font-normal',
+                        !dayProps.modifiers.disabled && dayProps.modifiers.outside && 'text-muted-foreground opacity-50'
+                    )}
+                 >
+                    {dayProps.date.getDate()}
+                 </Button>
                 {tasksForDay && tasksForDay.length > 0 && (
-                     <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex space-x-1">
+                     <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex space-x-1 pointer-events-none">
                         <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
                      </div>
                 )}

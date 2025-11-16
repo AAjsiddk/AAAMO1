@@ -102,3 +102,10 @@
 .react-calendar-heatmap .color-mood-neutral { fill: #6b7280; }
 .react-calendar-heatmap .color-mood-anxious { fill: #8b5cf6; }
 .react-calendar-heatmap .color-mood-sad { fill: #3b82f6; }
+
+
+/* Fix for react-day-picker */
+.rdp-row {
+  display: flex;
+  justify-content: space-around;
+}
