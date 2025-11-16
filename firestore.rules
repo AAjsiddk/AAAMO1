@@ -83,8 +83,8 @@ service cloud.firestore {
     }
     
      /**
-     * @description Security rules for the /users/{userId}/notes/{noteId} collection.
-     * @path /users/{userId}/notes/{noteId}
+     * @description Security rules for the /users/{userId}/notes collection.
+     * @path /users/{userId}/notes
      * @principle Enforces user-ownership for notes.
      */
     match /users/{userId}/notes/{noteId} {
