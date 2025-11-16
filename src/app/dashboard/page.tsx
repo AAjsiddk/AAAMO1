@@ -24,7 +24,7 @@ import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore
 import type { JournalEntry, Task } from '@/lib/types';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 function LatestJournalEntries() {
   const { user } = useUser();
@@ -89,7 +89,7 @@ function LatestJournalEntries() {
 }
 
 
-function DashboardPageContent() {
+export default function DashboardPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
@@ -207,5 +207,3 @@ function DashboardPageContent() {
     </div>
   );
 }
-
-export default React.memo(DashboardPageContent);

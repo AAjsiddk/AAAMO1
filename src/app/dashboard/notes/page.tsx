@@ -90,7 +90,7 @@ export default function NotesPage() {
     try {
         if(editingNote) {
              const noteDocRef = doc(firestore, `users/${user.uid}/notes`, editingNote.id);
-             await updateDoc(noteDocRef, { ...values });
+             await updateDoc(noteDocRef, { ...values, updatedAt: serverTimestamp() });
              toast({ title: 'نجاح', description: 'تم تحديث الملاحظة.' });
         } else {
              await addDoc(notesCollectionRef, {
@@ -99,6 +99,7 @@ export default function NotesPage() {
                 pinned: false,
                 color: 'default',
                 createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
             });
             toast({ title: 'نجاح', description: 'تمت إضافة الملاحظة.' });
         }

@@ -85,6 +85,7 @@ export type Note = {
     pinned: boolean;
     color: string;
     createdAt: FieldValue;
+    updatedAt: FieldValue;
 };
 
 
