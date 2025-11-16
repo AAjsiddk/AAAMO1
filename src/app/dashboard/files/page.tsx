@@ -83,7 +83,7 @@ export default function FilesPage() {
   const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
+  const [editingItem, setEditingItem] = useState<{ type: 'folder' | 'file'; data: Folder | FileType } | null>(null);
   
   const [itemToDelete, setItemToDelete] = useState<{ type: 'folder' | 'file'; id: string } | null>(null);
 
@@ -131,8 +131,8 @@ export default function FilesPage() {
     if (!user || !foldersCollectionRef) return;
     setIsSubmitting(true);
     try {
-        if(editingFolder) {
-            const folderDocRef = doc(firestore, `users/${user.uid}/folders`, editingFolder.id);
+        if(editingItem && editingItem.type === 'folder') {
+            const folderDocRef = doc(firestore, `users/${user.uid}/folders`, editingItem.data.id);
             await updateDoc(folderDocRef, { name: values.name });
             toast({ title: 'نجاح', description: 'تم تحديث المجلد.' });
         } else {
@@ -147,18 +147,18 @@ export default function FilesPage() {
         }
       folderForm.reset();
       setIsFolderDialogOpen(false);
-      setEditingFolder(null);
+      setEditingItem(null);
     } catch (error) {
       console.error("Error saving folder: ", error);
-      toast({ variant: 'destructive', title: 'خطأ', description: `فشل ${editingFolder ? 'تحديث' : 'إنشاء'} المجلد.` });
+      toast({ variant: 'destructive', title: 'خطأ', description: `فشل ${editingItem ? 'تحديث' : 'إنشاء'} المجلد.` });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const openEditFolderDialog = (folder: Folder) => {
-    setEditingFolder(folder);
-    folderForm.setValue('name', folder.name);
+  const openEditDialog = (item: Folder | FileType, type: 'folder' | 'file') => {
+    setEditingItem({ type, data: item });
+    folderForm.setValue('name', item.name); // Using one form for rename
     setIsFolderDialogOpen(true);
   };
   
@@ -281,15 +281,15 @@ export default function FilesPage() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">الملفات والمجلدات</h2>
         <div className="flex items-center space-x-2 space-x-reverse">
-          <Dialog open={isFolderDialogOpen} onOpenChange={(open) => { setIsFolderDialogOpen(open); if (!open) { setEditingFolder(null); folderForm.reset(); } }}>
+          <Dialog open={isFolderDialogOpen} onOpenChange={(open) => { setIsFolderDialogOpen(open); if (!open) { setEditingItem(null); folderForm.reset(); } }}>
             <DialogTrigger asChild>
-              <Button onClick={() => setIsFolderDialogOpen(true)}>
+              <Button onClick={() => { setEditingItem(null); setIsFolderDialogOpen(true); }}>
                 <PlusCircle className="ml-2 h-4 w-4" />
                 مجلد جديد
               </Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>{editingFolder ? 'إعادة تسمية المجلد' : 'إنشاء مجلد جديد'}</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{editingItem ? `إعادة تسمية "${editingItem.data.name}"` : 'إنشاء مجلد جديد'}</DialogTitle></DialogHeader>
               <Form {...folderForm}>
                 <form onSubmit={folderForm.handleSubmit(handleCreateOrUpdateFolder)} className="space-y-4">
                   <FormField
@@ -297,7 +297,7 @@ export default function FilesPage() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>اسم المجلد</FormLabel>
+                        <FormLabel>الاسم</FormLabel>
                         <FormControl>
                           <Input placeholder="مثال: مشاريعي" {...field} />
                         </FormControl>
@@ -309,7 +309,7 @@ export default function FilesPage() {
                     <DialogClose asChild><Button type="button" variant="secondary">إلغاء</Button></DialogClose>
                     <Button type="submit" disabled={isSubmitting}>
                       {isSubmitting && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                      {editingFolder ? 'حفظ التعديل' : 'إنشاء'}
+                      {editingItem ? 'حفظ التعديل' : 'إنشاء'}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -419,7 +419,7 @@ export default function FilesPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={() => openEditFolderDialog(folder)}>
+                    <DropdownMenuItem onSelect={() => openEditDialog(folder, 'folder')}>
                       <Edit className="ml-2 h-4 w-4" />
                       <span>إعادة تسمية</span>
                     </DropdownMenuItem>

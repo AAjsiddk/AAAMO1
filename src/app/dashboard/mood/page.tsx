@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Smile, Loader2 } from 'lucide-react';
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { JournalEntry } from '@/lib/types';
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
@@ -65,8 +65,8 @@ export default function MoodPage() {
   
   const heatmapData = useMemo(() => {
     if (!entries) return [];
-    return entries.filter(e => e.mood).map(entry => ({
-        date: format((entry.createdAt as any).toDate(), 'yyyy-MM-dd'),
+    return entries.filter(e => e.mood && e.createdAt).map(entry => ({
+        date: format((entry.createdAt as Timestamp).toDate(), 'yyyy-MM-dd'),
         mood: entry.mood,
     }));
   }, [entries]);

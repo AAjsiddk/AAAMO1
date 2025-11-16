@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/card'
 import { useCollection, useUser, useMemoFirebase } from '@/firebase'
 import type { Task } from '@/lib/types'
-import { collection } from 'firebase/firestore'
+import { collection, Timestamp } from 'firebase/firestore'
 import { useFirestore } from '@/firebase'
 import {
   BarChart,
@@ -29,7 +29,7 @@ import { useMemo } from 'react'
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE', '#00C49F', '#FFBB28'];
 
 const statusTranslations: { [key in Task['status']]: string } = {
-  pending: 'قيد الانتظar',
+  pending: 'قيد الانتظار',
   in_progress: 'قيد التنفيذ',
   completed: 'مكتملة',
   deferred: 'مؤجلة',
@@ -71,14 +71,17 @@ export default function AnalyticsPage() {
     }));
 
     tasks.forEach(task => {
-        if (task.status === 'completed' && task.updatedAt && typeof (task.updatedAt as any).toDate === 'function') {
-            const completedDate = (task.updatedAt as any).toDate();
-            const dayOfWeek = completedDate.getDay();
-            weekCounts[dayOfWeek].completed++;
+        if (task.status === 'completed' && task.updatedAt) {
+            // Ensure createdAt is not null and is a Firestore Timestamp
+            const date = (task.updatedAt as Timestamp)?.toDate();
+            if (date) {
+                const dayOfWeek = date.getDay();
+                weekCounts[dayOfWeek].completed++;
+            }
         }
     });
     return weekCounts;
-  }, [tasks])
+  }, [tasks]);
 
 
   const isLoading = loadingTasks

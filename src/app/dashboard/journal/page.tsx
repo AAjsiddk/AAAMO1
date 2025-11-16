@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -50,17 +50,30 @@ import {
   Sparkles,
   Annoyed,
   CalendarHeart,
+  ImagePlus,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { JournalEntry } from '@/lib/types';
 import { format, isSameDay } from 'date-fns';
 import Image from 'next/image';
 
+// Placeholder for a real storage upload function
+async function uploadImage(file: File): Promise<string> {
+  // In a real app, you would upload to Firebase Storage and get the URL
+  // For this prototype, we'll use a placeholder and convert the image to a Data URL
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target?.result as string);
+    reader.readAsDataURL(file);
+  });
+}
+
 const journalSchema = z.object({
   title: z.string().min(1, { message: 'العنوان مطلوب.' }),
   content: z.string().min(1, { message: 'المحتوى مطلوب.' }),
-  imageUrl: z.string().url({ message: 'الرجاء إدخال رابط صحيح' }).optional().or(z.literal('')),
+  imageFile: z.instanceof(FileList).optional(),
 });
+
 
 const moodIcons: { [key in NonNullable<JournalEntry['mood']>]: React.ReactElement } = {
     happy: <Smile className="h-5 w-5 text-green-500" />,
@@ -91,6 +104,8 @@ export default function JournalPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showOnThisDay, setShowOnThisDay] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -98,8 +113,10 @@ export default function JournalPage() {
 
   const form = useForm<z.infer<typeof journalSchema>>({
     resolver: zodResolver(journalSchema),
-    defaultValues: { title: '', content: '', imageUrl: '' },
+    defaultValues: { title: '', content: '' },
   });
+  
+  const imageFileRef = form.register('imageFile');
 
   const journalCollectionRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -134,6 +151,13 @@ export default function JournalPage() {
     
     try {
         const mood = analyzeMood(values.content);
+        let imageUrl: string | undefined = undefined;
+
+        if (values.imageFile && values.imageFile.length > 0) {
+            // In a real app, this would upload to Firebase Storage
+            // For now, we convert to a Data URL for demonstration
+            imageUrl = await uploadImage(values.imageFile[0]);
+        }
 
         const newEntry: Omit<JournalEntry, 'id'> = {
           title: values.title,
@@ -141,16 +165,14 @@ export default function JournalPage() {
           userId: user.uid,
           mood: mood,
           createdAt: serverTimestamp(),
+          imageUrl,
         };
-
-        if (values.imageUrl) {
-            newEntry.imageUrl = values.imageUrl;
-        }
-
+        
         await addDoc(journalCollectionRef, newEntry);
         
         toast({ title: 'نجاح', description: 'تمت إضافة تدوينتك بنجاح.' });
         form.reset();
+        setPreviewImage(null);
         setIsDialogOpen(false);
     } catch (error) {
         console.error("Error creating journal entry: ", error);
@@ -189,14 +211,14 @@ export default function JournalPage() {
                 <CalendarHeart className="ml-2 h-4 w-4" />
                 في مثل هذا اليوم
             </Button>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) { form.reset(); setPreviewImage(null); } setIsDialogOpen(open); }}>
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="ml-2 h-4 w-4" />
                 تدوينة جديدة
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-md">
               <DialogHeader><DialogTitle>تدوينة جديدة</DialogTitle></DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -206,9 +228,47 @@ export default function JournalPage() {
                   <FormField name="content" control={form.control} render={({ field }) => (
                     <FormItem><FormLabel>المحتوى</FormLabel><FormControl><Textarea placeholder="ماذا يدور في خلدك؟" {...field} rows={6} /></FormControl><FormMessage /></FormItem>
                   )} />
-                  <FormField name="imageUrl" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>رابط صورة (اختياري)</FormLabel><FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
+                  <FormItem>
+                    <FormLabel>إضافة صورة (اختياري)</FormLabel>
+                    <FormControl>
+                        <div 
+                            className="mt-2 flex justify-center rounded-lg border border-dashed border-input px-6 py-10"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                        <div className="text-center">
+                            {previewImage ? (
+                                <Image src={previewImage} alt="Preview" width={200} height={200} className="mx-auto h-24 w-auto rounded-md" />
+                            ) : (
+                                <>
+                                    <ImagePlus className="mx-auto h-12 w-12 text-gray-400" />
+                                    <p className="mt-4 text-sm leading-6 text-muted-foreground">اسحب وأفلت صورة أو انقر للاختيار</p>
+                                </>
+                            )}
+                        </div>
+                        <Input 
+                            {...imageFileRef}
+                            ref={fileInputRef}
+                            id="image-upload"
+                            type="file"
+                            className="sr-only"
+                            accept="image/*"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                        setPreviewImage(reader.result as string);
+                                    };
+                                    reader.readAsDataURL(file);
+                                } else {
+                                    setPreviewImage(null);
+                                }
+                            }}
+                        />
+                        </div>
+                    </FormControl>
+                  </FormItem>
+
                   <DialogFooter>
                     <DialogClose asChild><Button type="button" variant="secondary">إلغاء</Button></DialogClose>
                     <Button type="submit" disabled={isSubmitting}>
