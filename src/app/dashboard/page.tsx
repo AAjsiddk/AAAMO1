@@ -118,7 +118,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              مؤشر الإنجاز العام
+              مؤشر الإنجاز اليومي
             </CardTitle>
              <CardDescription>
               {tasks?.length || 0} مهمة
@@ -149,31 +149,31 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <Button asChild variant="outline" className="flex flex-col h-24">
+            <Button asChild variant="outline" className="flex flex-col h-24 transform transition-transform duration-200 hover:scale-105 hover:bg-primary/10">
               <Link href="/dashboard/goals">
                 <Target className="h-8 w-8 mb-2 text-primary" />
                 <span>هدف</span>
               </Link>
             </Button>
-             <Button asChild variant="outline" className="flex flex-col h-24">
+             <Button asChild variant="outline" className="flex flex-col h-24 transform transition-transform duration-200 hover:scale-105 hover:bg-primary/10">
               <Link href="/dashboard/habits">
                 <Repeat className="h-8 w-8 mb-2 text-primary" />
                 <span>عادة</span>
               </Link>
             </Button>
-            <Button asChild variant="outline" className="flex flex-col h-24">
+            <Button asChild variant="outline" className="flex flex-col h-24 transform transition-transform duration-200 hover:scale-105 hover:bg-primary/10">
               <Link href="/dashboard/tasks">
                 <ClipboardCheck className="h-8 w-8 mb-2 text-primary" />
                 <span>مهمة</span>
               </Link>
             </Button>
-            <Button asChild variant="outline" className="flex flex-col h-24">
+            <Button asChild variant="outline" className="flex flex-col h-24 transform transition-transform duration-200 hover:scale-105 hover:bg-primary/10">
               <Link href="/dashboard/journal">
                 <Book className="h-8 w-8 mb-2 text-primary" />
                 <span>مذكرة</span>
               </Link>
             </Button>
-            <Button asChild variant="outline" className="flex flex-col h-24">
+            <Button asChild variant="outline" className="flex flex-col h-24 transform transition-transform duration-200 hover:scale-105 hover:bg-primary/10">
               <Link href="/dashboard/files">
                 <FilePlus className="h-8 w-8 mb-2 text-primary" />
                 <span>ملف</span>
@@ -200,7 +200,11 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-             <p className="text-center text-muted-foreground py-8">"لا تؤجل عمل اليوم إلى الغد."</p>
+             <div className="flex items-center justify-center h-full p-4">
+               <blockquote className="border-r-4 border-primary pr-4 italic text-lg text-center text-muted-foreground">
+                 "لا تؤجل عمل اليوم إلى الغد."
+               </blockquote>
+             </div>
           </CardContent>
         </Card>
       </div>
