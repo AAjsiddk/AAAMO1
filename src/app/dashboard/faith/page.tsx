@@ -83,6 +83,7 @@ export default function FaithPage() {
   const heatmapData = useMemo(() => {
     if (!allActs) return [];
     return allActs.reduce((acc, act) => {
+        if (!act.date) return acc;
         const existing = acc.find(d => d.date === act.date);
         if (existing) {
             existing.count += (act.count || 1);
