@@ -73,10 +73,17 @@
 @layer base {
   * {
     @apply border-border;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
   body {
     @apply bg-background text-foreground;
     font-family: 'Tajawal', sans-serif;
+    overflow-x: hidden;
+  }
+  html {
+    overflow-x: hidden;
   }
 }
 
