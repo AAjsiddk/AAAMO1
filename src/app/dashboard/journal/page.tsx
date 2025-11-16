@@ -237,7 +237,7 @@ export default function JournalPage() {
                         >
                         <div className="text-center">
                             {previewImage ? (
-                                <Image src={previewImage} alt="Preview" width={200} height={200} className="mx-auto h-24 w-auto rounded-md" />
+                                <Image src={previewImage} alt="Preview" width={200} height={200} className="mx-auto h-24 w-auto rounded-md object-cover" />
                             ) : (
                                 <>
                                     <ImagePlus className="mx-auto h-12 w-12 text-gray-400" />
@@ -324,7 +324,7 @@ export default function JournalPage() {
               </CardHeader>
               <CardContent>
                 {entry.imageUrl && (
-                    <div className="mb-4 relative aspect-video max-w-lg overflow-hidden rounded-md">
+                    <div className="mb-4 relative aspect-video max-w-full sm:max-w-lg overflow-hidden rounded-md">
                         <Image src={entry.imageUrl} alt={entry.title} fill={true} className="object-cover" />
                     </div>
                 )}

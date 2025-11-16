@@ -128,7 +128,7 @@ service cloud.firestore {
     }
     
     match /users/{userId}/notes/{noteId} {
-      allow read, write, list: if isOwner(userId);
+      allow read, write, create, update, delete, list: if isOwner(userId);
     }
   }
 }
