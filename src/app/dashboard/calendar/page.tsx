@@ -1,17 +1,37 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
-import type { Task } from '@/lib/types';
+import type { Task, Goal } from '@/lib/types';
 import { collection, Timestamp } from 'firebase/firestore';
 import { format, isSameDay } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
-import { Loader2 } from 'lucide-react';
-import type { DayPicker, DayProps } from 'react-day-picker';
+import { Loader2, Calendar as CalendarIcon, Target, ClipboardCheck, Info } from 'lucide-react';
+import type { DayProps } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+type CalendarEvent = {
+    id: string;
+    title: string;
+    type: 'task' | 'goal';
+    date: Date;
+    status?: Task['status'];
+};
+
+const statusTranslations: { [key in Task['status']]: string } = {
+  pending: 'قيد الانتظار',
+  in_progress: 'قيد التنفيذ',
+  completed: 'مكتملة',
+  deferred: 'مؤجلة',
+  cancelled: 'ملغاة',
+  waiting_for: 'في انتظار طرف آخر',
+  archived: 'مؤرشفة',
+};
+
 
 export default function CalendarPage() {
     const { user } = useUser();
@@ -22,42 +42,49 @@ export default function CalendarPage() {
         user ? collection(firestore, `users/${user.uid}/tasks`) : null
     , [user, firestore]);
 
+    const goalsQuery = useMemoFirebase(() =>
+        user ? collection(firestore, `users/${user.uid}/goals`) : null
+    , [user, firestore]);
+
     const { data: tasks, isLoading: tasksLoading } = useCollection<Task>(tasksQuery);
+    const { data: goals, isLoading: goalsLoading } = useCollection<Goal>(goalsQuery);
     
-    const tasksByDate = useMemo(() => {
-        const map = new Map<string, Task[]>();
-        if (!tasks) return map;
-
-        tasks.forEach(task => {
-            if (task.endDate) {
-                const date = (task.endDate as Timestamp).toDate();
-                const dateString = format(date, 'yyyy-MM-dd');
-                if (!map.has(dateString)) {
-                    map.set(dateString, []);
+    const eventsByDate = useMemo(() => {
+        const map = new Map<string, CalendarEvent[]>();
+        if (tasks) {
+            tasks.forEach(task => {
+                const date = task.endDate ? (task.endDate as Timestamp).toDate() : null;
+                if (date) {
+                    const dateString = format(date, 'yyyy-MM-dd');
+                    if (!map.has(dateString)) map.set(dateString, []);
+                    map.get(dateString)?.push({ id: task.id, title: task.title, type: 'task', date, status: task.status });
                 }
-                map.get(dateString)?.push(task);
-            }
-        });
+            });
+        }
+        if (goals) {
+             goals.forEach(goal => {
+                const date = goal.endDate ? (goal.endDate as Timestamp).toDate() : null;
+                 if (date) {
+                    const dateString = format(date, 'yyyy-MM-dd');
+                    if (!map.has(dateString)) map.set(dateString, []);
+                    map.get(dateString)?.push({ id: goal.id, title: goal.name, type: 'goal', date });
+                }
+            });
+        }
         return map;
-    }, [tasks]);
+    }, [tasks, goals]);
 
-    const selectedDayTasks = useMemo(() => {
+    const selectedDayEvents = useMemo(() => {
         if (!selectedDate) return [];
         const dateString = format(selectedDate, 'yyyy-MM-dd');
-        return tasksByDate.get(dateString) || [];
-    }, [selectedDate, tasksByDate]);
+        return eventsByDate.get(dateString) || [];
+    }, [selectedDate, eventsByDate]);
     
     const DayWithTasks = (dayProps: DayProps) => {
-        const { date } = dayProps;
-        const tasksForDay = tasksByDate.get(format(date, 'yyyy-MM-dd'));
-        const modifiers = dayProps.modifiers || {};
+        const { date, modifiers } = dayProps;
+        const eventsForDay = eventsByDate.get(format(date, 'yyyy-MM-dd'));
         
-        // Remove props that are not valid for DOM elements
-        const buttonProps: React.HTMLAttributes<HTMLButtonElement> & { 'aria-label'?: string | undefined, disabled?: boolean | undefined } = {
-            ...dayProps,
-            children: undefined, 
-        };
-        
+        const buttonProps: React.HTMLAttributes<HTMLButtonElement> = { ...dayProps };
         delete (buttonProps as any).displayMonth;
         delete (buttonProps as any).date;
         delete (buttonProps as any).modifiers;
@@ -65,17 +92,17 @@ export default function CalendarPage() {
         return (
              <div className="relative">
                 <Button 
-                    {...buttonProps}
                     name="day"
-                    variant={modifiers.selected ? 'default' : modifiers.today ? 'outline' : 'ghost'} 
+                    {...buttonProps}
+                    variant={modifiers?.selected ? 'default' : modifiers?.today ? 'outline' : 'ghost'} 
                     className={cn(
                         'h-9 w-9 p-0 font-normal',
-                        !modifiers.disabled && modifiers.outside && 'text-muted-foreground opacity-50'
+                        !modifiers?.disabled && modifiers?.outside && 'text-muted-foreground opacity-50'
                     )}
                  >
-                    {dayProps.date.getDate()}
+                    {date.getDate()}
                  </Button>
-                {tasksForDay && tasksForDay.length > 0 && (
+                {eventsForDay && eventsForDay.length > 0 && (
                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex space-x-1 pointer-events-none">
                         <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
                      </div>
@@ -98,37 +125,49 @@ export default function CalendarPage() {
                             onSelect={setSelectedDate}
                             className="w-full"
                             locale={ar}
-                            components={{
-                                Day: DayWithTasks
-                            }}
+                            components={{ Day: DayWithTasks }}
                         />
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="p-4">
-                        <h3 className="font-semibold text-lg mb-4">
-                           مهام {selectedDate ? format(selectedDate, 'd MMMM', { locale: ar }) : 'اليوم'}
-                        </h3>
-                        {tasksLoading ? (
+                     <CardHeader>
+                        <CardTitle className="text-lg">
+                           أحداث يوم {selectedDate ? format(selectedDate, 'd MMMM', { locale: ar }) : ''}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                         <ScrollArea className="h-96">
+                        {tasksLoading || goalsLoading ? (
                              <div className="flex justify-center items-center h-full">
                                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                              </div>
-                        ) : selectedDayTasks.length > 0 ? (
-                            <div className="space-y-2">
-                                {selectedDayTasks.map(task => (
-                                    <div key={task.id} className="p-3 bg-muted rounded-md">
-                                        <p className="font-medium">{task.title}</p>
-                                        <Badge variant={task.status === 'completed' ? 'default' : 'secondary'}>
-                                            {task.status === 'completed' ? 'مكتملة' : 'قيد التنفيذ'}
-                                        </Badge>
+                        ) : selectedDayEvents.length > 0 ? (
+                            <div className="space-y-3">
+                                {selectedDayEvents.map(event => (
+                                    <div key={event.id} className="p-3 bg-muted rounded-md flex items-start gap-3">
+                                        <div className="mt-1">
+                                            {event.type === 'task' ? <ClipboardCheck className="h-5 w-5 text-primary" /> : <Target className="h-5 w-5 text-primary" />}
+                                        </div>
+                                        <div>
+                                            <p className="font-medium">{event.title}</p>
+                                             {event.type === 'task' && event.status && (
+                                                <Badge variant="secondary" className="text-xs">
+                                                    {statusTranslations[event.status] || event.status}
+                                                </Badge>
+                                             )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-muted-foreground text-center py-8">
-                                لا توجد مهام مجدولة لهذا اليوم.
-                            </p>
+                             <div className="flex flex-col text-center items-center justify-center h-full text-muted-foreground p-8">
+                                <Info className="h-8 w-8 mb-2" />
+                                <p>
+                                    لا توجد مهام أو أهداف مجدولة لهذا اليوم.
+                                </p>
+                            </div>
                         )}
+                        </ScrollArea>
                     </CardContent>
                 </Card>
             </div>
