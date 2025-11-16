@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 import type { DayPicker, DayProps } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export default function CalendarPage() {
     const { user } = useUser();
@@ -47,16 +48,16 @@ export default function CalendarPage() {
     }, [selectedDate, tasksByDate]);
     
     const DayWithTasks = (dayProps: DayProps) => {
-        const { date, displayMonth } = dayProps;
+        const { date } = dayProps;
         const tasksForDay = tasksByDate.get(format(date, 'yyyy-MM-dd'));
+        const modifiers = dayProps.modifiers || {};
         
         // Remove props that are not valid for DOM elements
         const buttonProps: React.HTMLAttributes<HTMLButtonElement> & { 'aria-label'?: string | undefined, disabled?: boolean | undefined } = {
             ...dayProps,
             children: undefined, 
         };
-        // This is a bit of a hack to get around the fact that DayPicker passes down
-        // props that are not valid for DOM elements.
+        
         delete (buttonProps as any).displayMonth;
         delete (buttonProps as any).date;
         delete (buttonProps as any).modifiers;
@@ -66,10 +67,10 @@ export default function CalendarPage() {
                 <Button 
                     {...buttonProps}
                     name="day"
-                    variant={dayProps.modifiers.selected ? 'default' : dayProps.modifiers.today ? 'outline' : 'ghost'} 
+                    variant={modifiers.selected ? 'default' : modifiers.today ? 'outline' : 'ghost'} 
                     className={cn(
                         'h-9 w-9 p-0 font-normal',
-                        !dayProps.modifiers.disabled && dayProps.modifiers.outside && 'text-muted-foreground opacity-50'
+                        !modifiers.disabled && modifiers.outside && 'text-muted-foreground opacity-50'
                     )}
                  >
                     {dayProps.date.getDate()}
