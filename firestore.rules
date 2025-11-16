@@ -13,13 +13,15 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
     
-    // Generic rule for all user subcollections
+    // --- Rules for INDIVIDUAL documents in subcollections ---
+    // This covers get, create, update, delete operations.
+    // It does NOT cover list (collection queries).
     match /users/{userId}/{collection}/{docId} {
       allow read, update, delete, create: if isOwner(userId);
     }
 
-    // Explicitly allow list operations on collections where it's needed by the app.
-    // The generic rule above does not cover 'list'.
+    // --- Rules for LISTING collections ---
+    // These are required for queries that read multiple documents.
     match /users/{userId}/tasks { allow list: if isOwner(userId); }
     match /users/{userId}/goals { allow list: if isOwner(userId); }
     match /users/{userId}/habits { allow list: if isOwner(userId); }
@@ -33,12 +35,14 @@ service cloud.firestore {
     match /users/{userId}/relaxationActivities { allow list: if isOwner(userId); }
     match /users/{userId}/projects { allow list: if isOwner(userId); }
 
-    // Rules for sub-subcollections like habit marks
-    match /users/{userId}/habits/{habitId}/marks/{markId} {
-      allow read, write: if isOwner(userId);
-    }
+    // --- Rules for sub-subcollections ---
+    // Example: listing marks within a specific habit
      match /users/{userId}/habits/{habitId}/marks {
       allow list: if isOwner(userId);
+    }
+    // Rule for individual marks
+    match /users/{userId}/habits/{habitId}/marks/{markId} {
+      allow read, write: if isOwner(userId);
     }
   }
 }
