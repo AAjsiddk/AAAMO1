@@ -1,13 +1,44 @@
 rules_version = '2';
+
+// Helper function to check ownership
+function isOwner(userId) {
+  return request.auth != null && request.auth.uid == userId;
+}
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow reading/writing ONLY inside the user’s own document
-    match /users/{userId}/{collection}/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    // Also allow operations directly on the user root
+
+    // Allow read, write on the user document itself
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
+    }
+    
+    // Generic rule for all user subcollections
+    match /users/{userId}/{collection}/{docId} {
+      allow read, update, delete, create: if isOwner(userId);
+    }
+
+    // Explicitly allow list operations on collections where it's needed by the app.
+    // The generic rule above does not cover 'list'.
+    match /users/{userId}/tasks { allow list: if isOwner(userId); }
+    match /users/{userId}/goals { allow list: if isOwner(userId); }
+    match /users/{userId}/habits { allow list: if isOwner(userId); }
+    match /users/{userId}/folders { allow list: if isOwner(userId); }
+    match /users/{userId}/files { allow list: if isOwner(userId); }
+    match /users/{userId}/journalEntries { allow list: if isOwner(userId); }
+    match /users/{userId}/notes { allow list: if isOwner(userId); }
+    match /users/{userId}/futureMessages { allow list: if isOwner(userId); }
+    match /users/{userId}/libraryItems { allow list: if isOwner(userId); }
+    match /users/{userId}/worshipActs { allow list: if isOwner(userId); }
+    match /users/{userId}/relaxationActivities { allow list: if isOwner(userId); }
+    match /users/{userId}/projects { allow list: if isOwner(userId); }
+
+    // Rules for sub-subcollections like habit marks
+    match /users/{userId}/habits/{habitId}/marks/{markId} {
+      allow read, write: if isOwner(userId);
+    }
+     match /users/{userId}/habits/{habitId}/marks {
+      allow list: if isOwner(userId);
     }
   }
 }
