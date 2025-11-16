@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Trophy, Loader2 } from 'lucide-react';
+import { Trophy, Loader2, CheckCircle, Target } from 'lucide-react';
 import { useCollection, useUser, useMemoFirebase } from '@/firebase'
 import { useFirestore } from '@/firebase'
 import { collection } from 'firebase/firestore'
@@ -47,24 +47,28 @@ export default function AchievementsPage() {
                 <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
             ) : (
                  <div className="grid md:grid-cols-2 gap-4 text-center">
-                    <Card>
+                    <Card className="bg-card">
                         <CardHeader>
-                            <CardTitle className="text-5xl">{completedTasksCount}</CardTitle>
-                            <CardDescription>مهمة مكتملة</CardDescription>
+                            <CardTitle className="flex items-center justify-center gap-2 text-xl font-bold"><CheckCircle className="text-green-500" /> المهام المكتملة</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <p className="text-6xl">{getTrophy(completedTasksCount)}</p>
-                            <p className="text-sm text-muted-foreground mt-2">ميدالية المهام</p>
+                        <CardContent className="space-y-4">
+                            <p className="text-6xl font-bold">{completedTasksCount}</p>
+                            <div className="flex flex-col items-center">
+                                <p className="text-4xl">{getTrophy(completedTasksCount)}</p>
+                                <p className="text-sm text-muted-foreground mt-1">ميدالية المهام</p>
+                            </div>
                         </CardContent>
                     </Card>
-                     <Card>
+                     <Card className="bg-card">
                         <CardHeader>
-                            <CardTitle className="text-5xl">{completedGoalsCount}</CardTitle>
-                            <CardDescription>هدف محقق</CardDescription>
+                             <CardTitle className="flex items-center justify-center gap-2 text-xl font-bold"><Target className="text-red-500"/> الأهداف المحققة</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <p className="text-6xl">{getTrophy(completedGoalsCount)}</p>
-                            <p className="text-sm text-muted-foreground mt-2">ميدالية الأهداف</p>
+                        <CardContent className="space-y-4">
+                            <p className="text-6xl font-bold">{completedGoalsCount}</p>
+                             <div className="flex flex-col items-center">
+                                <p className="text-4xl">{getTrophy(completedGoalsCount)}</p>
+                                <p className="text-sm text-muted-foreground mt-1">ميدالية الأهداف</p>
+                            </div>
                         </CardContent>
                     </Card>
                  </div>
@@ -76,7 +80,7 @@ export default function AchievementsPage() {
           <Trophy className="h-16 w-16 text-muted-foreground" />
           <h3 className="text-xl font-semibold">التحديات قيد التطوير</h3>
           <p className="text-muted-foreground max-w-md">
-            قريبًا... سيتم إضافة تحديات مخصصة لمساعدتك على النمو وتحقيق المزيد.
+            قريبًا... سيتم إضافة تحديات مخصصة وربطها بالأهداف والعادات لمنحك شارات عند تحقيقها.
           </p>
         </CardContent>
       </Card>

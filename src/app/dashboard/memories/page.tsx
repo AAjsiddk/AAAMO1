@@ -8,6 +8,8 @@ import { Camera, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { format, isSameDay, subYears, addYears } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 type Memory = {
     id: string;
@@ -29,12 +31,14 @@ export default function MemoriesPage() {
 
     const memories = useMemo<Memory[]>(() => {
         if (!journalEntries) return [];
-        return journalEntries.filter(entry => entry.imageUrl).map(entry => ({
-            id: entry.id,
-            title: entry.title,
-            imageUrl: entry.imageUrl,
-            createdAt: entry.createdAt,
-        }));
+        return journalEntries
+            .filter(entry => entry.imageUrl && entry.createdAt)
+            .map(entry => ({
+                id: entry.id,
+                title: entry.title,
+                imageUrl: entry.imageUrl,
+                createdAt: entry.createdAt,
+            }));
     }, [journalEntries]);
 
     const onThisDayMemories = useMemo(() => {
@@ -68,6 +72,9 @@ export default function MemoriesPage() {
               <p className="text-muted-foreground max-w-md">
                 أضف تدوينات في "المذكرات" مع صور لبدء بناء أرشيف ذكرياتك.
               </p>
+              <Button asChild className="mt-2">
+                <Link href="/dashboard/journal">اذهب إلى المذكرات</Link>
+              </Button>
            </CardContent>
          </Card>
       )}
@@ -107,7 +114,7 @@ export default function MemoriesPage() {
       )}
       
        {!isLoading && memories.length > 0 && (
-         <Card>
+         <Card className="mt-4">
             <CardHeader>
                 <CardTitle>كل الذكريات</CardTitle>
                  <CardDescription>تصفح جميع لحظاتك المصورة.</CardDescription>
@@ -117,7 +124,7 @@ export default function MemoriesPage() {
                      <div key={memory.id} className="group relative aspect-square overflow-hidden rounded-lg">
                          <Image src={memory.imageUrl} alt={memory.title} layout="fill" objectFit="cover" className="transition-transform group-hover:scale-105" />
                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                         <div className="absolute bottom-0 left-0 p-4">
+                         <div className="absolute bottom-0 left-0 right-0 p-4">
                             <h4 className="font-semibold text-white truncate">{memory.title}</h4>
                             <p className="text-xs text-white/80">{format(memory.createdAt.toDate(), "d MMM yyyy", {locale: ar})}</p>
                          </div>

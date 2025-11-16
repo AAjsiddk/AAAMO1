@@ -77,6 +77,17 @@ export type JournalEntry = {
     createdAt: FieldValue;
 }
 
+export type Note = {
+    id: string;
+    userId: string;
+    title: string;
+    content: string;
+    pinned: boolean;
+    color: string;
+    createdAt: FieldValue;
+};
+
+
 export type FutureMessage = {
   id: string;
   userId: string;

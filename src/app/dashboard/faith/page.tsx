@@ -17,7 +17,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
 import {
   Form,
@@ -29,7 +28,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, Loader2, BookOpen, Link as LinkIcon, HandHeart, Minus, CheckSquare, Edit, MessageSquare } from 'lucide-react';
+import { Plus, Trash2, Loader2, BookOpen, Link as LinkIcon, HandHeart, Minus, Edit, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { WorshipAct } from '@/lib/types';
 import CalendarHeatmap from 'react-calendar-heatmap';
@@ -150,8 +149,8 @@ export default function FaithPage() {
           <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
-                    <CardTitle>أعمال اليوم</CardTitle>
-                    <CardDescription>سجل العبادات التي قمت بها اليوم وأضف ملاحظاتك.</CardDescription>
+                    <CardTitle className='flex items-center gap-2'><HandHeart className="text-primary"/> أعمال اليوم</CardTitle>
+                    <CardDescription>سجل العبادات التي قمت بها اليوم وأضف ملاحظاتك لتعميق تجربتك الروحانية.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
@@ -167,7 +166,7 @@ export default function FaithPage() {
                         )} />
                         <FormField control={form.control} name="notes" render={({ field }) => (
                             <FormItem>
-                                <FormLabel>ملاحظات (اختياري)</FormLabel>
+                                <FormLabel>ملاحظات وتأملات (اختياري)</FormLabel>
                                 <FormControl>
                                     <Textarea placeholder="اكتب خواطرك، دعاء، أو تفاصيل أخرى..." {...field} />
                                 </FormControl>
@@ -186,8 +185,8 @@ export default function FaithPage() {
                             <Accordion type="multiple" className="w-full">
                                 {todayActs.map(act => (
                                     <AccordionItem value={act.id} key={act.id}>
-                                        <div className="flex items-center justify-between p-2 rounded-md">
-                                             <AccordionTrigger className="flex-grow text-right mr-4 hover:no-underline">
+                                        <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+                                             <AccordionTrigger className="flex-grow text-right mr-4 hover:no-underline p-0">
                                                 <span className="font-medium">{act.name}</span>
                                             </AccordionTrigger>
                                             <div className="flex items-center gap-1 flex-shrink-0">
@@ -219,7 +218,7 @@ export default function FaithPage() {
                     <CardTitle>خريطة العبادات</CardTitle>
                     <CardDescription>نظرة على التزامك خلال العام الماضي.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className='overflow-x-auto'>
                     {isLoadingAll ? <div className="flex justify-center"><Loader2 className="animate-spin" /></div> : 
                         <>
                             <CalendarHeatmap
@@ -233,7 +232,7 @@ export default function FaithPage() {
                                 tooltipDataAttrs={(value: {date: string, count: number}) => {
                                     return {
                                     'data-tooltip-id': 'heatmap-tooltip',
-                                    'data-tooltip-content': `${value.date}: ${value.count} عمل`,
+                                    'data-tooltip-content': value.date && value.count ? `${value.date}: ${value.count} عمل` : '',
                                     };
                                 }}
                             />

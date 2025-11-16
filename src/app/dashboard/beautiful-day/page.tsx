@@ -6,7 +6,6 @@ import { useMemo } from 'react';
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
 
-// For simplicity, we'll reuse the journal entry type and filter for a specific title
 type BeautifulMoment = {
     id: string;
     content: string;
@@ -30,11 +29,18 @@ export default function BeautifulDayPage() {
   const { data: allEntries, isLoading } = useCollection<any>(entriesQuery);
 
   const beautifulMoments = useMemo(() => {
-    return allEntries?.filter(entry => entry.title === 'My Beautiful Moment').map(entry => ({
-      id: entry.id,
-      content: entry.content,
-      createdAt: entry.createdAt,
-    } as BeautifulMoment)) || [];
+    if (!allEntries) return [];
+    return allEntries
+      .filter(entry => entry.title === 'My Beautiful Moment' || entry.title === 'لحظة سعيدة')
+      .map(entry => {
+        if (!entry.createdAt) return null; // Guard against null createdAt
+        return {
+          id: entry.id,
+          content: entry.content,
+          createdAt: entry.createdAt,
+        } as BeautifulMoment;
+      })
+      .filter(Boolean) as BeautifulMoment[];
   }, [allEntries]);
   
   return (
@@ -46,8 +52,8 @@ export default function BeautifulDayPage() {
         <CardHeader>
             <CardTitle>سجل اللحظات الإيجابية</CardTitle>
             <CardDescription>
-                هذا القسم سيمكنك من تسجيل لحظة إيجابية واحدة كل يوم لبناء عادة التفكير الإيجابي. 
-                يمكنك إضافتها من خلال أيقونة "الحالة المزاجية" في الشريط العلوي واختيار عنوان مناسب.
+                هذا القسم سيعرض اللحظات السعيدة التي تسجلها كل يوم لبناء عادة التفكير الإيجابي. 
+                يمكنك إضافتها من خلال أيقونة "الحالة المزاجية" في الشريط العلوي.
             </CardDescription>
         </CardHeader>
         <CardContent>
@@ -63,10 +69,10 @@ export default function BeautifulDayPage() {
           ) : (
              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                  {beautifulMoments.map(moment => (
-                    <Card key={moment.id} className="bg-secondary">
+                    <Card key={moment.id} className="bg-secondary/50 border-primary/20 hover:shadow-lg transition-shadow">
                         <CardContent className="p-4">
                              <p className="font-medium text-secondary-foreground">"{moment.content}"</p>
-                             <p className="text-xs text-muted-foreground mt-2">{moment.createdAt.toDate().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                             <p className="text-xs text-muted-foreground mt-2">{moment.createdAt?.toDate().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                         </CardContent>
                     </Card>
                  ))}

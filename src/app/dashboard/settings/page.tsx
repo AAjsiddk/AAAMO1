@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useUser, useFirestore }from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { useUser, useFirestore, useAuth }from '@/firebase';
+import { doc, setDoc, updateDoc } from 'firebase/firestore';
+import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import {
   Card,
   CardContent,
@@ -14,10 +15,11 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Palette, User as UserIcon, Lock } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 // Helper function to convert HSL string "h s% l%" to a hex color
 function hslStringToHex(hslStr: string): string {
@@ -77,6 +79,7 @@ function hexToHslString(hex: string): string {
 
 export default function SettingsPage() {
   const { user } = useUser();
+  const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -85,6 +88,11 @@ export default function SettingsPage() {
   const [accentColor, setAccentColor] = useState('0 0% 0%');
   const [isSaving, setIsSaving] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  
+  const [displayName, setDisplayName] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+
 
   useEffect(() => {
     setIsMounted(true);
@@ -94,7 +102,10 @@ export default function SettingsPage() {
         setBackgroundColor(computedStyle.getPropertyValue('--background').trim());
         setAccentColor(computedStyle.getPropertyValue('--accent').trim());
     }
-  }, []);
+    if(user?.displayName) {
+        setDisplayName(user.displayName);
+    }
+  }, [user]);
 
   const handleColorChange = useCallback((colorSetter: React.Dispatch<React.SetStateAction<string>>, cssVar: string, hexValue: string) => {
     const hslValue = hexToHslString(hexValue);
@@ -117,20 +128,52 @@ export default function SettingsPage() {
     };
 
     try {
-      await setDoc(userDocRef, themeData, { merge: true });
+      await updateDoc(userDocRef, { theme: themeData });
       toast({ title: "تم الحفظ", description: "تم حفظ إعدادات المظهر بنجاح." });
     } catch (error) {
        console.error("Error saving theme:", error);
        const permissionError = new FirestorePermissionError({
             path: userDocRef.path,
             operation: 'update',
-            requestResourceData: themeData
+            requestResourceData: { theme: themeData }
         });
         errorEmitter.emit('permission-error', permissionError);
-        // We don't need a toast here because the global error handler will catch it.
     } finally {
         setIsSaving(false);
     }
+  }
+
+  const handleAccountUpdate = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!user || !auth) return;
+      
+      setIsSaving(true);
+      try {
+          if (newPassword) {
+              if(!currentPassword) {
+                  toast({ variant: "destructive", title: "خطأ", description: "يجب إدخال كلمة المرور الحالية لتغييرها." });
+                  setIsSaving(false);
+                  return;
+              }
+              if (user.email) {
+                  const credential = EmailAuthProvider.credential(user.email, currentPassword);
+                  await reauthenticateWithCredential(user, credential);
+                  await updatePassword(user, newPassword);
+                  toast({ title: "نجاح", description: "تم تحديث كلمة المرور بنجاح." });
+                  setCurrentPassword('');
+                  setNewPassword('');
+              }
+          }
+      } catch (error: any) {
+          console.error("Password update error:", error);
+           let desc = "فشل تحديث كلمة المرور.";
+          if (error.code === 'auth/wrong-password') {
+            desc = "كلمة المرور الحالية غير صحيحة.";
+          }
+          toast({ variant: "destructive", title: "خطأ", description: desc });
+      } finally {
+        setIsSaving(false);
+      }
   }
   
   if (!isMounted) {
@@ -144,11 +187,12 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <h2 className="text-3xl font-bold tracking-tight">الإعدادات</h2>
+      
       <Card>
         <CardHeader>
-          <CardTitle>تخصيص المظهر</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Palette/> تخصيص المظهر</CardTitle>
           <CardDescription>
             قم بتخصيص ألوان التطبيق لتناسب ذوقك. انقر على مربع اللون لاختيار لون جديد.
           </CardDescription>
@@ -197,8 +241,45 @@ export default function SettingsPage() {
             </div>
           <Button onClick={saveTheme} disabled={isSaving}>
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            حفظ التغييرات
+            حفظ تغييرات المظهر
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Lock /> إعدادات الأمان</CardTitle>
+          <CardDescription>
+            قم بتحديث كلمة المرور الخاصة بحسابك.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <form onSubmit={handleAccountUpdate} className="space-y-4 max-w-sm">
+                 <div className="space-y-2">
+                    <Label htmlFor="currentPassword">كلمة المرور الحالية</Label>
+                    <Input 
+                        id="currentPassword" 
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="أدخل كلمة المرور الحالية"
+                    />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="newPassword">كلمة المرور الجديدة</Label>
+                    <Input 
+                        id="newPassword" 
+                        type="password" 
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="أدخل كلمة المرور الجديدة"
+                    />
+                </div>
+                 <Button type="submit" disabled={isSaving || !newPassword}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    تحديث كلمة المرور
+                </Button>
+            </form>
         </CardContent>
       </Card>
     </div>

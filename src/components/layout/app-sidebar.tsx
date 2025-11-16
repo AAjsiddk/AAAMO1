@@ -24,7 +24,6 @@ import {
   Settings,
   FolderKanban,
   Calendar,
-  Users,
   Camera,
   MessageSquare,
   Sparkles,
@@ -32,7 +31,6 @@ import {
   BookOpen,
   Clock,
   Heart,
-  ShieldCheck,
   Trophy,
   Package,
   Droplets,
@@ -41,6 +39,7 @@ import {
   Coffee,
   Library,
   HandHeart,
+  StickyNote,
 } from 'lucide-react'
 
 export function AppSidebar() {
@@ -61,6 +60,7 @@ export function AppSidebar() {
     { name: 'العادات', href: '/dashboard/habits', icon: <Repeat /> },
     { name: 'الملفات', href: '/dashboard/files', icon: <File /> },
     { name: 'المذكرات', href: '/dashboard/journal', icon: <Book /> },
+    { name: 'الملاحظات', href: '/dashboard/notes', icon: <StickyNote /> },
   ];
 
   const advancedSections = [
@@ -157,7 +157,7 @@ export function AppSidebar() {
             </SidebarMenuItem>
           ))}
            <SidebarSeparator className="my-1" />
-          {otherAdvancedSections.map((section) => (
+            {spiritualSection.map((section) => (
             <SidebarMenuItem key={section.href}>
               <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
                 <Link href={section.href!}>
@@ -168,7 +168,7 @@ export function AppSidebar() {
             </SidebarMenuItem>
           ))}
           <SidebarSeparator className="my-1" />
-          {spiritualSection.map((section) => (
+          {otherAdvancedSections.map((section) => (
             <SidebarMenuItem key={section.href}>
               <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
                 <Link href={section.href!}>

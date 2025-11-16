@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { collection, getDocs } from 'firebase/firestore';
-import { Download, Upload, Loader2 } from 'lucide-react';
+import { Download, Upload, Loader2, FileJson, FileImage } from 'lucide-react';
 import { useState } from 'react';
 
 const collectionsToExport = [
     'tasks', 'goals', 'habits', 'journalEntries', 'files', 'folders', 
-    'futureMessages', 'libraryItems', 'worshipActs', 'relaxationActivities'
+    'futureMessages', 'libraryItems', 'worshipActs', 'relaxationActivities', 'notes'
 ];
 
 export default function DataSyncPage() {
@@ -62,37 +62,52 @@ export default function DataSyncPage() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">تصدير واستيراد البيانات</h2>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+       <Card>
             <CardHeader>
-                <CardTitle>تصدير البيانات</CardTitle>
+                <CardTitle>النسخ الاحتياطي والاستعادة</CardTitle>
                 <CardDescription>
-                    قم بتنزيل نسخة احتياطية كاملة من جميع بياناتك في التطبيق بصيغة JSON.
+                    قم بإدارة بياناتك عن طريق تصديرها كنسخة احتياطية أو استيرادها لاستعادة حالتها.
                 </CardDescription>
             </CardHeader>
-            <CardContent>
-                <Button onClick={handleExport} disabled={isExporting}>
-                    {isExporting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Download className="ml-2 h-4 w-4" />}
-                    {isExporting ? 'جاري التصدير...' : 'تصدير بياناتي'}
-                </Button>
+            <CardContent className="grid gap-6 md:grid-cols-2">
+                 <div className="flex flex-col gap-2 p-6 border rounded-lg">
+                    <div className="flex items-center gap-2">
+                         <FileJson className="h-6 w-6 text-primary" />
+                         <h3 className="text-lg font-semibold">تصدير البيانات</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                        قم بتنزيل نسخة احتياطية كاملة من جميع بياناتك في التطبيق بصيغة JSON.
+                    </p>
+                    <Button onClick={handleExport} disabled={isExporting} className="mt-2 w-fit">
+                        {isExporting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Download className="ml-2 h-4 w-4" />}
+                        {isExporting ? 'جاري التصدير...' : 'تصدير بياناتي'}
+                    </Button>
+                </div>
+                 <div className="flex flex-col gap-2 p-6 border rounded-lg">
+                    <div className="flex items-center gap-2">
+                         <Upload className="h-6 w-6 text-muted-foreground" />
+                         <h3 className="text-lg font-semibold">استيراد البيانات</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                        استعد بياناتك من ملف نسخة احتياطية. (ميزة قيد التطوير)
+                    </p>
+                    <Button onClick={handleImport} disabled={true} className="mt-2 w-fit">
+                        {isImporting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Upload className="ml-2 h-4 w-4" />}
+                        {isImporting ? 'جاري الاستيراد...' : 'استيراد بيانات'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">سيتم تفعيل هذه الميزة في التحديثات القادمة.</p>
+                </div>
+                <div className="md:col-span-2 flex flex-col gap-2 p-6 border rounded-lg bg-secondary/30">
+                    <div className="flex items-center gap-2">
+                         <FileImage className="h-6 w-6 text-muted-foreground" />
+                         <h3 className="text-lg font-semibold">تصدير كصورة (قريبًا)</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                        قريبًا... ستتمكن من تصدير ملخص بياناتك على هيئة صورة منظمة وسهلة للمشاركة.
+                    </p>
+                </div>
             </CardContent>
         </Card>
-        <Card>
-            <CardHeader>
-                <CardTitle>استيراد البيانات</CardTitle>
-                <CardDescription>
-                    استعد بياناتك من ملف نسخة احتياطية. (ميزة قيد التطوير)
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Button onClick={handleImport} disabled={true}>
-                    {isImporting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Upload className="ml-2 h-4 w-4" />}
-                    {isImporting ? 'جاري الاستيراد...' : 'استيراد بيانات'}
-                </Button>
-                 <p className="text-xs text-muted-foreground mt-2">سيتم تفعيل هذه الميزة في التحديثات القادمة.</p>
-            </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
