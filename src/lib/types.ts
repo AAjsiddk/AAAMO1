@@ -73,7 +73,7 @@ export type JournalEntry = {
     title: string;
     content: string;
     mood?: 'happy' | 'sad' | 'neutral' | 'excited' | 'anxious';
-    imageUrl?: string;
+    imageUrls?: string[];
     createdAt: FieldValue;
 }
 
