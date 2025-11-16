@@ -82,13 +82,8 @@ service cloud.firestore {
       allow read, write, create, update, delete, list: if isOwner(userId);
     }
     
-     /**
-     * @description Security rules for the /users/{userId}/notes collection.
-     * @path /users/{userId}/notes
-     * @principle Enforces user-ownership for notes.
-     */
     match /users/{userId}/notes/{noteId} {
-      allow read, write, create, update, delete, list: if isOwner(userId);
+       allow read, write, create, update, delete, list: if isOwner(userId);
     }
 
     /**
