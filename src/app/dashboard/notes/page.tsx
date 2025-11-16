@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Loader2, StickyNote, Edit, Pin, PinOff } from 'lucide-react';
+import { PlusCircle, Trash2, Loader2, StickyNote, Edit, Pin, PinOff, Inbox } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { Note } from '@/lib/types';
@@ -178,7 +178,7 @@ export default function NotesPage() {
       {!isLoading && (!notes || notes.length === 0) && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
-            <StickyNote className="h-16 w-16 text-muted-foreground" />
+            <Inbox className="h-16 w-16 text-muted-foreground" />
             <h3 className="text-xl font-semibold">لا توجد ملاحظات بعد</h3>
             <p className="text-muted-foreground max-w-md">
               ابدأ بتدوين أفكارك السريعة وملاحظاتك الهامة.

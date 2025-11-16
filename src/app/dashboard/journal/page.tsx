@@ -156,6 +156,8 @@ export default function JournalPage() {
 
         if (values.imageFiles && values.imageFiles.length > 0) {
             const files = Array.from(values.imageFiles);
+            // In a real app, you'd upload to Firebase Storage and get URLs.
+            // For this prototype, we'll use data URIs.
             const uploadPromises = files.map(file => uploadImage(file));
             imageUrls = await Promise.all(uploadPromises);
         }
@@ -212,11 +214,29 @@ export default function JournalPage() {
                 title: 'خطأ',
                 description: `لا يمكنك رفع أكثر من ${MAX_FILES} صورة.`,
             });
+            // Clear the file input
+            if(fileInputRef.current) fileInputRef.current.value = "";
             return;
         }
         const newPreviews = fileArray.map(file => URL.createObjectURL(file));
         setPreviewImages(newPreviews);
     }
+  };
+
+  const removePreviewImage = (index: number) => {
+    const newPreviews = [...previewImages];
+    newPreviews.splice(index, 1);
+    setPreviewImages(newPreviews);
+
+    // To properly update the react-hook-form FileList, we need to reconstruct it
+    const dataTransfer = new DataTransfer();
+    const currentFiles = form.getValues('imageFiles');
+    if (currentFiles) {
+        Array.from(currentFiles)
+            .filter((_, i) => i !== index)
+            .forEach(file => dataTransfer.items.add(file));
+    }
+    form.setValue('imageFiles', dataTransfer.files);
   };
 
 
@@ -250,23 +270,30 @@ export default function JournalPage() {
                     <FormLabel>إضافة صور (حتى {MAX_FILES} صور)</FormLabel>
                      <FormControl>
                         <div 
-                            className="mt-2 flex justify-center rounded-lg border border-dashed border-input px-6 py-10 cursor-pointer"
+                            className="mt-1 flex justify-center rounded-lg border border-dashed border-input px-6 py-10 cursor-pointer"
                             onClick={() => fileInputRef.current?.click()}
                         >
                         <div className="text-center">
-                            {previewImages.length > 0 ? (
-                               <div className="grid grid-cols-3 gap-2">
-                                {previewImages.map((src, index) => (
-                                    <div key={index} className="relative aspect-square">
-                                        <Image src={src} alt={`Preview ${index + 1}`} fill className="object-cover rounded-md" />
-                                    </div>
-                                ))}
-                               </div>
-                            ) : (
+                            {previewImages.length === 0 ? (
                                 <>
                                     <ImagePlus className="mx-auto h-12 w-12 text-gray-400" />
                                     <p className="mt-4 text-sm leading-6 text-muted-foreground">اسحب وأفلت صور أو انقر للاختيار</p>
                                 </>
+                            ) : (
+                               <div className="grid grid-cols-3 gap-2">
+                                {previewImages.map((src, index) => (
+                                    <div key={index} className="relative group aspect-square">
+                                        <Image src={src} alt={`Preview ${index + 1}`} fill className="object-cover rounded-md" />
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); removePreviewImage(index); }}
+                                            className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                ))}
+                               </div>
                             )}
                         </div>
                         <Input 
