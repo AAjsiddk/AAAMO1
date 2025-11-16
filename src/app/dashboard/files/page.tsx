@@ -258,6 +258,22 @@ export default function FilesPage() {
       }
   };
 
+  const handleFileClick = (file: FileType) => {
+    // Placeholder for actual file download from Firebase Storage
+    toast({
+      title: 'بدء تحميل الملف',
+      description: `سيتم تحميل ملف "${file.name}".`,
+    });
+    // In a real app, you would get the download URL from Storage and create a link.
+    // const link = document.createElement('a');
+    // link.href = file.storagePath; // This would be the download URL
+    // link.download = file.name;
+    // document.body.appendChild(link);
+    // link.click();
+    // document.body.removeChild(link);
+  };
+
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
        <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
@@ -433,7 +449,7 @@ export default function FilesPage() {
             </Card>
           ))}
           {files?.map((file) => (
-            <Card key={file.id} className="group relative cursor-pointer hover:shadow-lg transition-shadow">
+            <Card key={file.id} className="group relative cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleFileClick(file)}>
               <CardContent className="flex flex-col items-center justify-center p-6">
                 <FileIcon className="h-16 w-16 text-muted-foreground" />
                 <span className="mt-2 font-medium truncate w-full text-center">{file.name}</span>
@@ -441,16 +457,12 @@ export default function FilesPage() {
               <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem disabled>
-                      <Edit className="ml-2 h-4 w-4" />
-                      <span>إعادة تسمية</span>
-                    </DropdownMenuItem>
-                     <DropdownMenuItem onSelect={() => setItemToDelete({ type: 'file', id: file.id })} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                     <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); setItemToDelete({ type: 'file', id: file.id })}} className="text-destructive focus:text-destructive focus:bg-destructive/10">
                         <Trash2 className="ml-2 h-4 w-4" />
                         <span>حذف</span>
                     </DropdownMenuItem>

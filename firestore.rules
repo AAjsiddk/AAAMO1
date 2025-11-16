@@ -1,9 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Allow reading/writing ONLY inside the user’s own document
     match /users/{userId}/{collection}/{docId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+    // Also allow operations directly on the user root
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
