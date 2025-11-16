@@ -9,6 +9,7 @@ import { format, isSameDay } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
+import type { DayProps } from 'react-day-picker';
 
 export default function CalendarPage() {
     const { user } = useUser();
@@ -44,13 +45,14 @@ export default function CalendarPage() {
         return tasksByDate.get(dateString) || [];
     }, [selectedDate, tasksByDate]);
     
-    const DayWithTasks = ({ date, ...props }: { date: Date } & any) => {
+    const DayWithTasks = (props: DayProps) => {
+        const { date, children } = props;
         const dateString = format(date, 'yyyy-MM-dd');
         const tasksForDay = tasksByDate.get(dateString);
         
         return (
-            <div {...props}>
-                {props.children}
+            <div className="relative">
+                {children}
                 {tasksForDay && tasksForDay.length > 0 && (
                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex space-x-1">
                         <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
