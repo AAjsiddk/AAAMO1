@@ -57,8 +57,7 @@ service cloud.firestore {
      * @principle Enforces user-ownership for tasks.
      */
     match /users/{userId}/tasks/{taskId} {
-      allow read, write, create, update, delete: if isOwner(userId);
-      allow list: if isOwner(userId);
+      allow read, write, create, update, delete, list: if isOwner(userId);
     }
 
     /**
@@ -71,8 +70,7 @@ service cloud.firestore {
      * @principle Enforces user-ownership for file data.
      */
     match /users/{userId}/files/{fileId} {
-      allow read, write, create, update, delete: if isOwner(userId);
-       allow list: if isOwner(userId);
+      allow read, write, create, update, delete, list: if isOwner(userId);
     }
     
     /**
@@ -81,8 +79,7 @@ service cloud.firestore {
      * @principle Enforces user-ownership for journal entries.
      */
     match /users/{userId}/journalEntries/{journalEntryId} {
-      allow read, write, create, update, delete: if isOwner(userId);
-       allow list: if isOwner(userId);
+      allow read, write, create, update, delete, list: if isOwner(userId);
     }
     
      /**
@@ -91,8 +88,7 @@ service cloud.firestore {
      * @principle Enforces user-ownership for notes.
      */
     match /users/{userId}/notes/{noteId} {
-      allow read, write, create, update, delete: if isOwner(userId);
-       allow list: if isOwner(userId);
+      allow read, write, create, update, delete, list: if isOwner(userId);
     }
 
     /**
@@ -101,53 +97,43 @@ service cloud.firestore {
      * @principle Enforces user-ownership for audit log data.
      */
     match /users/{userId}/audit_logs/{auditLogId} {
-      allow read, write, create, update, delete: if isOwner(userId);
-      allow list: if isOwner(userId);
+      allow read, write, create, update, delete, list: if isOwner(userId);
     }
     
     match /users/{userId}/futureMessages/{messageId} {
-      allow read, write, create, update, delete: if isOwner(userId);
-      allow list: if isOwner(userId);
+      allow read, write, create, update, delete, list: if isOwner(userId);
     }
     
     match /users/{userId}/libraryItems/{itemId} {
-       allow read, write, create, update, delete: if isOwner(userId);
-       allow list: if isOwner(userId);
+       allow read, write, create, update, delete, list: if isOwner(userId);
     }
 
     match /users/{userId}/worshipActs/{actId} {
-       allow read, write, create, update, delete: if isOwner(userId);
-       allow list: if isOwner(userId);
+       allow read, write, create, update, delete, list: if isOwner(userId);
     }
 
     match /users/{userId}/relaxationActivities/{activityId} {
-        allow read, write, create, update, delete: if isOwner(userId);
-        allow list: if isOwner(userId);
+        allow read, write, create, update, delete, list: if isOwner(userId);
     }
 
     match /users/{userId}/goals/{goalId} {
-        allow read, write, create, update, delete: if isOwner(userId);
-        allow list: if isOwner(userId);
+        allow read, write, create, update, delete, list: if isOwner(userId);
     }
 
     match /users/{userId}/folders/{folderId} {
-        allow read, write, create, update, delete: if isOwner(userId);
-        allow list: if isOwner(userId);
+        allow read, write, create, update, delete, list: if isOwner(userId);
     }
 
     match /users/{userId}/habits/{habitId} {
-        allow read, write, create, update, delete: if isOwner(userId);
-        allow list: if isOwner(userId);
+        allow read, write, create, update, delete, list: if isOwner(userId);
     }
     
     match /users/{userId}/habits/{habitId}/marks/{markId} {
-       allow read, write, create, update, delete: if isOwner(userId);
-       allow list: if isOwner(userId);
+       allow read, write, create, update, delete, list: if isOwner(userId);
     }
 
     match /users/{userId}/projects/{projectId} {
-       allow read, write, create, update, delete: if isOwner(userId);
-       allow list: if isOwner(userId);
+       allow read, write, create, update, delete, list: if isOwner(userId);
     }
   }
 }
