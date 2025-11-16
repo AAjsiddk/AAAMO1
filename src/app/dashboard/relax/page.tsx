@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -80,12 +80,7 @@ export default function RelaxationPage() {
     return collection(firestore, `users/${user.uid}/relaxationActivities`);
   }, [firestore, user]);
 
-  const activitiesQuery = useMemoFirebase(() => {
-    if (!activitiesCollectionRef) return null;
-    return query(activitiesCollectionRef);
-  }, [activitiesCollectionRef]);
-
-  const { data: activities, isLoading: isLoadingActivities } = useCollection<RelaxationActivity>(activitiesQuery);
+  const { data: activities, isLoading: isLoadingActivities } = useCollection<RelaxationActivity>(activitiesCollectionRef);
 
   const onSubmit = async (values: z.infer<typeof activitySchema>) => {
     if (!activitiesCollectionRef || !user) return;

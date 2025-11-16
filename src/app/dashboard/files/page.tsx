@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -77,7 +77,7 @@ export default function FilesPage() {
   const { toast } = useToast();
 
   const [path, setPath] = useState<{ id: string | null; name: string }[]>([{ id: null, name: 'الجذر' }]);
-  const currentFolderId = path[path.length - 1]?.id || null;
+  const currentFolderId = useMemo(() => path[path.length - 1]?.id || null, [path]);
 
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
   const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);

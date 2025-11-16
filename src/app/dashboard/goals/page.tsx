@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -226,12 +226,7 @@ export default function GoalsPage() {
     return collection(firestore, `users/${user.uid}/goals`);
   }, [firestore, user]);
 
-  const goalsQuery = useMemoFirebase(() => {
-    if (!goalsCollectionRef) return null;
-    return query(goalsCollectionRef);
-  }, [goalsCollectionRef]);
-
-  const { data: goals, isLoading: isLoadingGoals } = useCollection<Goal>(goalsQuery);
+  const { data: goals, isLoading: isLoadingGoals } = useCollection<Goal>(goalsCollectionRef);
 
   const handleDialogOpen = (goal: Goal | null) => {
     setEditingGoal(goal);

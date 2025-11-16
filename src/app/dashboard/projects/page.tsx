@@ -40,8 +40,6 @@ export default function ProjectsPage() {
 
   const projectsCollectionRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    // We can reuse the 'goals' collection with a special type field, or create a new 'projects' collection.
-    // For simplicity, we'll use a new collection.
     return collection(firestore, `users/${user.uid}/projects`);
   }, [firestore, user]);
 

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -114,16 +114,19 @@ export default function JournalPage() {
   const { data: allEntries, isLoading: isLoadingEntries } = useCollection<JournalEntry>(entriesQuery);
 
   const today = new Date();
-  const entries = showOnThisDay 
-    ? allEntries?.filter(entry => {
-        if (!entry.createdAt) return false;
-        const entryDate = (entry.createdAt as Timestamp).toDate();
-        // Exclude entries from today
-        return !isSameDay(entryDate, today) && 
-               entryDate.getDate() === today.getDate() && 
-               entryDate.getMonth() === today.getMonth();
-      })
-    : allEntries;
+  const entries = useMemo(() => {
+    if (!allEntries) return [];
+    if (showOnThisDay) {
+        return allEntries.filter(entry => {
+            if (!entry.createdAt) return false;
+            const entryDate = (entry.createdAt as Timestamp).toDate();
+            return !isSameDay(entryDate, today) && 
+                   entryDate.getDate() === today.getDate() && 
+                   entryDate.getMonth() === today.getMonth();
+        });
+    }
+    return allEntries;
+  }, [allEntries, showOnThisDay, today]);
 
   const onSubmit = async (values: z.infer<typeof journalSchema>) => {
     if (!firestore || !user || !journalCollectionRef) return;
