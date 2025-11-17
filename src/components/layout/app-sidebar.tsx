@@ -35,7 +35,7 @@ import {
   HandHeart,
   FolderKanban,
   StickyNote,
-  Clock, // Added Clock import
+  Clock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

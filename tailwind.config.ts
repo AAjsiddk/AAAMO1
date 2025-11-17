@@ -13,8 +13,16 @@ export default {
         body: ['Tajawal', 'sans-serif'],
         headline: ['Tajawal', 'sans-serif'],
         code: ['monospace'],
+        inter: ['Inter', 'system-ui', 'sans-serif']
       },
       colors: {
+        bg: 'var(--bg)',
+        'card-bg': 'var(--card-bg)',
+        'muted-text': 'var(--muted-text)',
+        'accent-1': 'var(--accent-1)',
+        'accent-2': 'var(--accent-2)',
+        'accent-3': 'var(--accent-3)',
+        danger: 'var(--danger)',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
@@ -46,6 +54,7 @@ export default {
           foreground: 'hsl(var(--destructive-foreground))',
         },
         border: 'hsl(var(--border))',
+        'glass-border': 'var(--glass-border)',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         chart: {
@@ -70,6 +79,13 @@ export default {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      boxShadow: {
+        'soft-glow': '0 8px 30px rgba(124,92,255,0.12)',
+        'card-deep': '0 6px 18px rgba(2,6,23,0.6)',
+      },
+      backdropBlur: {
+        xs: '2px'
       },
       keyframes: {
         'accordion-down': {

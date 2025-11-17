@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus, Trash2, Loader2, GripVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { ProjectTask } from '@/lib/types';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 
 const columns = {
@@ -44,7 +43,7 @@ function TaskCard({ task, index, onDelete }: { task: ProjectTask, index: number,
 }
 
 
-function Column({ columnId, title, tasks, onAddTask }: { columnId: ColumnId, title: string, tasks: ProjectTask[], onAddTask: (columnId: ColumnId, content: string) => void }) {
+function Column({ columnId, title, tasks, onAddTask, onDeleteTask }: { columnId: ColumnId, title: string, tasks: ProjectTask[], onAddTask: (columnId: ColumnId, content: string) => void, onDeleteTask: (id: string) => void }) {
   const [newTaskContent, setNewTaskContent] = useState('');
 
   const handleAddTask = () => {
@@ -67,7 +66,7 @@ function Column({ columnId, title, tasks, onAddTask }: { columnId: ColumnId, tit
             className={`p-3 flex-grow overflow-y-auto transition-colors ${snapshot.isDraggingOver ? 'bg-primary/10' : ''}`}
           >
             {tasks.map((task, index) => (
-              <TaskCard key={task.id} task={task} index={index} onDelete={() => { /* Implement delete */ }} />
+              <TaskCard key={task.id} task={task} index={index} onDelete={onDeleteTask} />
             ))}
             {provided.placeholder}
             <div className="mt-2">
@@ -124,8 +123,7 @@ export default function ProjectsPage() {
     if (!firestore || !user) return;
     const taskDocRef = doc(firestore, `users/${user.uid}/projectTasks`, draggableId);
     
-    // Using non-blocking update for better UI responsiveness
-    setDocumentNonBlocking(taskDocRef, { columnId: destination.droppableId }, { merge: true });
+    updateDoc(taskDocRef, { columnId: destination.droppableId });
     
     toast({
         title: "تم نقل المهمة",
@@ -149,6 +147,18 @@ export default function ProjectsPage() {
      }
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    if (!firestore || !user) return;
+    const taskDocRef = doc(firestore, `users/${user.uid}/projectTasks`, taskId);
+    try {
+        await deleteDoc(taskDocRef);
+        toast({ title: "تم حذف المهمة" });
+    } catch(e) {
+        console.error("Error deleting task:", e);
+        toast({ variant: 'destructive', title: "خطأ", description: "فشل حذف المهمة."});
+    }
+  }
+
   const tasksByColumn = useMemo(() => {
     const initial: Record<ColumnId, ProjectTask[]> = {
       todo: [],
@@ -156,7 +166,10 @@ export default function ProjectsPage() {
       'done': [],
     };
     if (!tasks) return initial;
-    return tasks.reduce((acc, task) => {
+    
+    const sortedTasks = [...tasks].sort((a,b) => (a.createdAt as any) - (b.createdAt as any));
+
+    return sortedTasks.reduce((acc, task) => {
       const column = task.columnId || 'todo';
       if(acc[column]) {
         acc[column].push(task);
@@ -184,6 +197,7 @@ export default function ProjectsPage() {
                         title={title}
                         tasks={tasksByColumn[id as ColumnId]}
                         onAddTask={handleAddTask}
+                        onDeleteTask={handleDeleteTask}
                     />
                 ))}
             </div>
