@@ -88,6 +88,12 @@ const Sidebar = React.forwardRef<
           side="right"
           className="w-72 bg-background p-0 text-foreground border-l"
         >
+          <SheetHeader className="sr-only">
+             <SheetTitle>القائمة الرئيسية</SheetTitle>
+             <SheetDescription>
+                تنقل بين أقسام التطبيق المختلفة.
+             </SheetDescription>
+           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
       </Sheet>
