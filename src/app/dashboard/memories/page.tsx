@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 type Memory = {
     id: string;
     title: string;
-    imageUrl: string;
+    imageUrls: string[];
     createdAt: Timestamp;
 }
 
@@ -32,11 +32,11 @@ export default function MemoriesPage() {
     const memories = useMemo<Memory[]>(() => {
         if (!journalEntries) return [];
         return journalEntries
-            .filter(entry => entry.imageUrl && entry.createdAt)
+            .filter(entry => entry.imageUrls && entry.imageUrls.length > 0 && entry.createdAt)
             .map(entry => ({
                 id: entry.id,
                 title: entry.title,
-                imageUrl: entry.imageUrl,
+                imageUrls: entry.imageUrls,
                 createdAt: entry.createdAt,
             }));
     }, [journalEntries]);
@@ -45,7 +45,6 @@ export default function MemoriesPage() {
         const today = new Date();
         return memories.filter(memory => {
             const memoryDate = memory.createdAt.toDate();
-            // Check if it's the same day and month, but not the same year
             return memoryDate.getDate() === today.getDate() &&
                    memoryDate.getMonth() === today.getMonth() &&
                    memoryDate.getFullYear() !== today.getFullYear();
@@ -94,7 +93,7 @@ export default function MemoriesPage() {
                           <Card>
                             <CardContent className="flex flex-col items-center justify-center p-6 space-y-4">
                                <div className="relative w-full aspect-video overflow-hidden rounded-lg">
-                                 <Image src={memory.imageUrl} alt={memory.title} layout="fill" objectFit="cover" />
+                                 <Image src={memory.imageUrls[0]} alt={memory.title} layout="fill" objectFit="cover" />
                                </div>
                                <div className="text-center">
                                     <h4 className="font-semibold">{memory.title}</h4>
@@ -122,7 +121,7 @@ export default function MemoriesPage() {
             <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                  {memories.map(memory => (
                      <div key={memory.id} className="group relative aspect-square overflow-hidden rounded-lg">
-                         <Image src={memory.imageUrl} alt={memory.title} layout="fill" objectFit="cover" className="transition-transform group-hover:scale-105" />
+                         <Image src={memory.imageUrls[0]} alt={memory.title} layout="fill" objectFit="cover" className="transition-transform group-hover:scale-105" />
                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                          <div className="absolute bottom-0 left-0 right-0 p-4">
                             <h4 className="font-semibold text-white truncate">{memory.title}</h4>

@@ -156,8 +156,6 @@ export default function JournalPage() {
 
         if (values.imageFiles && values.imageFiles.length > 0) {
             const files = Array.from(values.imageFiles);
-            // In a real app, you'd upload to Firebase Storage and get URLs.
-            // For this prototype, we'll use data URIs.
             const uploadPromises = files.map(file => uploadImage(file));
             imageUrls = await Promise.all(uploadPromises);
         }
@@ -214,7 +212,6 @@ export default function JournalPage() {
                 title: 'خطأ',
                 description: `لا يمكنك رفع أكثر من ${MAX_FILES} صورة.`,
             });
-            // Clear the file input
             if(fileInputRef.current) fileInputRef.current.value = "";
             return;
         }
@@ -228,7 +225,6 @@ export default function JournalPage() {
     newPreviews.splice(index, 1);
     setPreviewImages(newPreviews);
 
-    // To properly update the react-hook-form FileList, we need to reconstruct it
     const dataTransfer = new DataTransfer();
     const currentFiles = form.getValues('imageFiles');
     if (currentFiles) {

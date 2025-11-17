@@ -54,6 +54,7 @@ import { format, eachDayOfInterval, startOfDay } from 'date-fns';
 const habitSchema = z.object({
   name: z.string().min(1, { message: 'اسم العادة مطلوب.' }),
   type: z.enum(['acquire', 'quit']),
+  frequency: z.enum(['daily', 'weekly', 'monthly']),
   startDate: z.date({ required_error: "تاريخ البدء مطلوب." }),
   endDate: z.date({ required_error: "تاريخ الانتهاء مطلوب." }),
 });
@@ -80,7 +81,6 @@ function HabitDayTracker({ habit }: { habit: Habit }) {
 
         try {
             if (existingMark && existingMark.status === status) {
-                 // If the user clicks the same status again, delete the mark (un-set it)
                  await deleteDoc(markRef);
             } else {
                  const newMark: Omit<HabitMark, 'id'> = {
@@ -165,7 +165,7 @@ function HabitCard({ habit, onEdit, onDelete }: { habit: Habit; onEdit: (habit: 
           </div>
         </CardTitle>
         <CardDescription>
-          النوع: {habit.type === 'acquire' ? 'اكتساب' : 'ترك'}
+          النوع: {habit.type === 'acquire' ? 'اكتساب' : 'ترك'} | التكرار: {habit.frequency === 'daily' ? 'يومي' : habit.frequency === 'weekly' ? 'أسبوعي' : 'شهري'}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
@@ -185,11 +185,16 @@ export default function HabitsPage() {
 
   const form = useForm<z.infer<typeof habitSchema>>({
     resolver: zodResolver(habitSchema),
+    defaultValues: {
+      name: '',
+      type: 'acquire',
+      frequency: 'daily',
+    }
   });
   
   useEffect(() => {
     if (!isDialogOpen) {
-      form.reset({ name: '', type: 'acquire', startDate: undefined, endDate: undefined });
+      form.reset({ name: '', type: 'acquire', frequency: 'daily', startDate: undefined, endDate: undefined });
       setEditingHabit(null);
     }
   }, [isDialogOpen, form]);
@@ -206,6 +211,7 @@ export default function HabitsPage() {
     form.reset({
       name: habit.name,
       type: habit.type,
+      frequency: habit.frequency || 'daily',
       startDate: habit.startDate ? (habit.startDate as Timestamp).toDate() : new Date(),
       endDate: habit.endDate ? (habit.endDate as Timestamp).toDate() : new Date(),
     });
@@ -320,6 +326,32 @@ export default function HabitsPage() {
                         <SelectContent>
                           <SelectItem value="acquire">اكتساب عادة</SelectItem>
                           <SelectItem value="quit">ترك عادة</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="frequency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>التكرار</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        dir="rtl"
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر التكرار" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="daily">يومي</SelectItem>
+                          <SelectItem value="weekly">أسبوعي</SelectItem>
+                          <SelectItem value="monthly">شهري</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

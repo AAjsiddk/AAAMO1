@@ -84,20 +84,23 @@ export default function CalendarPage() {
         const { date, modifiers } = dayProps;
         const eventsForDay = eventsByDate.get(format(date, 'yyyy-MM-dd'));
         
-        const buttonProps: React.HTMLAttributes<HTMLButtonElement> = { ...dayProps };
-        delete (buttonProps as any).displayMonth;
-        delete (buttonProps as any).date;
-        delete (buttonProps as any).modifiers;
+        // This is a workaround to avoid passing non-DOM props to the button element
+        const buttonProps: any = { ...dayProps };
+        delete buttonProps.displayMonth;
+        delete buttonProps.date;
+        delete buttonProps.modifiers;
+
+        const safeModifiers = modifiers || {};
         
         return (
              <div className="relative">
                 <Button 
                     name="day"
                     {...buttonProps}
-                    variant={modifiers?.selected ? 'default' : modifiers?.today ? 'outline' : 'ghost'} 
+                    variant={safeModifiers.selected ? 'default' : safeModifiers.today ? 'outline' : 'ghost'} 
                     className={cn(
                         'h-9 w-9 p-0 font-normal',
-                        !modifiers?.disabled && modifiers?.outside && 'text-muted-foreground opacity-50'
+                        !safeModifiers.disabled && safeModifiers.outside && 'text-muted-foreground opacity-50'
                     )}
                  >
                     {date.getDate()}

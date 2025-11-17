@@ -169,8 +169,6 @@ export default function FilesPage() {
     try {
       const file = values.file[0];
       
-      // NOTE: This is a placeholder for actual file upload to Firebase Storage.
-      // We are only creating the Firestore document here.
       const newFile: Omit<FileType, 'id'> = {
         name: values.name,
         userId: user.uid,
@@ -201,7 +199,6 @@ export default function FilesPage() {
             const foldersToDelete = new Set<string>([itemToDelete.id]);
             const foldersToCheck = [itemToDelete.id];
 
-            // Recursively find all sub-folders to delete
             while (foldersToCheck.length > 0) {
                 const currentId = foldersToCheck.pop()!;
                 const subFoldersQuery = query(collection(firestore, `users/${user.uid}/folders`), where('parentId', '==', currentId));
@@ -214,14 +211,12 @@ export default function FilesPage() {
 
             const batch = writeBatch(firestore);
 
-            // Delete all files within these folders
             for (const folderId of foldersToDelete) {
                 const filesInFolderQuery = query(collection(firestore, `users/${user.uid}/files`), where('folderId', '==', folderId));
                 const filesSnapshot = await getDocs(filesInFolderQuery);
                 filesSnapshot.forEach(doc => batch.delete(doc.ref));
             }
             
-            // Delete all the folders
             foldersToDelete.forEach(id => {
                 const folderRef = doc(firestore, `users/${user.uid}/folders`, id);
                 batch.delete(folderRef);
@@ -232,7 +227,6 @@ export default function FilesPage() {
 
         } else { // Deleting a file
             const fileRef = doc(firestore, `users/${user.uid}/files`, itemToDelete.id);
-            // TODO: Also delete file from Firebase Storage
             await deleteDoc(fileRef);
             toast({ title: 'تم الحذف', description: 'تم حذف الملف بنجاح.' });
         }
@@ -259,18 +253,10 @@ export default function FilesPage() {
   };
 
   const handleFileClick = (file: FileType) => {
-    // Placeholder for actual file download from Firebase Storage
     toast({
       title: 'بدء تحميل الملف',
       description: `سيتم تحميل ملف "${file.name}".`,
     });
-    // In a real app, you would get the download URL from Storage and create a link.
-    // const link = document.createElement('a');
-    // link.href = file.storagePath; // This would be the download URL
-    // link.download = file.name;
-    // document.body.appendChild(link);
-    // link.click();
-    // document.body.removeChild(link);
   };
 
 

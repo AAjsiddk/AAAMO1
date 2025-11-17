@@ -22,9 +22,9 @@ export type Habit = {
   userId: string;
   name: string;
   type: 'acquire' | 'quit';
+  frequency: 'daily' | 'weekly' | 'monthly';
   startDate: Timestamp | Date;
   endDate: Timestamp | Date;
-  frequency?: string;
   streak?: number;
 };
 

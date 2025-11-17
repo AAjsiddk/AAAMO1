@@ -17,7 +17,7 @@ service cloud.firestore {
     // This covers get, create, update, delete operations.
     // It does NOT cover list (collection queries).
     match /users/{userId}/{collection}/{docId} {
-      allow read, update, delete, create: if isOwner(userId);
+      allow read, write, update, delete: if isOwner(userId);
     }
 
     // --- Rules for LISTING collections ---
