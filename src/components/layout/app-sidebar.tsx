@@ -28,8 +28,6 @@ import {
   MessageSquare,
   Sparkles,
   Smile,
-  BookOpen,
-  Clock,
   Heart,
   Trophy,
   Package,
