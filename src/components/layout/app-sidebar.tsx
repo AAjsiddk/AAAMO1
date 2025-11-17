@@ -35,6 +35,7 @@ import {
   HandHeart,
   FolderKanban,
   StickyNote,
+  Clock, // Added Clock import
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -58,6 +59,7 @@ export function AppSidebar() {
     { name: 'الملاحظات', href: '/dashboard/notes', icon: StickyNote },
     { name: 'الملفات', href: '/dashboard/files', icon: File },
     { name: 'المذكرات', href: '/dashboard/journal', icon: Camera },
+    { name: 'المشاريع', href: '/dashboard/projects', icon: FolderKanban },
   ];
 
   const selfDevelopmentSections = [
@@ -70,7 +72,9 @@ export function AppSidebar() {
   const toolsSections = [
       { name: 'الذكاء المساعد', href: '/dashboard/ai-assistant', icon: BrainCircuit },
       { name: 'مكتبتي المعرفية', href: '/dashboard/library', icon: Library },
+      { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: Clock },
       { name: 'مخطط الترفيه', href: '/dashboard/relax', icon: Coffee },
+      { name: 'تصدير واستيراد', href: '/dashboard/data-sync', icon: Package },
   ];
 
   const analysisSections = [
@@ -83,7 +87,6 @@ export function AppSidebar() {
     { name: 'الذكريات', href: '/dashboard/memories', icon: Camera },
     { name: 'رسائل للمستقبل', href: '/dashboard/messages', icon: MessageSquare },
     { name: 'الثيمات', href: '/dashboard/dynamic-themes', icon: Droplets },
-    { name: 'النسخ الاحتياطي', href: '/dashboard/data-sync', icon: Package },
   ]
   
   const NavLink = ({ item, active }: { item: { href: string; name: string; icon: React.ElementType }, active: boolean }) => (
@@ -94,9 +97,6 @@ export function AppSidebar() {
         <item.icon className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
         <span className="mr-4 font-medium">{item.name}</span>
         {active && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400 rounded-r-full"></div>}
-        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 hidden group-hover:block bg-background text-foreground px-2 py-1 rounded-md text-sm shadow-lg border">
-            {item.name}
-        </div>
     </Link>
   );
 
