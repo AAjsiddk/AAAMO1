@@ -6,8 +6,6 @@ import {
   SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarSeparator,
 } from '@/components/ui/sidebar'
 import { Logo } from '@/components/logo'
 import { usePathname } from 'next/navigation'
@@ -34,7 +32,6 @@ import {
   Coffee,
   Library,
   HandHeart,
-  Clock,
   FolderKanban,
   StickyNote,
 } from 'lucide-react'
@@ -49,54 +46,56 @@ export function AppSidebar() {
   }
   
   const mainSections = [
-    { name: 'لوحة التحكم', href: '/dashboard', icon: <LayoutDashboard /> },
-    { name: 'التقويم', href: '/dashboard/calendar', icon: <Calendar /> },
+    { name: 'لوحة التحكم', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'التقويم', href: '/dashboard/calendar', icon: Calendar },
   ]
   
   const organizationSections = [
-    { name: 'الأهداف', href: '/dashboard/goals', icon: <Target /> },
-    { name: 'المشاريع', href: '/dashboard/projects', icon: <FolderKanban /> },
-    { name: 'المهام', href: '/dashboard/tasks', icon: <ClipboardCheck /> },
-    { name: 'العادات', href: '/dashboard/habits', icon: <Repeat /> },
-    { name: 'الملاحظات', href: '/dashboard/notes', icon: <StickyNote /> },
-    { name: 'الملفات', href: '/dashboard/files', icon: <File /> },
-    { name: 'المذكرات', href: '/dashboard/journal', icon: <Camera /> },
+    { name: 'الأهداف', href: '/dashboard/goals', icon: Target },
+    { name: 'المهام', href: '/dashboard/tasks', icon: ClipboardCheck },
+    { name: 'العادات', href: '/dashboard/habits', icon: Repeat },
+    { name: 'الملاحظات', href: '/dashboard/notes', icon: StickyNote },
+    { name: 'الملفات', href: '/dashboard/files', icon: File },
+    { name: 'المذكرات', href: '/dashboard/journal', icon: Camera },
   ];
 
   const selfDevelopmentSections = [
-      { name: 'مرآة الذات', href: '/dashboard/mood', icon: <Smile /> },
-      { name: 'صندوق الامتنان', href: '/dashboard/gratitude', icon: <Heart /> },
-      { name: 'يومي الجميل', href: '/dashboard/beautiful-day', icon: <Sparkles /> },
-      { name: 'ركن العبادات', href: '/dashboard/faith', icon: <HandHeart /> },
+      { name: 'مرآة الذات', href: '/dashboard/mood', icon: Smile },
+      { name: 'صندوق الامتنان', href: '/dashboard/gratitude', icon: Heart },
+      { name: 'يومي الجميل', href: '/dashboard/beautiful-day', icon: Sparkles },
+      { name: 'ركن العبادات', href: '/dashboard/faith', icon: HandHeart },
   ];
   
   const toolsSections = [
-      { name: 'الذكاء المساعد', href: '/dashboard/ai-assistant', icon: <BrainCircuit /> },
-      { name: 'مكتبتي المعرفية', href: '/dashboard/library', icon: <Library /> },
-      { name: 'وضع التركيز', href: '/dashboard/focus', icon: <Clock /> },
-      { name: 'مخطط الترفيه', href: '/dashboard/relax', icon: <Coffee /> },
+      { name: 'الذكاء المساعد', href: '/dashboard/ai-assistant', icon: BrainCircuit },
+      { name: 'مكتبتي المعرفية', href: '/dashboard/library', icon: Library },
+      { name: 'مخطط الترفيه', href: '/dashboard/relax', icon: Coffee },
   ];
 
   const analysisSections = [
-    { name: 'التحليلات', href: '/dashboard/analytics', icon: <BarChart /> },
-    { name: 'الإنجاز التراكمي', href: '/dashboard/cumulative-achievements', icon: <TrendingUp /> },
-    { name: 'الإنجازات', href: '/dashboard/achievements', icon: <Trophy /> },
+    { name: 'التحليلات', href: '/dashboard/analytics', icon: BarChart },
+    { name: 'الإنجاز التراكمي', href: '/dashboard/cumulative-achievements', icon: TrendingUp },
+    { name: 'الإنجازات', href: '/dashboard/achievements', icon: Trophy },
   ];
 
   const otherSections = [
-    { name: 'الذكريات', href: '/dashboard/memories', icon: <Camera /> },
-    { name: 'رسائل للمستقبل', href: '/dashboard/messages', icon: <MessageSquare /> },
-    { name: 'الثيمات', href: '/dashboard/dynamic-themes', icon: <Droplets /> },
-    { name: 'النسخ الاحتياطي', href: '/dashboard/data-sync', icon: <Package /> },
+    { name: 'الذكريات', href: '/dashboard/memories', icon: Camera },
+    { name: 'رسائل للمستقبل', href: '/dashboard/messages', icon: MessageSquare },
+    { name: 'الثيمات', href: '/dashboard/dynamic-themes', icon: Droplets },
+    { name: 'النسخ الاحتياطي', href: '/dashboard/data-sync', icon: Package },
   ]
   
-  const NavLink = ({ item, active }: { item: { href: string; name: string; icon: React.ReactNode }, active: boolean }) => (
+  const NavLink = ({ item, active }: { item: { href: string; name: string; icon: React.ElementType }, active: boolean }) => (
     <Link href={item.href} className={cn(
-        "flex items-center p-3 rounded-lg text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors",
+        "group relative flex items-center p-3 rounded-lg text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors duration-200",
         active && "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground"
     )}>
-        {item.icon}
-        <span className="mr-4">{item.name}</span>
+        <item.icon className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
+        <span className="mr-4 font-medium">{item.name}</span>
+        {active && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400 rounded-r-full"></div>}
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 hidden group-hover:block bg-background text-foreground px-2 py-1 rounded-md text-sm shadow-lg border">
+            {item.name}
+        </div>
     </Link>
   );
 
@@ -147,7 +146,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-             <NavLink item={{name: "الإعدادات", href:"/dashboard/settings", icon: <Settings /> }} active={isActive('/dashboard/settings')} />
+             <NavLink item={{name: "الإعدادات", href:"/dashboard/settings", icon: Settings }} active={isActive('/dashboard/settings')} />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

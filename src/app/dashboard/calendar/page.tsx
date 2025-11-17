@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
 import type { Task, Goal } from '@/lib/types';
@@ -137,6 +137,9 @@ export default function CalendarPage() {
                         <CardTitle className="text-lg">
                            أحداث يوم {selectedDate ? format(selectedDate, 'd MMMM', { locale: ar }) : ''}
                         </CardTitle>
+                        <CardDescription>
+                            المهام والأهداف المجدولة لهذا اليوم.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
                          <ScrollArea className="h-96">
