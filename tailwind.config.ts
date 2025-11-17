@@ -18,11 +18,11 @@ export default {
       colors: {
         bg: 'var(--bg)',
         'card-bg': 'var(--card-bg)',
-        'muted': 'var(--muted)',
-        'accent-1': 'var(--accent-1)',
-        'accent-2': 'var(--accent-2)',
-        'accent-3': 'var(--accent-3)',
-        'danger': 'var(--danger)',
+        muted: 'var(--muted)',
+        accent1: 'var(--accent-1)',
+        accent2: 'var(--accent-2)',
+        accent3: 'var(--accent-3)',
+        danger: 'var(--danger)',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
@@ -41,10 +41,7 @@ export default {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
         },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
+        'muted-foreground': 'hsl(var(--muted-foreground))',
         accent: {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
@@ -53,7 +50,7 @@ export default {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
-        border: 'hsl(var(--border))',
+        border: 'var(--glass-border)',
         'glass-border': 'var(--glass-border)',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -81,11 +78,11 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       boxShadow: {
-        'soft-glow': '0 8px 30px rgba(124,92,255,0.12)',
+        'soft-glow': '0 8px 30px var(--glass-glow, rgba(124,92,255,0.12))',
         'card-deep': '0 6px 18px rgba(2,6,23,0.6)',
       },
       backdropBlur: {
-        xs: '2px'
+        xs: '8px'
       },
       keyframes: {
         'accordion-down': {
