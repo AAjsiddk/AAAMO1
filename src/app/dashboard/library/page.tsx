@@ -15,6 +15,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -44,7 +45,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Loader2, Library, Book, Video, Link as LinkIcon, FileText, Image as ImageIcon } from 'lucide-react';
+import { PlusCircle, Trash2, Loader2, Library, Book, Video, Link as LinkIcon, FileText, Image as ImageIcon, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { LibraryItem } from '@/lib/types';
 import Image from 'next/image';
@@ -56,6 +57,7 @@ const itemSchema = z.object({
   source: z.string().min(1, { message: 'المصدر مطلوب.' }),
   description: z.string().optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
+  impactfulQuote: z.string().optional(),
 });
 
 const typeIcons = {
@@ -82,8 +84,10 @@ export default function LibraryPage() {
 
   const form = useForm<z.infer<typeof itemSchema>>({
     resolver: zodResolver(itemSchema),
-    defaultValues: { title: '', type: 'link', source: '', description: '', imageUrl: '' },
+    defaultValues: { title: '', type: 'link', source: '', description: '', imageUrl: '', impactfulQuote: '' },
   });
+  
+  const itemType = form.watch('type');
 
   const libraryCollectionRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -168,6 +172,13 @@ export default function LibraryPage() {
                 <FormField control={form.control} name="source" render={({ field }) => (
                   <FormItem><FormLabel>المصدر</FormLabel><FormControl><Input placeholder="الرابط أو اسم الكتاب" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
+                
+                {itemType === 'book' && (
+                  <FormField control={form.control} name="impactfulQuote" render={({ field }) => (
+                    <FormItem><FormLabel>جملة أثرت فيك (اختياري)</FormLabel><FormControl><Textarea placeholder="اكتب اقتباسًا أو فكرة لامستك" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                )}
+
                 <FormField control={form.control} name="imageUrl" render={({ field }) => (
                   <FormItem><FormLabel>رابط صورة (اختياري)</FormLabel><FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
@@ -204,8 +215,8 @@ export default function LibraryPage() {
       {!isLoadingItems && items && items.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
-            <Card key={item.id} className="flex flex-col">
-              <CardHeader className="flex-row gap-4 items-start pb-2">
+            <Card key={item.id} className="flex flex-col overflow-hidden">
+              <CardHeader className="flex-row gap-4 items-start pb-4">
                 <div className="flex-shrink-0 mt-1">{typeIcons[item.type]}</div>
                 <div className="flex-grow">
                     <CardTitle>{item.title}</CardTitle>
@@ -221,15 +232,21 @@ export default function LibraryPage() {
                         <Image src={item.imageUrl} alt={item.title} fill={true} className="object-cover" />
                     </div>
                 )}
+                {item.impactfulQuote && (
+                  <blockquote className="border-r-2 border-primary pr-4 italic text-muted-foreground mb-4">
+                    "{item.impactfulQuote}"
+                  </blockquote>
+                )}
                 {item.description && <p className="text-sm text-muted-foreground flex-grow mb-4">{item.description}</p>}
-                <div className="mt-auto">
-                    <Button asChild variant="secondary" className="w-full">
-                        <Link href={item.source} target="_blank" rel="noopener noreferrer">
-                            الانتقال إلى المصدر <LinkIcon className="mr-2 h-4 w-4"/>
-                        </Link>
-                    </Button>
-                </div>
+                
               </CardContent>
+               <CardFooter>
+                  <Button asChild variant="secondary" className="w-full">
+                      <Link href={item.source} target="_blank" rel="noopener noreferrer">
+                          الانتقال إلى المصدر <LinkIcon className="mr-2 h-4 w-4"/>
+                      </Link>
+                  </Button>
+                </CardFooter>
             </Card>
           ))}
         </div>

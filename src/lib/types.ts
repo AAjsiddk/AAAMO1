@@ -111,6 +111,7 @@ export type LibraryItem = {
   source: string; // URL for link/video, name for book
   imageUrl?: string;
   description?: string;
+  impactfulQuote?: string;
   createdAt: FieldValue;
 };
 

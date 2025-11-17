@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { chatWithBot } from '@/ai/flows/chat-flow';
+import { useUser } from '@/firebase';
 
 type Message = {
   role: 'user' | 'bot';
@@ -21,6 +22,7 @@ type Conversation = {
 };
 
 export default function AiAssistantPage() {
+  const { user } = useUser();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [input, setInput] = useState('');
@@ -29,6 +31,33 @@ export default function AiAssistantPage() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const activeConversation = conversations.find(c => c.id === activeConversationId);
+
+  // Load chats from localStorage on component mount
+  useEffect(() => {
+    if (user) {
+      const savedChats = localStorage.getItem(`all_chats_${user.uid}`);
+      if (savedChats) {
+        const parsedChats: Conversation[] = JSON.parse(savedChats);
+        setConversations(parsedChats);
+        if (parsedChats.length > 0) {
+          setActiveConversationId(parsedChats[0].id);
+        } else {
+           startNewConversation(false); // Don't save if no chats exist
+        }
+      } else {
+        startNewConversation(false); // Start a new one if nothing is saved
+      }
+    }
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // Save chats to localStorage whenever they change
+  const saveChats = useCallback((updatedConversations: Conversation[]) => {
+      if(user) {
+        localStorage.setItem(`all_chats_${user.uid}`, JSON.stringify(updatedConversations));
+      }
+  }, [user]);
+
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -39,24 +68,25 @@ export default function AiAssistantPage() {
     }
   }, [activeConversation?.messages]);
 
-  const startNewConversation = () => {
+  const startNewConversation = (shouldSave = true) => {
     const newId = `conv_${Date.now()}`;
     const newConversation: Conversation = {
       id: newId,
-      title: `محادثة جديدة ${conversations.length + 1}`,
+      title: `محادثة ${conversations.length + 1}`,
       messages: [],
     };
-    setConversations(prev => [newConversation, ...prev]);
+    
+    setConversations(prev => {
+        const newConversations = [newConversation, ...prev];
+        if (shouldSave) {
+          saveChats(newConversations);
+        }
+        return newConversations;
+    });
+
     setActiveConversationId(newId);
   };
-
-  useEffect(() => {
-    if (conversations.length === 0) {
-      startNewConversation();
-    }
-     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading || !activeConversationId) return;
@@ -70,7 +100,7 @@ export default function AiAssistantPage() {
         : c
     );
     setConversations(updatedConversations);
-
+    
     const currentInput = input;
     setInput('');
     setIsLoading(true);
@@ -79,11 +109,14 @@ export default function AiAssistantPage() {
       const response = await chatWithBot({ query: currentInput });
       const botMessage: Message = { role: 'bot', content: response.answer };
       
-      setConversations(prev => prev.map(c => 
+      const finalConversations = updatedConversations.map(c => 
         c.id === activeConversationId 
           ? { ...c, messages: [...c.messages, botMessage] }
           : c
-      ));
+      );
+      setConversations(finalConversations);
+      saveChats(finalConversations);
+
 
     } catch (error: any) {
       console.error("Error calling AI assistant:", error);
@@ -108,7 +141,7 @@ export default function AiAssistantPage() {
      <div className="flex h-[calc(100vh_-_4rem)]">
       {/* Sidebar for conversations */}
       <div className="w-64 border-l bg-background/50 p-2 hidden md:flex flex-col">
-        <Button onClick={startNewConversation} className="mb-2">
+        <Button onClick={() => startNewConversation()} className="mb-2">
           <Plus className="ml-2 h-4 w-4" />
           محادثة جديدة
         </Button>
