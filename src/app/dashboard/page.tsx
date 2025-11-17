@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -41,7 +41,7 @@ const tasbeehOptions = [
 ];
 
 
-export default function Dashboard() {
+const DashboardPage = () => {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -49,9 +49,6 @@ export default function Dashboard() {
   const [tasbeehCount, setTasbeehCount] = useState(0);
   const [currentTasbeeh, setCurrentTasbeeh] = useState(tasbeehOptions[0]);
   const [tasbeehTarget, setTasbeehTarget] = useState(33);
-  const [inspiration, setInspiration] = useState('');
-  const [isSavingInspiration, setIsSavingInspiration] = useState(false);
-
 
   const tasksQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/tasks`), orderBy('updatedAt', 'desc'), limit(10)) : null), [user, firestore]);
   const goalsQuery = useMemoFirebase(() => (user ? collection(firestore, `users/${user.uid}/goals`) : null), [user, firestore]);
@@ -84,11 +81,11 @@ export default function Dashboard() {
     return weekCounts;
   }, [tasks]);
 
-  const stats = {
+  const stats = useMemo(() => ({
     tasksCompleted: tasks?.filter(t => t.status === 'completed').length || 0,
     activeGoals: goals?.filter(g => (g.progress || 0) < 100).length || 0,
     activeHabits: habits?.length || 0,
-  };
+  }), [tasks, goals, habits]);
   
   const handleTasbeehClick = () => {
     if (tasbeehCount + 1 === tasbeehTarget) {
@@ -100,26 +97,6 @@ export default function Dashboard() {
         setTasbeehCount(tasbeehCount + 1);
     }
   };
-
-  const handleSaveInspiration = async () => {
-    if (!inspiration.trim() || !user || !firestore) return;
-    setIsSavingInspiration(true);
-    const inspirationsCollectionRef = collection(firestore, `users/${user.uid}/inspirations`);
-    try {
-        await addDoc(inspirationsCollectionRef, {
-            content: inspiration,
-            createdAt: serverTimestamp(),
-            userId: user.uid,
-        });
-        toast({ title: 'تم الحفظ', description: 'تم حفظ إلهامك بنجاح.' });
-        setInspiration('');
-    } catch (error) {
-        console.error("Error saving inspiration:", error);
-        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل حفظ الإلهام.' });
-    } finally {
-        setIsSavingInspiration(false);
-    }
-  }
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -280,7 +257,6 @@ export default function Dashboard() {
                 </CardContent>
             </Card>
         </motion.div>
-        
         <motion.div custom={7} initial="hidden" animate="visible" variants={cardVariants}>
              <Card className="bg-card/70 border-border/50 backdrop-blur-sm h-full">
                 <CardHeader>
@@ -289,26 +265,18 @@ export default function Dashboard() {
                         صندوق الإلهام
                     </CardTitle>
                     <CardDescription>
-                        دوّن الأفكار السريعة والخواطر قبل أن تفلت منك.
+                       أفكارك السريعة ستظهر هنا. يمكنك إضافتها من صفحة الإلهامات.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col h-full">
-                    <div className="flex-grow">
-                        <Textarea 
-                            placeholder="ما الذي يدور في ذهنك؟"
-                            className="bg-transparent border-border h-full resize-none"
-                            rows={10}
-                            value={inspiration}
-                            onChange={(e) => setInspiration(e.target.value)}
-                        />
-                    </div>
-                    <Button 
-                        className="mt-4 w-full" 
-                        onClick={handleSaveInspiration} 
-                        disabled={isSavingInspiration || !inspiration.trim()}
-                    >
-                        {isSavingInspiration ? <Loader2 className="h-4 w-4 animate-spin" /> : "حفظ الإلهام"}
+                <CardContent className="flex flex-col h-full items-center justify-center">
+                   <div className="text-center">
+                    <p className="text-muted-foreground">اذهب إلى صفحة الإلهامات لتدوين أفكارك.</p>
+                     <Button asChild variant="link" className="mt-2">
+                        <Link href="/dashboard/inspirations">
+                             الذهاب إلى الإلهامات <ArrowLeft className="mr-2 h-4 w-4" />
+                        </Link>
                     </Button>
+                   </div>
                 </CardContent>
             </Card>
         </motion.div>
@@ -318,3 +286,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+export default memo(DashboardPage);

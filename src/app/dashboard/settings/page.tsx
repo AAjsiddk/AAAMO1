@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useUser, useFirestore, useAuth }from '@/firebase';
-import { doc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import {
   Card,
@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Loader2, Palette, User as UserIcon, Lock } from 'lucide-react';
+import { Loader2, Palette, Lock } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { cn } from '@/lib/utils';
@@ -24,7 +24,7 @@ import { Separator } from '@/components/ui/separator';
 // Helper function to convert HSL string "h s% l%" to a hex color
 function hslStringToHex(hslStr: string): string {
   if (!hslStr) return '#000000';
-  const [h, s, l] = hslStr.match(/\d+/g)?.map(Number) || [0, 0, 0];
+  const [h, s, l] = hslStr.match(/(\d+(\.\d+)?)/g)?.map(Number) || [0, 0, 0];
   const saturation = s / 100;
   const lightness = l / 100;
   
@@ -37,7 +37,7 @@ function hslStringToHex(hslStr: string): string {
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
-// Helper function to convert hex color to an HSL string "h s% l%"
+// Helper function to convert hex color to an HSL string "h s l"
 function hexToHslString(hex: string): string {
   let r = 0, g = 0, b = 0;
   if (hex.length === 4) {
@@ -45,9 +45,9 @@ function hexToHslString(hex: string): string {
     g = parseInt(hex[2] + hex[2], 16);
     b = parseInt(hex[3] + hex[3], 16);
   } else if (hex.length === 7) {
-    r = parseInt(hex[1] + hex[2], 16);
-    g = parseInt(hex[3] + hex[4], 16);
-    b = parseInt(hex[5] + hex[6], 16);
+    r = parseInt(hex.substring(1, 3), 16);
+    g = parseInt(hex.substring(3, 5), 16);
+    b = parseInt(hex.substring(5, 7), 16);
   }
   
   r /= 255;
@@ -89,10 +89,18 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   
-  const [displayName, setDisplayName] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
+  const debouncedSetPrimaryColor = useMemo(() => {
+    let timeoutId: NodeJS.Timeout;
+    return (value: string) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            document.documentElement.style.setProperty('--primary', value);
+        }, 100);
+    }
+  }, []);
 
   useEffect(() => {
     setIsMounted(true);
@@ -102,10 +110,7 @@ export default function SettingsPage() {
         setBackgroundColor(computedStyle.getPropertyValue('--background').trim());
         setAccentColor(computedStyle.getPropertyValue('--accent').trim());
     }
-    if(user?.displayName) {
-        setDisplayName(user.displayName);
-    }
-  }, [user]);
+  }, []);
 
   const handleColorChange = useCallback((colorSetter: React.Dispatch<React.SetStateAction<string>>, cssVar: string, hexValue: string) => {
     const hslValue = hexToHslString(hexValue);
@@ -122,9 +127,9 @@ export default function SettingsPage() {
     
     const userDocRef = doc(firestore, 'users', user.uid);
     const themeData = {
-        primaryColor,
-        backgroundColor,
-        accentColor
+        primary: primaryColor,
+        background: backgroundColor,
+        accent: accentColor,
     };
 
     try {
@@ -209,7 +214,14 @@ export default function SettingsPage() {
                             value={hslStringToHex(primaryColor)}
                             onChange={(e) => handleColorChange(setPrimaryColor, '--primary', e.target.value)}
                             />
-                        <span className='font-mono text-sm text-muted-foreground'>{primaryColor}</span>
+                        <Input 
+                            className="font-mono text-sm"
+                            value={primaryColor}
+                            onChange={(e) => {
+                                setPrimaryColor(e.target.value);
+                                debouncedSetPrimaryColor(e.target.value);
+                            }}
+                        />
                     </div>
                 </div>
                 <div className="space-y-2">
@@ -222,7 +234,14 @@ export default function SettingsPage() {
                             value={hslStringToHex(backgroundColor)}
                             onChange={(e) => handleColorChange(setBackgroundColor, '--background', e.target.value)}
                         />
-                         <span className='font-mono text-sm text-muted-foreground'>{backgroundColor}</span>
+                         <Input 
+                            className="font-mono text-sm"
+                            value={backgroundColor}
+                            onChange={(e) => {
+                                setBackgroundColor(e.target.value);
+                                document.documentElement.style.setProperty('--background', e.target.value);
+                            }}
+                        />
                     </div>
                 </div>
                  <div className="space-y-2">
@@ -235,7 +254,14 @@ export default function SettingsPage() {
                             value={hslStringToHex(accentColor)}
                             onChange={(e) => handleColorChange(setAccentColor, '--accent', e.target.value)}
                         />
-                         <span className='font-mono text-sm text-muted-foreground'>{accentColor}</span>
+                         <Input 
+                            className="font-mono text-sm"
+                            value={accentColor}
+                            onChange={(e) => {
+                                setAccentColor(e.target.value);
+                                document.documentElement.style.setProperty('--accent', e.target.value);
+                            }}
+                         />
                     </div>
                 </div>
             </div>

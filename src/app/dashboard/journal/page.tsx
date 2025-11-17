@@ -143,7 +143,7 @@ export default function JournalPage() {
                    entryDate.getMonth() === today.getMonth();
         });
     }
-    return allEntries;
+    return allEntries.filter(entry => entry.title !== 'Gratitude Entry');
   }, [allEntries, showOnThisDay, today]);
 
   const onSubmit = async (values: z.infer<typeof journalSchema>) => {
@@ -342,7 +342,7 @@ export default function JournalPage() {
       {!isLoadingEntries && entries && entries.length > 0 && (
         <div className="space-y-4">
           {entries.map((entry) => (
-            <Card key={entry.id} className="card-glass">
+            <Card key={entry.id} className="card-glass overflow-hidden">
               <CardHeader>
                 <CardTitle className="flex justify-between items-start">
                   <span>{entry.title}</span>
@@ -364,7 +364,7 @@ export default function JournalPage() {
                  {entry.imageUrls && entry.imageUrls.length > 0 && (
                   <div className="mb-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                     {entry.imageUrls.map((url, index) => (
-                      <div key={index} className="relative aspect-square w-full overflow-hidden rounded-md">
+                      <div key={index} className="relative aspect-video w-full overflow-hidden rounded-md">
                         <Image src={url} alt={`${entry.title} - ${index + 1}`} fill className="object-cover" />
                       </div>
                     ))}
@@ -372,7 +372,7 @@ export default function JournalPage() {
                 )}
                 <p className="whitespace-pre-wrap">{entry.content}</p>
               </CardContent>
-              {entry.updatedAt && (
+              {entry.updatedAt && !isSameDay((entry.createdAt as Timestamp).toDate(), (entry.updatedAt as Timestamp).toDate()) && (
                 <CardFooter>
                     <p className="text-xs text-muted-foreground">آخر تعديل: {formatDate(entry.updatedAt)}</p>
                 </CardFooter>

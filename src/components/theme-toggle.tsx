@@ -3,20 +3,25 @@
 import * as React from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase'
+import { doc, updateDoc } from 'firebase/firestore'
 
 export function ThemeToggle() {
   const [theme, setTheme] = React.useState('dark');
-  
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  // Effect to load theme from localStorage on initial mount
   React.useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
       setTheme(savedTheme);
     } else {
-      // Default to dark as requested
-      setTheme('dark');
+      setTheme('dark'); // Default to dark
     }
   }, []);
 
+  // Effect to apply theme to the document and save to localStorage
   React.useEffect(() => {
     if (theme === 'light') {
       document.documentElement.classList.add('light'); 
@@ -27,7 +32,14 @@ export function ThemeToggle() {
       document.documentElement.classList.remove('light');
       localStorage.setItem('theme', 'dark');
     }
-  }, [theme]);
+    
+    // Also save theme preference to Firestore if user is logged in
+    if(user && firestore) {
+        const userDocRef = doc(firestore, `users/${user.uid}`);
+        updateDoc(userDocRef, { theme: theme }).catch(console.error);
+    }
+
+  }, [theme, user, firestore]);
   
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');

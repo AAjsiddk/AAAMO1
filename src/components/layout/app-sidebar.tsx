@@ -38,6 +38,7 @@ import {
   Clock,
   BookOpen,
   HeartPulse,
+  Lightbulb,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -69,6 +70,7 @@ export function AppSidebar() {
       { name: 'يومي الجميل', href: '/dashboard/beautiful-day', icon: Sparkles },
       { name: 'ركن العبادات', href: '/dashboard/faith', icon: HandHeart },
       { name: 'الصحة والغذاء', href: '/dashboard/health', icon: HeartPulse },
+      { name: 'الإلهامات', href: '/dashboard/inspirations', icon: Lightbulb },
   ];
   
   const toolsSections = [
