@@ -38,13 +38,16 @@ import {
   HandHeart,
   Clock,
   FolderKanban,
+  StickyNote,
 } from 'lucide-react'
 
 export function AppSidebar() {
   const pathname = usePathname()
 
   const isActive = (path: string) => {
-    return pathname === path || (path !== '/dashboard' && pathname.startsWith(`${path}/`))
+    // Exact match for dashboard, startsWith for others
+    if (path === '/dashboard') return pathname === path;
+    return pathname.startsWith(path)
   }
   
   const mainSections = [
@@ -54,8 +57,10 @@ export function AppSidebar() {
   
   const organizationSections = [
     { name: 'الأهداف', href: '/dashboard/goals', icon: <Target /> },
+    { name: 'المشاريع', href: '/dashboard/projects', icon: <FolderKanban /> },
     { name: 'المهام', href: '/dashboard/tasks', icon: <ClipboardCheck /> },
     { name: 'العادات', href: '/dashboard/habits', icon: <Repeat /> },
+    { name: 'الملاحظات', href: '/dashboard/notes', icon: <StickyNote /> },
     { name: 'الملفات', href: '/dashboard/files', icon: <File /> },
     { name: 'المذكرات', href: '/dashboard/journal', icon: <Camera /> },
   ];
@@ -107,6 +112,8 @@ export function AppSidebar() {
               ))}
           </SidebarGroup>
 
+          <SidebarSeparator />
+
           <SidebarGroup>
             <SidebarGroupLabel>التنظيم</SidebarGroupLabel>
              {organizationSections.map((section) => (
@@ -121,6 +128,8 @@ export function AppSidebar() {
             ))}
           </SidebarGroup>
           
+          <SidebarSeparator />
+
            <SidebarGroup>
             <SidebarGroupLabel>تطوير الذات</SidebarGroupLabel>
            {selfDevelopmentSections.map((section) => (
@@ -134,6 +143,8 @@ export function AppSidebar() {
             </SidebarMenuItem>
           ))}
           </SidebarGroup>
+          
+          <SidebarSeparator />
 
           <SidebarGroup>
             <SidebarGroupLabel>الأدوات</SidebarGroupLabel>
@@ -149,6 +160,8 @@ export function AppSidebar() {
             ))}
           </SidebarGroup>
 
+          <SidebarSeparator />
+
            <SidebarGroup>
             <SidebarGroupLabel>التحليل والتقدم</SidebarGroupLabel>
             {analysisSections.map((section) => (
@@ -162,6 +175,8 @@ export function AppSidebar() {
             </SidebarMenuItem>
           ))}
           </SidebarGroup>
+          
+          <SidebarSeparator />
           
           <SidebarGroup>
             <SidebarGroupLabel>أقسام أخرى</SidebarGroupLabel>

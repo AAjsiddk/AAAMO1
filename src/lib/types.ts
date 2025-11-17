@@ -17,6 +17,21 @@ export type Task = {
   subtasks?: Task[];
 };
 
+export type Note = {
+  id: string;
+  userId: string;
+  content: string;
+  createdAt: FieldValue;
+};
+
+
+export type ProjectTask = {
+    id: string;
+    content: string;
+    columnId: 'todo' | 'in-progress' | 'done';
+    userId: string;
+}
+
 export type Habit = {
   id: string;
   userId: string;
