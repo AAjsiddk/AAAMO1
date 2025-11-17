@@ -25,7 +25,7 @@ export default function AiDrawer({open, onClose}: {open: boolean, onClose: () =>
   , [user, firestore, currentChatId]);
 
   useEffect(() => {
-    if (!chatsCollectionRef) return;
+    if (!user?.uid || !chatsCollectionRef) return;
     const q = query(chatsCollectionRef, orderBy("updatedAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
       const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -34,10 +34,10 @@ export default function AiDrawer({open, onClose}: {open: boolean, onClose: () =>
       console.error("Chat list error:", err);
     });
     return () => unsub();
-  }, [chatsCollectionRef]);
+  }, [user?.uid, chatsCollectionRef]);
 
   useEffect(() => {
-    if (!messagesCollectionRef) {
+    if (!user?.uid || !currentChatId || !messagesCollectionRef) {
       setMessages([]);
       return;
     }
@@ -47,7 +47,7 @@ export default function AiDrawer({open, onClose}: {open: boolean, onClose: () =>
       setTimeout(() => scroller.current?.scrollTo({top: scroller.current.scrollHeight, behavior:"smooth"}), 80);
     });
     return () => unsub();
-  }, [messagesCollectionRef]);
+  }, [user?.uid, currentChatId, messagesCollectionRef]);
 
   const newChat = async () => {
     if (!user || !chatsCollectionRef) return alert("Please login");
@@ -177,3 +177,5 @@ export default function AiDrawer({open, onClose}: {open: boolean, onClose: () =>
     </motion.div>
   );
 }
+
+    
