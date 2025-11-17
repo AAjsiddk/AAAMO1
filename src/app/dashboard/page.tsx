@@ -102,7 +102,7 @@ export default function Dashboard() {
   };
 
   const handleSaveInspiration = async () => {
-    if (!inspiration.trim() || !user) return;
+    if (!inspiration.trim() || !user || !firestore) return;
     setIsSavingInspiration(true);
     const inspirationsCollectionRef = collection(firestore, `users/${user.uid}/inspirations`);
     try {

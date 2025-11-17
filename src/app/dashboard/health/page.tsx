@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -64,14 +64,14 @@ export default function HealthPage() {
   }, [firestore, user]);
 
   const todayEntryQuery = useMemoFirebase(() => {
-    if (!healthCollectionRef) return null;
-    return query(healthCollectionRef, where('date', '==', todayString), where("userId", "==", user?.uid));
+    if (!healthCollectionRef || !user?.uid) return null;
+    return query(healthCollectionRef, where('date', '==', todayString), where("userId", "==", user.uid));
   }, [healthCollectionRef, user?.uid]);
   
   const { data: todayEntries, isLoading } = useCollection<HealthEntry>(todayEntryQuery);
   const todayEntry = todayEntries?.[0];
 
-  useState(() => {
+  useEffect(() => {
     if (todayEntry) {
       form.reset({
         notes: todayEntry.notes,
@@ -79,7 +79,7 @@ export default function HealthPage() {
         wentToGym: todayEntry.wentToGym,
       });
     }
-  });
+  }, [todayEntry, form]);
 
   const onSubmit = async (values: FormData) => {
     if (!healthCollectionRef || !user) return;
@@ -90,15 +90,15 @@ export default function HealthPage() {
         ...values,
         userId: user.uid,
         date: todayString,
-        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       };
 
       if (todayEntry) {
         const entryDocRef = doc(firestore, `users/${user.uid}/healthEntries`, todayEntry.id);
-        await updateDoc(entryDocRef, values);
+        await updateDoc(entryDocRef, entryData);
         toast({ title: 'نجاح', description: 'تم تحديث سجل اليوم الصحي.' });
       } else {
-        await addDoc(healthCollectionRef, entryData);
+        await addDoc(healthCollectionRef, { ...entryData, createdAt: serverTimestamp() });
         toast({ title: 'نجاح', description: 'تم تسجيل بيانات اليوم الصحية.' });
       }
     } catch (error) {
