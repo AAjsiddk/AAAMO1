@@ -17,13 +17,11 @@ import Link from 'next/link'
 import {
   LayoutDashboard,
   ClipboardCheck,
-  Book,
   File,
   Target,
   Repeat,
   BarChart,
   Settings,
-  FolderKanban,
   Calendar,
   Camera,
   MessageSquare,
@@ -39,6 +37,7 @@ import {
   Library,
   HandHeart,
   Clock,
+  FolderKanban,
 } from 'lucide-react'
 
 export function AppSidebar() {
@@ -76,7 +75,6 @@ export function AppSidebar() {
   ];
 
   const analysisSections = [
-    { name: 'المشاريع', href: '/dashboard/projects', icon: <FolderKanban /> },
     { name: 'التحليلات', href: '/dashboard/analytics', icon: <BarChart /> },
     { name: 'الإنجاز التراكمي', href: '/dashboard/cumulative-achievements', icon: <TrendingUp /> },
     { name: 'الإنجازات', href: '/dashboard/achievements', icon: <Trophy /> },
