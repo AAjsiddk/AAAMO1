@@ -38,6 +38,7 @@ import {
   Library,
   HandHeart,
   StickyNote,
+  Clock,
 } from 'lucide-react'
 
 export function AppSidebar() {
