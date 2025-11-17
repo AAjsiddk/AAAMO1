@@ -50,7 +50,6 @@ import {
   Sparkles as ExcitedIcon,
   Annoyed,
   Loader2,
-  PlusCircle,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -134,7 +133,7 @@ export function Header() {
         };
 
         if (values.imageUrl) {
-            newEntry.imageUrl = values.imageUrl;
+            newEntry.imageUrls = [values.imageUrl];
         }
 
         await addDoc(journalCollectionRef, newEntry);
@@ -179,7 +178,7 @@ export function Header() {
         </DialogContent>
       </Dialog>
     
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full">
         <div className="container flex h-16 max-w-screen-2xl items-center">
           <div className="flex items-center gap-2">
             {user && <SidebarTrigger />}

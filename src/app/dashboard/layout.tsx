@@ -2,8 +2,6 @@ import { Header } from '@/components/layout/header';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { AuthGuard } from '@/components/layout/auth-guard';
-import FABChat from '@/components/dashboard/FABChat';
-import { Particles } from '@/components/dashboard/Particles';
 
 export default function DashboardLayout({
   children,
@@ -12,7 +10,6 @@ export default function DashboardLayout({
 }) {
   return (
     <SidebarProvider>
-      <Particles />
       <div className="flex min-h-screen w-full flex-row-reverse relative z-10">
         <AppSidebar />
         <div className="flex flex-1 flex-col">
@@ -21,7 +18,6 @@ export default function DashboardLayout({
             <AuthGuard>{children}</AuthGuard>
           </main>
         </div>
-        <FABChat />
       </div>
     </SidebarProvider>
   );
