@@ -1,18 +1,19 @@
-"use client";
-
-import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+'use client';
+import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
-import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
-import type { Task, Goal, Habit, JournalEntry } from '@/lib/types';
-import { useMemo, useState } from 'react';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { collection, query, orderBy, limit, Timestamp, addDoc, serverTimestamp } from 'firebase/firestore';
+import type { Task, Goal, Habit, JournalEntry, Inspiration } from '@/lib/types';
+import { Loader2, ArrowLeft, Lightbulb } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -43,10 +44,13 @@ const tasbeehOptions = [
 export default function Dashboard() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   const [tasbeehCount, setTasbeehCount] = useState(0);
   const [currentTasbeeh, setCurrentTasbeeh] = useState(tasbeehOptions[0]);
   const [tasbeehTarget, setTasbeehTarget] = useState(33);
+  const [inspiration, setInspiration] = useState('');
+  const [isSavingInspiration, setIsSavingInspiration] = useState(false);
 
 
   const tasksQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/tasks`), orderBy('updatedAt', 'desc'), limit(10)) : null), [user, firestore]);
@@ -88,7 +92,6 @@ export default function Dashboard() {
   
   const handleTasbeehClick = () => {
     if (tasbeehCount + 1 === tasbeehTarget) {
-        // Vibrate and reset or show a message
         if (navigator.vibrate) {
             navigator.vibrate(200);
         }
@@ -97,6 +100,26 @@ export default function Dashboard() {
         setTasbeehCount(tasbeehCount + 1);
     }
   };
+
+  const handleSaveInspiration = async () => {
+    if (!inspiration.trim() || !user) return;
+    setIsSavingInspiration(true);
+    const inspirationsCollectionRef = collection(firestore, `users/${user.uid}/inspirations`);
+    try {
+        await addDoc(inspirationsCollectionRef, {
+            content: inspiration,
+            createdAt: serverTimestamp(),
+            userId: user.uid,
+        });
+        toast({ title: 'تم الحفظ', description: 'تم حفظ إلهامك بنجاح.' });
+        setInspiration('');
+    } catch (error) {
+        console.error("Error saving inspiration:", error);
+        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل حفظ الإلهام.' });
+    } finally {
+        setIsSavingInspiration(false);
+    }
+  }
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -215,7 +238,8 @@ export default function Dashboard() {
          </motion.div>
       </div>
 
-        <motion.div custom={6} initial="hidden" animate="visible" variants={cardVariants}>
+       <div className="grid gap-4 md:grid-cols-2">
+         <motion.div custom={6} initial="hidden" animate="visible" variants={cardVariants}>
             <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="text-center text-2xl font-bold text-primary">السبحة الإلكترونية</CardTitle>
@@ -256,6 +280,40 @@ export default function Dashboard() {
                 </CardContent>
             </Card>
         </motion.div>
+        
+        <motion.div custom={7} initial="hidden" animate="visible" variants={cardVariants}>
+             <Card className="bg-card/70 border-border/50 backdrop-blur-sm h-full">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Lightbulb className="text-primary" />
+                        صندوق الإلهام
+                    </CardTitle>
+                    <CardDescription>
+                        دوّن الأفكار السريعة والخواطر قبل أن تفلت منك.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col h-full">
+                    <div className="flex-grow">
+                        <Textarea 
+                            placeholder="ما الذي يدور في ذهنك؟"
+                            className="bg-transparent border-border h-full resize-none"
+                            rows={10}
+                            value={inspiration}
+                            onChange={(e) => setInspiration(e.target.value)}
+                        />
+                    </div>
+                    <Button 
+                        className="mt-4 w-full" 
+                        onClick={handleSaveInspiration} 
+                        disabled={isSavingInspiration || !inspiration.trim()}
+                    >
+                        {isSavingInspiration ? <Loader2 className="h-4 w-4 animate-spin" /> : "حفظ الإلهام"}
+                    </Button>
+                </CardContent>
+            </Card>
+        </motion.div>
+
+       </div>
 
     </div>
   );

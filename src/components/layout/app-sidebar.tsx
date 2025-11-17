@@ -36,6 +36,8 @@ import {
   FolderKanban,
   StickyNote,
   Clock,
+  BookOpen,
+  HeartPulse,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -66,9 +68,11 @@ export function AppSidebar() {
       { name: 'صندوق الامتنان', href: '/dashboard/gratitude', icon: Heart },
       { name: 'يومي الجميل', href: '/dashboard/beautiful-day', icon: Sparkles },
       { name: 'ركن العبادات', href: '/dashboard/faith', icon: HandHeart },
+      { name: 'الصحة والغذاء', href: '/dashboard/health', icon: HeartPulse },
   ];
   
   const toolsSections = [
+      { name: 'الدورات التعليمية', href: '/dashboard/courses', icon: BookOpen },
       { name: 'مكتبتي المعرفية', href: '/dashboard/library', icon: Library },
       { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: Clock },
       { name: 'مخطط الترفيه', href: '/dashboard/relax', icon: Coffee },

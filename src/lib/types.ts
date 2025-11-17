@@ -38,7 +38,7 @@ export type ProjectTask = {
 
 export type Habit = {
   id: string;
-  userId: string;
+  userId:string;
   name: string;
   type: 'acquire' | 'quit';
   frequency: 'daily' | 'weekly' | 'monthly';
@@ -133,5 +133,33 @@ export type RelaxationActivity = {
   name: string;
   description?: string;
   category: string;
+  createdAt: FieldValue;
+}
+
+export type HealthEntry = {
+    id: string;
+    userId: string;
+    date: string; // YYYY-MM-DD
+    foodIntake: { meal: string, description: string }[];
+    notes: string;
+    wentToGym: boolean;
+    createdAt: FieldValue;
+}
+
+export type Course = {
+    id: string;
+    userId: string;
+    title: string;
+    url: string;
+    notes: string;
+    pinned: boolean;
+    order: number;
+    createdAt: FieldValue;
+}
+
+export type Inspiration = {
+  id: string;
+  userId: string;
+  content: string;
   createdAt: FieldValue;
 }
