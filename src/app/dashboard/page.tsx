@@ -12,6 +12,7 @@ import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { Button } from "@/components/ui/button";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
