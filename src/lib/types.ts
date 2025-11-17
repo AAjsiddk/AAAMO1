@@ -21,6 +21,9 @@ export type Note = {
   id: string;
   userId: string;
   content: string;
+  color: string;
+  pinned: boolean;
+  order: number;
   createdAt: FieldValue;
 };
 

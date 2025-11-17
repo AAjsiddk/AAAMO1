@@ -8,8 +8,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarSeparator,
-  SidebarGroup,
-  SidebarGroupLabel,
 } from '@/components/ui/sidebar'
 import { Logo } from '@/components/logo'
 import { usePathname } from 'next/navigation'
@@ -40,12 +38,12 @@ import {
   FolderKanban,
   StickyNote,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export function AppSidebar() {
   const pathname = usePathname()
 
   const isActive = (path: string) => {
-    // Exact match for dashboard, startsWith for others
     if (path === '/dashboard') return pathname === path;
     return pathname.startsWith(path)
   }
@@ -91,6 +89,16 @@ export function AppSidebar() {
     { name: 'الثيمات', href: '/dashboard/dynamic-themes', icon: <Droplets /> },
     { name: 'النسخ الاحتياطي', href: '/dashboard/data-sync', icon: <Package /> },
   ]
+  
+  const NavLink = ({ item, active }: { item: { href: string; name: string; icon: React.ReactNode }, active: boolean }) => (
+    <Link href={item.href} className={cn(
+        "flex items-center p-3 rounded-lg text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors",
+        active && "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground"
+    )}>
+        {item.icon}
+        <span className="mr-4">{item.name}</span>
+    </Link>
+  );
 
   return (
     <Sidebar>
@@ -99,113 +107,47 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          <SidebarGroup>
-             {mainSections.map((section) => (
-                <SidebarMenuItem key={section.href}>
-                  <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
-                    <Link href={section.href!}>
-                      {section.icon}
-                      <span>{section.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-          </SidebarGroup>
-
-          <SidebarSeparator />
-
-          <SidebarGroup>
-            <SidebarGroupLabel>التنظيم</SidebarGroupLabel>
-             {organizationSections.map((section) => (
-              <SidebarMenuItem key={section.href}>
-                <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
-                  <Link href={section.href!}>
-                    {section.icon}
-                    <span>{section.name}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarGroup>
-          
-          <SidebarSeparator />
-
-           <SidebarGroup>
-            <SidebarGroupLabel>تطوير الذات</SidebarGroupLabel>
-           {selfDevelopmentSections.map((section) => (
+          {mainSections.map((section) => (
             <SidebarMenuItem key={section.href}>
-              <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
-                <Link href={section.href!}>
-                  {section.icon}
-                  <span>{section.name}</span>
-                </Link>
-              </SidebarMenuButton>
+              <NavLink item={section} active={isActive(section.href!)} />
             </SidebarMenuItem>
           ))}
-          </SidebarGroup>
-          
           <SidebarSeparator />
-
-          <SidebarGroup>
-            <SidebarGroupLabel>الأدوات</SidebarGroupLabel>
-            {toolsSections.map((section) => (
-              <SidebarMenuItem key={section.href}>
-                <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
-                  <Link href={section.href!}>
-                    {section.icon}
-                    <span>{section.name}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarGroup>
-
-          <SidebarSeparator />
-
-           <SidebarGroup>
-            <SidebarGroupLabel>التحليل والتقدم</SidebarGroupLabel>
-            {analysisSections.map((section) => (
+          {organizationSections.map((section) => (
             <SidebarMenuItem key={section.href}>
-              <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
-                <Link href={section.href!}>
-                  {section.icon}
-                  <span>{section.name}</span>
-                </Link>
-              </SidebarMenuButton>
+               <NavLink item={section} active={isActive(section.href!)} />
             </SidebarMenuItem>
           ))}
-          </SidebarGroup>
-          
-          <SidebarSeparator />
-          
-          <SidebarGroup>
-            <SidebarGroupLabel>أقسام أخرى</SidebarGroupLabel>
-            {otherSections.map((section) => (
-              <SidebarMenuItem key={section.href}>
-                <SidebarMenuButton asChild isActive={isActive(section.href!)} tooltip={section.name}>
-                  <Link href={section.href!}>
-                    {section.icon}
-                    <span>{section.name}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarGroup>
+           <SidebarSeparator />
+          {selfDevelopmentSections.map((section) => (
+            <SidebarMenuItem key={section.href}>
+               <NavLink item={section} active={isActive(section.href!)} />
+            </SidebarMenuItem>
+          ))}
+           <SidebarSeparator />
+           {toolsSections.map((section) => (
+            <SidebarMenuItem key={section.href}>
+               <NavLink item={section} active={isActive(section.href!)} />
+            </SidebarMenuItem>
+          ))}
+           <SidebarSeparator />
+           {analysisSections.map((section) => (
+            <SidebarMenuItem key={section.href}>
+               <NavLink item={section} active={isActive(section.href!)} />
+            </SidebarMenuItem>
+          ))}
+           <SidebarSeparator />
+          {otherSections.map((section) => (
+            <SidebarMenuItem key={section.href}>
+               <NavLink item={section} active={isActive(section.href!)} />
+            </SidebarMenuItem>
+          ))}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={isActive('/dashboard/settings')}
-              tooltip="الإعدادات"
-            >
-              <Link href="/dashboard/settings">
-                <Settings />
-                <span>الإعدادات</span>
-              </Link>
-            </SidebarMenuButton>
+             <NavLink item={{name: "الإعدادات", href:"/dashboard/settings", icon: <Settings /> }} active={isActive('/dashboard/settings')} />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
