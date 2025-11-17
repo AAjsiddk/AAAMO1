@@ -14,7 +14,6 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { TimeWidget } from '@/components/dashboard/time-widget';
-import { Progress } from '@/components/ui/progress';
 import 'react-circular-progressbar/dist/styles.css';
 import Link from 'next/link';
 import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';

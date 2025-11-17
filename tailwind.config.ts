@@ -18,11 +18,11 @@ export default {
       colors: {
         bg: 'var(--bg)',
         'card-bg': 'var(--card-bg)',
-        'muted-text': 'var(--muted-text)',
+        'muted': 'var(--muted)',
         'accent-1': 'var(--accent-1)',
         'accent-2': 'var(--accent-2)',
         'accent-3': 'var(--accent-3)',
-        danger: 'var(--danger)',
+        'danger': 'var(--danger)',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {

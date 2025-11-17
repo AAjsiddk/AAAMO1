@@ -21,7 +21,7 @@ export type Note = {
   id: string;
   userId: string;
   content: string;
-  color: string;
+  color: 'default' | 'yellow' | 'green' | 'blue' | 'purple' | 'pink';
   pinned: boolean;
   order: number;
   createdAt: FieldValue;
@@ -33,6 +33,7 @@ export type ProjectTask = {
     content: string;
     columnId: 'todo' | 'in-progress' | 'done';
     userId: string;
+    createdAt: FieldValue;
 }
 
 export type Habit = {

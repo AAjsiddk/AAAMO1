@@ -4,75 +4,76 @@
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
+    --background: 246 92% 6%; /* --bg: #070618; */
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 263 90% 68%;
+    --primary: 251 100% 68%; /* --accent-1: #7C5CFF; */
     --primary-foreground: 0 0% 98%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 263 90% 68%;
+    --muted: 220 13% 70%; /* --muted: #a6b0c3; */
+    --muted-foreground: 220 13% 70%;
+    --accent: 251 100% 68%; /* --accent-1: #7C5CFF; */
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 349 100% 68%; /* --danger: #FF5C7C; */
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 263 90% 68%;
+    --ring: 251 100% 68%;
     --radius: 0.75rem;
 
-    --bg-hsl: 246 92% 6%; /* #070618 */
-    --card-bg-hsl: 0 0% 100%; /* For rgba(255,255,255,0.03) */
-    --muted-hsl: 220 13% 70%; /* #a6b0c3 */
-    --accent1-hsl: 251 100% 68%; /* #7C5CFF */
-    --accent2-hsl: 167 100% 44%; /* #00E0B7 */
-    --accent3-hsl: 43 100% 70%; /* #FFD166 */
-    --glass-border-hsl: 0 0% 100%; /* For rgba(255,255,255,0.06) */
-    --danger-hsl: 349 100% 68%; /* #FF5C7C */
+    /* Custom colors from user */
+    --bg-hsl: 246 92% 6%;
+    --card-bg-hsl: 0 0% 100%;
+    --muted-hsl: 220 13% 70%;
+    --accent1-hsl: 251 100% 68%;
+    --accent2-hsl: 167 100% 44%;
+    --accent3-hsl: 43 100% 70%;
+    --glass-border-hsl: 0 0% 100%;
+    --danger-hsl: 349 100% 68%;
 
     --bg: #070618;
-    --card-bg: rgba(255,255,255,0.03);
-    --muted-text: #a6b0c3;
+    --card-bg: rgba(255, 255, 255, 0.03);
+    --muted: #a6b0c3;
     --accent-1: #7C5CFF;
     --accent-2: #00E0B7;
     --accent-3: #FFD166;
-    --glass-border: rgba(255,255,255,0.06);
+    --glass-border: rgba(255, 255, 255, 0.06);
     --danger: #FF5C7C;
   }
  
   .light {
-    --background: 0 0% 98%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 220 13% 95%; /* Lighter background for light mode */
+    --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 263 90% 68%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 263 90% 68%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 263 90% 68%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 251 100% 68%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 10% 3.9%;
+    --muted: 240 5% 65%;
+    --muted-foreground: 240 5% 45%;
+    --accent: 251 100% 68%;
+    --accent-foreground: 240 10% 3.9%;
+    --destructive: 349 100% 68%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 90%;
+    --input: 240 5% 90%;
+    --ring: 251 100% 68%;
 
     --bg: #F8F9FA;
     --card-bg: rgba(0,0,0,0.03);
-    --muted-text: #495057;
-    --accent-1: #5E35B1;
-    --accent-2: #26A69A;
-    --accent-3: #FDD835;
+    --muted: #495057;
+    --accent-1: #7C5CFF;
+    --accent-2: #00E0B7;
+    --accent-3: #FFD166;
     --glass-border: rgba(0,0,0,0.06);
-    --danger: #E53935;
+    --danger: #FF5C7C;
   }
 }
 
@@ -84,19 +85,23 @@
   body, html, #__next {
     @apply bg-background text-foreground;
     font-family: 'Tajawal', sans-serif;
-    max-width: 100%;
+    max-width: 100vw;
     overflow-x: hidden;
   }
   
   .page-container {
     width: 100%;
     padding: 10px;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   .card {
       width: 100%;
       border-radius: 12px;
       padding: 15px;
+      max-width: 100%;
+      overflow-x: hidden;
   }
 }
 

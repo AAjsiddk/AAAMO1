@@ -45,7 +45,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Loader2, Library, Book, Video, Link as LinkIcon, FileText, Image as ImageIcon, MessageCircle } from 'lucide-react';
+import { PlusCircle, Trash2, Loader2, Library, Book, Video, Link as LinkIcon, FileText, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { LibraryItem } from '@/lib/types';
 import Image from 'next/image';
@@ -61,10 +61,10 @@ const itemSchema = z.object({
 });
 
 const typeIcons = {
-  book: <Book className="h-6 w-6 text-primary" />,
-  article: <FileText className="h-6 w-6 text-primary" />,
-  video: <Video className="h-6 w-6 text-primary" />,
-  link: <LinkIcon className="h-6 w-6 text-primary" />,
+  book: <Book className="h-6 w-6 text-accent-1" />,
+  article: <FileText className="h-6 w-6 text-accent-1" />,
+  video: <Video className="h-6 w-6 text-accent-1" />,
+  link: <LinkIcon className="h-6 w-6 text-accent-1" />,
 };
 
 const typeTranslations = {
@@ -215,15 +215,15 @@ export default function LibraryPage() {
       {!isLoadingItems && items && items.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
-            <Card key={item.id} className="flex flex-col overflow-hidden">
+            <Card key={item.id} className="flex flex-col overflow-hidden bg-card-bg border-glass-border">
               <CardHeader className="flex-row gap-4 items-start pb-4">
                 <div className="flex-shrink-0 mt-1">{typeIcons[item.type]}</div>
                 <div className="flex-grow">
                     <CardTitle>{item.title}</CardTitle>
-                    <CardDescription>{typeTranslations[item.type]}</CardDescription>
+                    <CardDescription className="text-muted">{typeTranslations[item.type]}</CardDescription>
                 </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => handleDeleteItem(item.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-4 w-4 text-danger" />
                 </Button>
               </CardHeader>
               <CardContent className="flex flex-col flex-grow">
@@ -233,11 +233,11 @@ export default function LibraryPage() {
                     </div>
                 )}
                 {item.impactfulQuote && (
-                  <blockquote className="border-r-2 border-primary pr-4 italic text-muted-foreground mb-4">
+                  <blockquote className="border-r-2 border-accent-1 pr-4 italic text-muted mb-4">
                     "{item.impactfulQuote}"
                   </blockquote>
                 )}
-                {item.description && <p className="text-sm text-muted-foreground flex-grow mb-4">{item.description}</p>}
+                {item.description && <p className="text-sm text-muted flex-grow mb-4">{item.description}</p>}
                 
               </CardContent>
                <CardFooter>
