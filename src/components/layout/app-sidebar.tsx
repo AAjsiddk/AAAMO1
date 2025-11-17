@@ -6,6 +6,7 @@ import {
   SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
+  SidebarSeparator,
 } from '@/components/ui/sidebar'
 import { Logo } from '@/components/logo'
 import { usePathname } from 'next/navigation'
