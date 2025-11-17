@@ -4,6 +4,7 @@ import { useUser } from '@/firebase';
 import { Particles } from "@/components/dashboard/Particles";
 import { motion } from "framer-motion";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import FABChat from "@/components/dashboard/FABChat";
 
 function LiveTime() {
   const [time, setTime] = useState(new Date());
