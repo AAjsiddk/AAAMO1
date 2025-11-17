@@ -6,13 +6,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import type { Task, Goal, Habit, JournalEntry } from '@/lib/types';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -27,9 +27,27 @@ const cardVariants = {
   }),
 };
 
+const tasbeehOptions = [
+  "سبحان الله",
+  "الحمد لله",
+  "لا إله إلا الله",
+  "الله أكبر",
+  "سبحان الله وبحمده",
+  "سبحان الله العظيم",
+  "لا حول ولا قوة إلا بالله",
+  "أستغفر الله",
+  "اللهم صل على محمد",
+];
+
+
 export default function Dashboard() {
   const { user } = useUser();
   const firestore = useFirestore();
+
+  const [tasbeehCount, setTasbeehCount] = useState(0);
+  const [currentTasbeeh, setCurrentTasbeeh] = useState(tasbeehOptions[0]);
+  const [tasbeehTarget, setTasbeehTarget] = useState(33);
+
 
   const tasksQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/tasks`), orderBy('updatedAt', 'desc'), limit(10)) : null), [user, firestore]);
   const goalsQuery = useMemoFirebase(() => (user ? collection(firestore, `users/${user.uid}/goals`) : null), [user, firestore]);
@@ -67,6 +85,18 @@ export default function Dashboard() {
     activeGoals: goals?.filter(g => (g.progress || 0) < 100).length || 0,
     activeHabits: habits?.length || 0,
   };
+  
+  const handleTasbeehClick = () => {
+    if (tasbeehCount + 1 === tasbeehTarget) {
+        // Vibrate and reset or show a message
+        if (navigator.vibrate) {
+            navigator.vibrate(200);
+        }
+        setTasbeehCount(0);
+    } else {
+        setTasbeehCount(tasbeehCount + 1);
+    }
+  };
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -79,7 +109,7 @@ export default function Dashboard() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="h-full card-glass">
+            <Card className="h-full bg-card/70 border-border/50 backdrop-blur-sm">
                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">الوقت الحالي</CardTitle>
                  </CardHeader>
@@ -89,7 +119,7 @@ export default function Dashboard() {
             </Card>
         </motion.div>
         <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
-             <Card className="card-glass">
+             <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">المهام المنجزة (آخر 10)</CardTitle>
                 </CardHeader>
@@ -99,7 +129,7 @@ export default function Dashboard() {
             </Card>
         </motion.div>
          <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="card-glass">
+            <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">الأهداف النشطة</CardTitle>
                 </CardHeader>
@@ -109,7 +139,7 @@ export default function Dashboard() {
             </Card>
         </motion.div>
          <motion.div custom={3} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="card-glass">
+            <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">العادات قيد التتبع</CardTitle>
                 </CardHeader>
@@ -122,7 +152,7 @@ export default function Dashboard() {
 
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
          <motion.div custom={4} initial="hidden" animate="visible" variants={cardVariants} className="lg:col-span-4">
-            <Card className="h-full card-glass">
+            <Card className="h-full bg-card/70 border-border/50 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle>الإنتاجية الأسبوعية</CardTitle>
                 <CardDescription>عدد المهام التي أنجزتها خلال هذا الأسبوع.</CardDescription>
@@ -148,7 +178,7 @@ export default function Dashboard() {
             </Card>
          </motion.div>
          <motion.div custom={5} initial="hidden" animate="visible" variants={cardVariants} className="lg:col-span-3">
-             <Card className="h-full card-glass">
+             <Card className="h-full bg-card/70 border-border/50 backdrop-blur-sm">
               <CardHeader>
                 <div className="flex justify-between items-center">
                     <div>
@@ -184,6 +214,48 @@ export default function Dashboard() {
             </Card>
          </motion.div>
       </div>
+
+        <motion.div custom={6} initial="hidden" animate="visible" variants={cardVariants}>
+            <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
+                <CardHeader>
+                    <CardTitle className="text-center text-2xl font-bold text-primary">السبحة الإلكترونية</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center justify-center gap-6">
+                    <p className="text-lg text-muted-foreground">التسبيح الحالي: <span className="font-bold text-foreground">{currentTasbeeh}</span></p>
+                     <div 
+                        className="w-48 h-48 rounded-full bg-gradient-to-br from-background to-secondary flex items-center justify-center text-6xl font-bold cursor-pointer select-none border-4 border-primary/50 shadow-lg active:scale-95 transition-transform"
+                        onClick={handleTasbeehClick}
+                    >
+                        {tasbeehCount}
+                    </div>
+                    <div className="w-full max-w-sm flex flex-col gap-4">
+                         <div>
+                            <label className="text-muted-foreground mb-2 block">اختر نوع التسبيح:</label>
+                            <Select defaultValue={currentTasbeeh} onValueChange={setCurrentTasbeeh}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="اختر نوع التسبيح" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {tasbeehOptions.map(option => (
+                                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                             <label className="text-muted-foreground mb-2 block">الهدف:</label>
+                            <Input
+                                type="number"
+                                value={tasbeehTarget}
+                                onChange={(e) => setTasbeehTarget(Number(e.target.value))}
+                                className="text-center"
+                                placeholder="الهدف"
+                            />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </motion.div>
 
     </div>
   );

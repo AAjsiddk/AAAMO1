@@ -10,7 +10,7 @@ export default function DashboardLayout({
 }) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full flex-row-reverse relative z-10 bg-gradient-to-br from-[#1B1B3A] via-[#2E2A62] to-[#4A3C9A] text-white">
+      <div className="flex min-h-screen w-full flex-row-reverse relative z-10 bg-background text-white">
         <AppSidebar />
         <div className="flex flex-1 flex-col">
           <Header />

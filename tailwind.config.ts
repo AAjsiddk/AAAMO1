@@ -61,7 +61,7 @@ export default {
         },
       },
       boxShadow: {
-        'soft-glow': '0 0 25px rgba(139, 92, 246, 0.3)',
+        'soft-glow': '0 0 25px hsl(var(--primary) / 0.3)',
       },
       keyframes: {
         'accordion-down': {
