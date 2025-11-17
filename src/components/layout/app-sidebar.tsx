@@ -43,7 +43,7 @@ export function AppSidebar() {
   const pathname = usePathname()
 
   const isActive = (path: string) => {
-    if (path === '/dashboard') return pathname === path;
+    if (path === '/dashboard' && pathname !== '/dashboard') return false;
     return pathname.startsWith(path)
   }
   
@@ -91,12 +91,11 @@ export function AppSidebar() {
   
   const NavLink = ({ item, active }: { item: { href: string; name: string; icon: React.ElementType }, active: boolean }) => (
     <Link href={item.href} className={cn(
-        "group relative flex items-center p-3 rounded-lg text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors duration-200",
-        active && "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground"
+        "group relative flex items-center p-3 rounded-lg text-foreground/80 hover:text-foreground hover:bg-secondary transition-colors duration-200",
+        active && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
     )}>
         <item.icon className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
         <span className="mr-4 font-medium">{item.name}</span>
-        {active && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400 rounded-r-full"></div>}
     </Link>
   );
 

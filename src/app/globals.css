@@ -4,64 +4,80 @@
 
 @layer base {
   :root {
-    --background-from-rgb: 27, 27, 58;
-    --background-via-rgb: 46, 42, 98;
-    --background-to-rgb: 74, 60, 154;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
 
-    --background: 240 37% 17%;
-    --foreground: 220 13% 90%;
-    
-    --card: 240 37% 20%;
-    --card-foreground: 220 13% 95%;
-
-    --popover: 240 37% 17%;
-    --popover-foreground: 220 13% 95%;
-    
-    --primary: 262 88% 66%; /* #8B5CF6 */
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+ 
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+ 
+    --primary: 262 88% 66%;
     --primary-foreground: 0 0% 98%;
-
-    --secondary: 239 84% 68%; /* #6366F1 */
+ 
+    --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
-
-    --muted: 220 13% 70%;
-    --muted-foreground: 220 9% 55%;
-
-    --accent: 239 84% 68%;
+ 
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+ 
+    --accent: 240 3.7% 15.9%;
     --accent-foreground: 0 0% 98%;
-
-    --destructive: 349 100% 68%;
+ 
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 100% / 0.1;
-    --input: 0 0% 100% / 0.1;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
     --ring: 262 88% 66%;
-    --radius: 1rem;
+ 
+    --radius: 0.5rem;
   }
  
   .dark {
-    /* Keeping dark as the default, no changes needed unless a light theme is added */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+ 
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+ 
+    --primary: 262 88% 66%;
+    --primary-foreground: 0 0% 98%;
+ 
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+ 
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+ 
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 262 88% 66%;
   }
 }
 
 @layer base {
   * {
     @apply border-border;
-    box-sizing: border-box;
   }
-  body, html, #__next {
-    @apply text-foreground;
+  body {
+    @apply bg-background text-foreground;
+  }
+  html, body, #__next {
     font-family: 'Cairo', 'Readex Pro', system-ui, sans-serif;
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
-    max-width: 100vw;
-    overflow-x: hidden;
-    background: linear-gradient(to bottom right, rgb(var(--background-from-rgb)), rgb(var(--background-via-rgb)), rgb(var(--background-to-rgb)));
-  }
-  
-  .page-container {
-    width: 100%;
-    padding: 10px;
-    max-width: 100%;
+    height: 100%;
     overflow-x: hidden;
   }
 }

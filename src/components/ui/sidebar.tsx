@@ -33,7 +33,7 @@ const SidebarProvider = ({
   ...props
 }: React.ComponentProps<"div">) => {
   const isMobile = useIsMobile()
-  const [isOpen, setIsOpen] = React.useState(false)
+  const [isOpen, setIsOpen] = React.useState(!isMobile)
 
   const toggleSidebar = React.useCallback(() => {
     setIsOpen((prev) => !prev)
@@ -43,6 +43,10 @@ const SidebarProvider = ({
     if (isMobile) {
       setIsOpen(false);
     }
+  }, [isMobile]);
+
+  React.useEffect(() => {
+    setIsOpen(!isMobile);
   }, [isMobile]);
 
   const contextValue = React.useMemo<SidebarContext>(
@@ -82,14 +86,8 @@ const Sidebar = React.forwardRef<
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent
           side="right"
-          className="w-72 bg-sidebar p-0 text-sidebar-foreground"
+          className="w-72 bg-background p-0 text-foreground border-l"
         >
-          <SheetHeader className="p-4 border-b border-sidebar-border flex-row justify-between items-center space-y-0">
-             <SheetTitle className="text-primary text-xl">القائمة</SheetTitle>
-             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8">
-                <X/>
-             </Button>
-          </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
       </Sheet>
@@ -100,7 +98,7 @@ const Sidebar = React.forwardRef<
     <aside
       ref={ref}
       className={cn(
-        "bg-sidebar text-sidebar-foreground flex-shrink-0 flex flex-col transition-all duration-300 ease-in-out",
+        "bg-background text-foreground flex-shrink-0 flex flex-col transition-all duration-300 ease-in-out border-l",
         isOpen ? 'w-64' : 'w-20',
         className
       )}
@@ -116,18 +114,18 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, isOpen, isMobile } = useSidebar()
 
   return (
     <Button
       ref={ref}
       variant="ghost"
       size="icon"
-      className={cn("h-8 w-8 md:hidden", className)}
+      className={cn("h-8 w-8", isMobile ? '' : 'hidden md:inline-flex', className)}
       onClick={toggleSidebar}
       {...props}
     >
-      <PanelLeft />
+      {isMobile ? <PanelLeft /> : isOpen ? <X /> : <PanelLeft/>}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
@@ -138,10 +136,15 @@ const SidebarHeader = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div">
 >(({ className, ...props }, ref) => {
+  const { isOpen } = useSidebar()
   return (
     <div
       ref={ref}
-      className={cn("flex items-center justify-center p-4 border-b border-sidebar-border h-16", className)}
+      className={cn(
+        "flex items-center justify-center p-4 border-b h-14",
+        !isOpen && "h-14",
+        className
+        )}
       {...props}
     />
   )
@@ -169,7 +172,7 @@ const SidebarFooter = React.forwardRef<
   return (
     <div
       ref={ref}
-      className={cn("p-2 mt-auto border-t border-sidebar-border", className)}
+      className={cn("p-2 mt-auto border-t", className)}
       {...props}
     />
   )
@@ -210,7 +213,7 @@ const SidebarMenuButton = React.forwardRef<
       ref={ref}
       data-active={isActive}
       className={cn(
-        "flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground",
+        "flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm text-foreground/80 outline-none transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring data-[active=true]:bg-primary data-[active=true]:text-primary-foreground",
         className
       )}
       {...props}
@@ -226,7 +229,7 @@ const SidebarSeparator = React.forwardRef<
   return (
     <Separator
       ref={ref}
-      className={cn("my-2 bg-sidebar-border/50", className)}
+      className={cn("my-2 bg-border/50", className)}
       {...props}
     />
   )

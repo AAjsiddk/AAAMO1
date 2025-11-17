@@ -178,39 +178,29 @@ export function Header() {
         </DialogContent>
       </Dialog>
     
-      <header className="sticky top-0 z-50 w-full">
-        <div className="container flex h-16 max-w-screen-2xl items-center">
-          <div className="flex items-center gap-2">
-            {user && <SidebarTrigger />}
-            <div className="md:flex">
-              <Link href={user ? "/dashboard" : "/"} aria-label="الرئيسية">
-                  <Logo />
-              </Link>
-            </div>
-          </div>
-          <div className="flex flex-1 items-center justify-end gap-4">
-            <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
-              {!user && (
-                <>
-                  <Link
-                    href="/#features"
-                    className="text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    المميزات
-                  </Link>
-                  <Link
-                    href="/#start"
-                    className="text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    ابدأ الآن
-                  </Link>
-                </>
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 max-w-screen-2xl items-center">
+          <div className="mr-4 hidden md:flex">
+            <Link href={user ? "/dashboard" : "/"} className="mr-6 flex items-center space-x-2">
+              <Logo />
+            </Link>
+            <nav className="flex items-center space-x-6 text-sm font-medium">
+              {user && (
+                <Link
+                  href="/dashboard"
+                  className="transition-colors hover:text-foreground/80 text-foreground"
+                >
+                  لوحة التحكم
+                </Link>
               )}
             </nav>
+          </div>
+           {user && <SidebarTrigger />}
+
+          <div className="flex flex-1 items-center justify-end gap-4">
             <div className="flex items-center gap-2">
               {isUserLoading ? (
                 <>
-                  <Skeleton className="h-8 w-8 rounded-full" />
                   <Skeleton className="h-8 w-8 rounded-full" />
                 </>
               ) : user ? (
@@ -265,9 +255,9 @@ export function Header() {
                         </p>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                      <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
                         <LayoutDashboard className="ml-2 h-4 w-4" />
-                        <span>لوحة التحكم</span>
+                        <span>الإعدادات</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleSignOut}>
