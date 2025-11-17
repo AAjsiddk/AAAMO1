@@ -9,24 +9,23 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
-  FilePlus,
   Target,
-  Book,
   ClipboardCheck,
   Repeat,
   Inbox,
+  TrendingUp
 } from 'lucide-react';
 import { TimeWidget } from '@/components/dashboard/time-widget';
-import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
+import { Progress } from '@/components/ui/progress';
 import 'react-circular-progressbar/dist/styles.css';
 import Link from 'next/link';
 import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
-import type { JournalEntry, Task } from '@/lib/types';
+import type { JournalEntry, Task, Goal, Habit } from '@/lib/types';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMemo } from 'react';
 
-function LatestJournalEntries() {
+function LatestEntries() {
   const { user } = useUser();
   const firestore = useFirestore();
 
@@ -37,24 +36,19 @@ function LatestJournalEntries() {
   }, [user, firestore]);
 
   const { data: entries, isLoading } = useCollection<JournalEntry>(entriesQuery);
-
+  
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center space-x-4 space-x-reverse">
-          <Skeleton className="h-12 w-12 rounded-lg" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[250px]" />
-            <Skeleton className="h-4 w-[200px]" />
+        {[...Array(3)].map((_, i) => (
+           <div key={i} className="flex items-center space-x-4 space-x-reverse">
+            <Skeleton className="h-12 w-12 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-[250px]" />
+              <Skeleton className="h-4 w-[200px]" />
+            </div>
           </div>
-        </div>
-        <div className="flex items-center space-x-4 space-x-reverse">
-          <Skeleton className="h-12 w-12 rounded-lg" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[250px]" />
-            <Skeleton className="h-4 w-[200px]" />
-          </div>
-        </div>
+        ))}
       </div>
     );
   }
@@ -71,40 +65,99 @@ function LatestJournalEntries() {
   return (
     <div className="space-y-4">
       {entries.map((entry) => (
-        <div key={entry.id} className="flex items-center">
+        <Link href="/dashboard/journal" key={entry.id} className="flex items-center p-2 rounded-lg hover:bg-muted transition-colors">
           <div className="flex flex-col items-center justify-center bg-muted text-muted-foreground rounded-lg p-2 h-16 w-16 mr-4">
             <span className="text-sm font-bold">{entry.createdAt ? format((entry.createdAt as Timestamp).toDate(), 'MMM') : ''}</span>
             <span className="text-2xl font-bold">{entry.createdAt ? format((entry.createdAt as Timestamp).toDate(), 'dd') : ''}</span>
           </div>
           <div className="space-y-1 overflow-hidden">
-            <Link href="/dashboard/journal" className="font-medium hover:underline truncate">{entry.title}</Link>
+            <p className="font-medium hover:underline truncate">{entry.title}</p>
             <p className="text-sm text-muted-foreground truncate">
               {entry.content.substring(0, 100)}...
             </p>
           </div>
-        </div>
+        </Link>
       ))}
     </div>
   );
 }
 
-
-export default function DashboardPage() {
+function ProgressTracker() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const tasksQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/tasks`) : null),
-    [user, firestore]
-  );
-  const { data: tasks, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
-  
-  const dailyProgress = useMemo(() => {
-    if (!tasks || tasks.length === 0) return 0;
-    const completedTasks = tasks.filter(task => task.status === 'completed').length;
-    return Math.round((completedTasks / tasks.length) * 100);
-  }, [tasks]);
+  const tasksQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/tasks`), orderBy('updatedAt', 'desc'), limit(1)) : null), [user, firestore]);
+  const goalsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/goals`), orderBy('updatedAt', 'desc'), limit(1)) : null), [user, firestore]);
+  const habitsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/habits`), orderBy('name', 'desc'), limit(1)) : null), [user, firestore]);
 
+  const { data: latestTask, isLoading: loadingTasks } = useCollection<Task>(tasksQuery);
+  const { data: latestGoal, isLoading: loadingGoals } = useCollection<Goal>(goalsQuery);
+  const { data: latestHabit, isLoading: loadingHabits } = useCollection<Habit>(habitsQuery);
+  
+  const isLoading = loadingTasks || loadingGoals || loadingHabits;
+
+  if (isLoading) {
+    return (
+       <div className="space-y-6">
+        {[...Array(3)].map((_, i) => (
+            <div key={i} className="space-y-2">
+                <div className="flex justify-between">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-12" />
+                </div>
+                <Skeleton className="h-4 w-full" />
+            </div>
+        ))}
+      </div>
+    )
+  }
+  
+  const hasItems = latestTask?.length || latestGoal?.length || latestHabit?.length;
+
+  return (
+    <div className="space-y-6">
+        {!hasItems ? (
+             <div className="text-center text-muted-foreground py-8">
+                <TrendingUp className="mx-auto h-12 w-12" />
+                <p className="mt-4">ابدأ بإضافة أهداف أو مهام لتتبع تقدمك.</p>
+             </div>
+        ) : (
+        <>
+          {latestGoal?.[0] && (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Link href="/dashboard/goals" className="font-medium hover:underline flex items-center gap-2"><Target/> <span>آخر هدف: {latestGoal[0].name}</span></Link>
+                <span className="text-sm font-bold text-primary">{latestGoal[0].progress || 0}%</span>
+              </div>
+              <Progress value={latestGoal[0].progress || 0} />
+            </div>
+          )}
+          {latestTask?.[0] && (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                 <Link href="/dashboard/tasks" className="font-medium hover:underline flex items-center gap-2"><ClipboardCheck/> <span>آخر مهمة: {latestTask[0].title}</span></Link>
+                <span className="text-sm font-semibold text-primary">{latestTask[0].status === 'completed' ? 'مكتملة' : 'قيد التنفيذ'}</span>
+              </div>
+            </div>
+          )}
+          {latestHabit?.[0] && (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                 <Link href="/dashboard/habits" className="font-medium hover:underline flex items-center gap-2"><Repeat/> <span>آخر عادة: {latestHabit[0].name}</span></Link>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+
+}
+
+
+export default function DashboardPage() {
+  const { user } = useUser();
+  
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -113,98 +166,33 @@ export default function DashboardPage() {
         </h2>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <TimeWidget />
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              مؤشر الإنجاز اليومي
-            </CardTitle>
-             <CardDescription>
-              {tasks?.length || 0} مهمة
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <div className="lg:col-span-2">
+          <TimeWidget />
+        </div>
+        <Card className="lg:col-span-5">
+          <CardHeader>
+            <CardTitle>متابعة التقدم</CardTitle>
+            <CardDescription>
+              نظرة سريعة على آخر تحديثاتك في الأهداف والمهام والعادات.
             </CardDescription>
           </CardHeader>
           <CardContent>
-             <div className="mx-auto w-32 h-32">
-              { isLoadingTasks ? <Skeleton className="h-full w-full rounded-full" /> : (
-                <CircularProgressbar
-                  value={dailyProgress}
-                  text={`${dailyProgress}%`}
-                  styles={buildStyles({
-                    textColor: 'hsl(var(--foreground))',
-                    pathColor: 'hsl(var(--primary))',
-                    trailColor: 'hsl(var(--muted))',
-                    textSize: '16px',
-                  })}
-                />
-              )}
-              </div>
-          </CardContent>
-        </Card>
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>إضافة سريعة</CardTitle>
-            <CardDescription>
-              ابدأ في تنظيم عالمك بخطوة واحدة.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <Button asChild variant="outline" className="flex flex-col h-24 transform transition-transform duration-200 hover:scale-105 hover:bg-primary/10">
-              <Link href="/dashboard/goals">
-                <Target className="h-8 w-8 mb-2 text-primary" />
-                <span>هدف</span>
-              </Link>
-            </Button>
-             <Button asChild variant="outline" className="flex flex-col h-24 transform transition-transform duration-200 hover:scale-105 hover:bg-primary/10">
-              <Link href="/dashboard/habits">
-                <Repeat className="h-8 w-8 mb-2 text-primary" />
-                <span>عادة</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="flex flex-col h-24 transform transition-transform duration-200 hover:scale-105 hover:bg-primary/10">
-              <Link href="/dashboard/tasks">
-                <ClipboardCheck className="h-8 w-8 mb-2 text-primary" />
-                <span>مهمة</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="flex flex-col h-24 transform transition-transform duration-200 hover:scale-105 hover:bg-primary/10">
-              <Link href="/dashboard/journal">
-                <Book className="h-8 w-8 mb-2 text-primary" />
-                <span>مذكرة</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="flex flex-col h-24 transform transition-transform duration-200 hover:scale-105 hover:bg-primary/10">
-              <Link href="/dashboard/files">
-                <FilePlus className="h-8 w-8 mb-2 text-primary" />
-                <span>ملف</span>
-              </Link>
-            </Button>
+            <ProgressTracker />
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-1 lg:col-span-4">
+      <div className="grid gap-4 md:grid-cols-1">
+        <Card className="col-span-1">
           <CardHeader>
             <CardTitle>آخر المذكرات</CardTitle>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <LatestJournalEntries />
-          </CardContent>
-        </Card>
-        <Card className="col-span-1 lg:col-span-3">
-          <CardHeader>
-            <CardTitle>تذكير اليوم</CardTitle>
-             <CardDescription>
-              رسالتك اليومية للتحفيز والإلهام.
+            <CardDescription>
+              أحدث ما قمت بتدوينه في مذكراتك الشخصية.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-             <div className="flex items-center justify-center h-full p-4">
-               <blockquote className="border-r-4 border-primary pr-4 italic text-lg text-center text-muted-foreground">
-                 "لا تؤجل عمل اليوم إلى الغد."
-               </blockquote>
-             </div>
+          <CardContent className="pl-2">
+            <LatestEntries />
           </CardContent>
         </Card>
       </div>

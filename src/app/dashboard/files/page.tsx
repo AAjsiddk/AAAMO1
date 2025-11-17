@@ -21,9 +21,10 @@ import {
   Edit,
   UploadCloud,
   ChevronRight,
+  FolderOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -406,13 +407,18 @@ export default function FilesPage() {
           {folders?.map((folder) => (
             <Card
               key={folder.id}
-              className="group relative cursor-pointer hover:shadow-lg transition-shadow"
-              onDoubleClick={() => navigateToFolder(folder.id, folder.name)}
+              className="group relative flex flex-col justify-between"
             >
-              <CardContent className="flex flex-col items-center justify-center p-6">
+              <CardContent className="flex flex-col items-center justify-center p-6" onDoubleClick={() => navigateToFolder(folder.id, folder.name)}>
                 <FolderIcon className="h-16 w-16 text-primary" />
                 <span className="mt-2 font-medium truncate w-full text-center">{folder.name}</span>
               </CardContent>
+              <CardFooter className="p-2 justify-center">
+                 <Button variant="outline" className="w-full" onClick={() => navigateToFolder(folder.id, folder.name)}>
+                    <FolderOpen className="ml-2 h-4 w-4"/>
+                    فتح
+                 </Button>
+              </CardFooter>
               <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -435,11 +441,17 @@ export default function FilesPage() {
             </Card>
           ))}
           {files?.map((file) => (
-            <Card key={file.id} className="group relative cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleFileClick(file)}>
+            <Card key={file.id} className="group relative flex flex-col justify-between">
               <CardContent className="flex flex-col items-center justify-center p-6">
                 <FileIcon className="h-16 w-16 text-muted-foreground" />
                 <span className="mt-2 font-medium truncate w-full text-center">{file.name}</span>
               </CardContent>
+               <CardFooter className="p-2 justify-center">
+                 <Button variant="outline" className="w-full" onClick={() => handleFileClick(file)}>
+                    <FolderOpen className="ml-2 h-4 w-4"/>
+                    فتح
+                 </Button>
+              </CardFooter>
               <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
