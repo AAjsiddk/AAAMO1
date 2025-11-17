@@ -181,7 +181,7 @@ export default function FilesPage() {
       
       await addDoc(filesCollectionRef, newFile);
       
-      toast({ title: 'نجاح', description: 'تم رفع معلومات الملف.' });
+      toast({ title: 'نجاح', description: 'تم رفع معلومات الملف. الرفع الفعلي قيد التطوير.' });
       fileForm.reset();
       setIsFileDialogOpen(false);
     } catch (error) {
@@ -255,8 +255,8 @@ export default function FilesPage() {
 
   const handleFileClick = (file: FileType) => {
     toast({
-      title: 'بدء تحميل الملف',
-      description: `سيتم تحميل ملف "${file.name}".`,
+      title: 'ميزة عرض الملفات قيد التطوير',
+      description: `سيتم فتح ملف "${file.name}" في المستقبل.`,
     });
   };
 
@@ -391,7 +391,7 @@ export default function FilesPage() {
       )}
 
       {!isLoading && (!folders || folders.length === 0) && (!files || files.length === 0) && (
-        <Card>
+        <Card className="card-glass">
           <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
             <FolderIcon className="h-16 w-16 text-muted-foreground" />
             <h3 className="text-xl font-semibold">المجلد فارغ</h3>
@@ -407,14 +407,14 @@ export default function FilesPage() {
           {folders?.map((folder) => (
             <Card
               key={folder.id}
-              className="group relative flex flex-col justify-between"
+              className="group relative flex flex-col justify-between card-glass"
             >
-              <CardContent className="flex flex-col items-center justify-center p-6" onDoubleClick={() => navigateToFolder(folder.id, folder.name)}>
+              <CardContent className="flex flex-col items-center justify-center p-6 cursor-pointer" onDoubleClick={() => navigateToFolder(folder.id, folder.name)}>
                 <FolderIcon className="h-16 w-16 text-primary" />
                 <span className="mt-2 font-medium truncate w-full text-center">{folder.name}</span>
               </CardContent>
               <CardFooter className="p-2 justify-center">
-                 <Button variant="outline" className="w-full" onClick={() => navigateToFolder(folder.id, folder.name)}>
+                 <Button variant="secondary" className="w-full" onClick={() => navigateToFolder(folder.id, folder.name)}>
                     <FolderOpen className="ml-2 h-4 w-4"/>
                     فتح
                  </Button>
@@ -441,15 +441,15 @@ export default function FilesPage() {
             </Card>
           ))}
           {files?.map((file) => (
-            <Card key={file.id} className="group relative flex flex-col justify-between">
+            <Card key={file.id} className="group relative flex flex-col justify-between card-glass">
               <CardContent className="flex flex-col items-center justify-center p-6">
                 <FileIcon className="h-16 w-16 text-muted-foreground" />
                 <span className="mt-2 font-medium truncate w-full text-center">{file.name}</span>
               </CardContent>
                <CardFooter className="p-2 justify-center">
-                 <Button variant="outline" className="w-full" onClick={() => handleFileClick(file)}>
-                    <FolderOpen className="ml-2 h-4 w-4"/>
-                    فتح
+                 <Button variant="secondary" className="w-full" onClick={() => handleFileClick(file)}>
+                    <Download className="ml-2 h-4 w-4"/>
+                    تحميل
                  </Button>
               </CardFooter>
               <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">

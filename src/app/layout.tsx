@@ -4,9 +4,32 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase';
 
+const APP_URL = "https://i.postimg.cc/xdHyLQT2/file-0000000048b871f597ddf2ad56aeec8c.png";
+
 export const metadata: Metadata = {
-  title: 'Smart Personal World',
-  description: 'Your smart personal world, organized and secure.',
+  title: 'عالمك الشخصي الذكي | لوحة تحكم متكاملة',
+  description: 'منصة ذكية لتنظيم كل جوانب حياتك الشخصية بأمان وخصوصية.',
+  openGraph: {
+    title: 'عالمك الشخصي الذكي | لوحة تحكم متكاملة',
+    description: 'منصة ذكية لتنظيم كل جوانب حياتك الشخصية بأمان وخصوصية.',
+    url: APP_URL,
+    images: [
+      {
+        url: APP_URL,
+        width: 1200,
+        height: 630,
+        alt: 'Smart Personal World',
+      },
+    ],
+    locale: 'ar_SA',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'عالمك الشخصي الذكي | لوحة تحكم متكاملة',
+    description: 'منصة ذكية لتنظيم كل جوانب حياتك الشخصية بأمان وخصوصية.',
+    images: [APP_URL],
+  },
 };
 
 export default function RootLayout({

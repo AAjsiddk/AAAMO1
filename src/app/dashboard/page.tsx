@@ -79,7 +79,7 @@ export default function Dashboard() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="h-full">
+            <Card className="h-full card-glass">
                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">الوقت الحالي</CardTitle>
                  </CardHeader>
@@ -89,7 +89,7 @@ export default function Dashboard() {
             </Card>
         </motion.div>
         <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
-             <Card>
+             <Card className="card-glass">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">المهام المنجزة (آخر 10)</CardTitle>
                 </CardHeader>
@@ -99,7 +99,7 @@ export default function Dashboard() {
             </Card>
         </motion.div>
          <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card>
+            <Card className="card-glass">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">الأهداف النشطة</CardTitle>
                 </CardHeader>
@@ -109,7 +109,7 @@ export default function Dashboard() {
             </Card>
         </motion.div>
          <motion.div custom={3} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card>
+            <Card className="card-glass">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">العادات قيد التتبع</CardTitle>
                 </CardHeader>
@@ -122,7 +122,7 @@ export default function Dashboard() {
 
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
          <motion.div custom={4} initial="hidden" animate="visible" variants={cardVariants} className="lg:col-span-4">
-            <Card className="h-full">
+            <Card className="h-full card-glass">
               <CardHeader>
                 <CardTitle>الإنتاجية الأسبوعية</CardTitle>
                 <CardDescription>عدد المهام التي أنجزتها خلال هذا الأسبوع.</CardDescription>
@@ -133,16 +133,22 @@ export default function Dashboard() {
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false}/>
                         <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false}/>
-                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}/>
+                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '0.5rem' }}/>
                         <Legend />
-                        <Bar dataKey="completed" fill="hsl(var(--primary))" name="المهام المنجزة" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="completed" fill="url(#colorUv)" name="المهام المنجزة" radius={[4, 4, 0, 0]} />
+                        <defs>
+                          <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.2}/>
+                          </linearGradient>
+                        </defs>
                     </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
          </motion.div>
          <motion.div custom={5} initial="hidden" animate="visible" variants={cardVariants} className="lg:col-span-3">
-             <Card className="h-full">
+             <Card className="h-full card-glass">
               <CardHeader>
                 <div className="flex justify-between items-center">
                     <div>
@@ -162,7 +168,7 @@ export default function Dashboard() {
                  ) : journalEntries && journalEntries.length > 0 ? (
                     <div className="space-y-4">
                         {journalEntries.map(entry => (
-                            <div key={entry.id} className="p-3 bg-muted/30 rounded-lg">
+                            <div key={entry.id} className="p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
                                 <h4 className="font-semibold truncate">{entry.title}</h4>
                                 <p className="text-sm text-muted-foreground line-clamp-2">{entry.content}</p>
                                 <p className="text-xs text-muted-foreground mt-1">

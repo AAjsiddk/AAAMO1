@@ -178,8 +178,8 @@ export function Header() {
         </DialogContent>
       </Dialog>
     
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 max-w-screen-2xl items-center">
+      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/50 backdrop-blur-xl">
+        <div className="container flex h-16 max-w-screen-2xl items-center">
           <div className="mr-4 hidden md:flex">
             <Link href={user ? "/dashboard" : "/"} className="mr-6 flex items-center space-x-2">
               <Logo />

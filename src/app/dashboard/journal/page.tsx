@@ -58,7 +58,7 @@ import type { JournalEntry } from '@/lib/types';
 import { format, isSameDay } from 'date-fns';
 import Image from 'next/image';
 
-const MAX_FILES = 20;
+const MAX_FILES = 5;
 
 // Placeholder for a real storage upload function
 async function uploadImage(file: File): Promise<string> {
@@ -241,7 +241,7 @@ export default function JournalPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">المذكرات</h2>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 space-x-reverse">
            <Button variant={showOnThisDay ? "default" : "outline"} onClick={() => setShowOnThisDay(!showOnThisDay)}>
                 <CalendarHeart className="ml-2 h-4 w-4" />
                 في مثل هذا اليوم
@@ -324,7 +324,7 @@ export default function JournalPage() {
       {isLoadingEntries && <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}
 
       {!isLoadingEntries && (!entries || entries.length === 0) && (
-        <Card>
+        <Card className="card-glass">
           <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
             <Inbox className="h-16 w-16 text-muted-foreground" />
             <h3 className="text-xl font-semibold">{showOnThisDay ? "لا توجد ذكريات في مثل هذا اليوم" : "لا توجد تدوينات بعد"}</h3>
@@ -342,7 +342,7 @@ export default function JournalPage() {
       {!isLoadingEntries && entries && entries.length > 0 && (
         <div className="space-y-4">
           {entries.map((entry) => (
-            <Card key={entry.id}>
+            <Card key={entry.id} className="card-glass">
               <CardHeader>
                 <CardTitle className="flex justify-between items-start">
                   <span>{entry.title}</span>
@@ -362,9 +362,9 @@ export default function JournalPage() {
               </CardHeader>
               <CardContent>
                  {entry.imageUrls && entry.imageUrls.length > 0 && (
-                  <div className="mb-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  <div className="mb-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                     {entry.imageUrls.map((url, index) => (
-                      <div key={index} className="relative aspect-video w-full overflow-hidden rounded-md">
+                      <div key={index} className="relative aspect-square w-full overflow-hidden rounded-md">
                         <Image src={url} alt={`${entry.title} - ${index + 1}`} fill className="object-cover" />
                       </div>
                     ))}

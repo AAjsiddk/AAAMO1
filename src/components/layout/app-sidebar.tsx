@@ -69,7 +69,6 @@ export function AppSidebar() {
   ];
   
   const toolsSections = [
-      { name: 'الذكاء المساعد', href: '/dashboard/ai-assistant', icon: BrainCircuit },
       { name: 'مكتبتي المعرفية', href: '/dashboard/library', icon: Library },
       { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: Clock },
       { name: 'مخطط الترفيه', href: '/dashboard/relax', icon: Coffee },
@@ -90,7 +89,7 @@ export function AppSidebar() {
   
   const NavLink = ({ item, active }: { item: { href: string; name: string; icon: React.ElementType }, active: boolean }) => (
     <Link href={item.href} className={cn(
-        "group relative flex items-center p-3 rounded-lg text-foreground/80 hover:text-foreground hover:bg-secondary transition-colors duration-200",
+        "group relative flex items-center p-3 rounded-lg text-foreground/80 hover:text-foreground hover:bg-white/10 transition-colors duration-200",
         active && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
     )}>
         <item.icon className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
