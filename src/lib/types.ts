@@ -94,6 +94,7 @@ export type JournalEntry = {
     mood?: 'happy' | 'sad' | 'neutral' | 'excited' | 'anxious';
     imageUrls?: string[];
     createdAt: FieldValue;
+    updatedAt: FieldValue;
 }
 
 export type FutureMessage = {

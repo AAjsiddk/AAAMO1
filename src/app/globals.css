@@ -33,6 +33,11 @@
     --ring: 262 88% 66%;
  
     --radius: 0.5rem;
+
+    --card-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --accent1: #7C5CFF;
+    --accent2: #00E0B7;
   }
  
   .dark {
@@ -63,6 +68,11 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 262 88% 66%;
+
+    --card-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --accent1: #7C5CFF;
+    --accent2: #00E0B7;
   }
 }
 
@@ -80,4 +90,11 @@
     height: 100%;
     overflow-x: hidden;
   }
+}
+
+.card-glass {
+  background: var(--card-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(8px);
+  @apply rounded-2xl shadow-lg;
 }

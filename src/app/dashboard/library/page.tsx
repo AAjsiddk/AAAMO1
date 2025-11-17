@@ -45,7 +45,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Loader2, Library, Book, Video, Link as LinkIcon, FileText, MessageCircle } from 'lucide-react';
+import { PlusCircle, Trash2, Loader2, Library, Book, Video, Link as LinkIcon, FileText, MessageCircle, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { LibraryItem } from '@/lib/types';
 import Image from 'next/image';
@@ -78,6 +78,7 @@ const typeTranslations = {
 export default function LibraryPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
@@ -100,6 +101,11 @@ export default function LibraryPage() {
   }, [libraryCollectionRef]);
 
   const { data: items, isLoading: isLoadingItems } = useCollection<LibraryItem>(itemsQuery);
+
+  const filteredItems = useMemo(() => {
+    if (!items) return [];
+    return items.filter(item => item.title.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [items, searchTerm]);
 
   const onSubmit = async (values: z.infer<typeof itemSchema>) => {
     if (!libraryCollectionRef || !user) return;
@@ -197,25 +203,41 @@ export default function LibraryPage() {
         </Dialog>
       </div>
 
+       <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input 
+            placeholder="ابحث عن عنصر في مكتبتك..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+       </div>
+
       {isLoadingItems && <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin" /></div>}
 
-      {!isLoadingItems && (!items || items.length === 0) && (
+      {!isLoadingItems && filteredItems.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
             <Library className="h-16 w-16 text-muted-foreground" />
-            <h3 className="text-xl font-semibold">مكتبتك فارغة</h3>
-            <p className="text-muted-foreground max-w-md">ابدأ بإضافة كتب، مقالات، أو فيديوهات تهمك لرحلة تطوير ذاتك.</p>
-            <Button onClick={() => setIsDialogOpen(true)} className="mt-4">
-              <PlusCircle className="ml-2 h-4 w-4" /> إضافة عنصر جديد
-            </Button>
+            <h3 className="text-xl font-semibold">{items && items.length > 0 ? 'لم يتم العثور على نتائج' : 'مكتبتك فارغة'}</h3>
+            <p className="text-muted-foreground max-w-md">
+              {items && items.length > 0
+                ? 'جرّب كلمة بحث مختلفة.'
+                : 'ابدأ بإضافة كتب، مقالات، أو فيديوهات تهمك لرحلة تطوير ذاتك.'}
+            </p>
+            {(!items || items.length === 0) && (
+              <Button onClick={() => setIsDialogOpen(true)} className="mt-4">
+                <PlusCircle className="ml-2 h-4 w-4" /> إضافة عنصر جديد
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {!isLoadingItems && items && items.length > 0 && (
+      {!isLoadingItems && filteredItems.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => (
-            <Card key={item.id} className="flex flex-col overflow-hidden bg-card-bg border-glass-border">
+          {filteredItems.map((item) => (
+            <Card key={item.id} className="flex flex-col overflow-hidden card-glass">
               <CardHeader className="flex-row gap-4 items-start pb-4">
                 <div className="flex-shrink-0 mt-1">{typeIcons[item.type]}</div>
                 <div className="flex-grow">

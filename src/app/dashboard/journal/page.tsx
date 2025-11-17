@@ -166,6 +166,7 @@ export default function JournalPage() {
           userId: user.uid,
           mood: mood,
           createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
           imageUrls: imageUrls,
         };
         
@@ -371,6 +372,11 @@ export default function JournalPage() {
                 )}
                 <p className="whitespace-pre-wrap">{entry.content}</p>
               </CardContent>
+              {entry.updatedAt && (
+                <CardFooter>
+                    <p className="text-xs text-muted-foreground">آخر تعديل: {formatDate(entry.updatedAt)}</p>
+                </CardFooter>
+              )}
             </Card>
           ))}
         </div>

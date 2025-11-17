@@ -59,7 +59,6 @@ export function AppSidebar() {
     { name: 'الملاحظات', href: '/dashboard/notes', icon: StickyNote },
     { name: 'الملفات', href: '/dashboard/files', icon: File },
     { name: 'المذكرات', href: '/dashboard/journal', icon: Camera },
-    { name: 'المشاريع', href: '/dashboard/projects', icon: FolderKanban },
   ];
 
   const selfDevelopmentSections = [
