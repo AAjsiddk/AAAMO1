@@ -3,46 +3,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow read, write on the user document itself
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /{subCollection}/{docId} {
+        allow get, list, read, create, update, delete:
+          if request.auth != null && request.auth.uid == userId;
+      }
     }
 
-    // --- Rules for INDIVIDUAL documents in subcollections ---
-    // This covers get, create, update, delete operations.
-    // It does NOT cover list (collection queries).
-    match /users/{userId}/{collection}/{docId} {
-      allow read, write, update, delete: if isOwner(userId);
-    }
-
-    // --- Rules for LISTING collections ---
-    // These are required for queries that read multiple documents.
-    match /users/{userId}/tasks { allow list: if isOwner(userId); }
-    match /users/{userId}/goals { allow list: if isOwner(userId); }
-    match /users/{userId}/habits { allow list: if isOwner(userId); }
-    match /users/{userId}/folders { allow list: if isOwner(userId); }
-    match /users/{userId}/files { allow list: if isOwner(userId); }
-    match /users/{userId}/journalEntries { allow list: if isOwner(userId); }
-    match /users/{userId}/notes { allow list: if isOwner(userId); }
-    match /users/{userId}/futureMessages { allow list: if isOwner(userId); }
-    match /users/{userId}/libraryItems { allow list: if isOwner(userId); }
-    match /users/{userId}/worshipActs { allow list: if isOwner(userId); }
-    match /users/{userId}/relaxationActivities { allow list: if isOwner(userId); }
-    match /users/{userId}/projects { allow list: if isOwner(userId); }
-
-    // --- Rules for sub-subcollections ---
-    // Example: listing marks within a specific habit
-     match /users/{userId}/habits/{habitId}/marks {
-      allow list: if isOwner(userId);
-    }
-    // Rule for individual marks
-    match /users/{userId}/habits/{habitId}/marks/{markId} {
-      allow read, write: if isOwner(userId);
+    // Fallback rule to deny all other access
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
-}
-
-// Helper function to check ownership
-function isOwner(userId) {
-  return request.auth != null && request.auth.uid == userId;
 }

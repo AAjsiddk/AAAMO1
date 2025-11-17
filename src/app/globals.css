@@ -73,9 +73,9 @@
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
     max-width: 100%;
     overflow-x: hidden;
-    box-sizing: border-box;
   }
   body {
     @apply bg-background text-foreground;
