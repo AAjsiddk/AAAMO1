@@ -112,7 +112,6 @@
 
 
 /* Fix for react-day-picker */
-.rdp-row {
-  display: flex;
-  justify-content: space-around;
+.rdp-button:not([disabled]) {
+    cursor: pointer;
 }
