@@ -38,6 +38,7 @@ import {
   HeartPulse,
   Lightbulb,
   Archive,
+  BookText
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -61,6 +62,7 @@ export function AppSidebar() {
     { name: 'الملاحظات', href: '/dashboard/notes', icon: StickyNote },
     { name: 'الملفات', href: '/dashboard/files', icon: File },
     { name: 'الصندوق الشخصي', href: '/dashboard/personal-box', icon: Archive },
+    { name: 'المذكرة', href: '/dashboard/journaling', icon: BookText },
   ];
 
   const selfDevelopmentSections = [
