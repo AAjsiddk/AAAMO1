@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -117,7 +117,7 @@ const statusColors: { [key in Task['status']]: string } = {
 };
 
 
-function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: Task; level?: number; onEdit: (task: Task) => void; onDelete: (taskId: string) => void; onAddSubtask: (parentId: string) => void; }) {
+const TaskItem = memo(function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: Task; level?: number; onEdit: (task: Task) => void; onDelete: (taskId: string) => void; onAddSubtask: (parentId: string) => void; }) {
   const [isExpanded, setIsExpanded] = useState(true);
   
   const getSafeDate = (date: any) => {
@@ -211,7 +211,8 @@ function TaskItem({ task, level = 0, onEdit, onDelete, onAddSubtask }: { task: T
       )}
     </div>
   );
-}
+});
+TaskItem.displayName = 'TaskItem';
 
 
 export default function TasksPage() {
