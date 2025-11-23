@@ -6,7 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, orderBy, limit, Timestamp, addDoc, serverTimestamp } from 'firebase/firestore';
 import type { Task, Goal, Habit, JournalEntry, Inspiration } from '@/lib/types';
-import { Loader2, ArrowLeft, Lightbulb, RefreshCw } from 'lucide-react';
+import { Loader2, ArrowLeft, Lightbulb, RefreshCw, RotateCcw } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -70,7 +70,6 @@ const DashboardPage = () => {
   const [currentWisdom, setCurrentWisdom] = useState<{type: string, text: string} | null>(null);
 
   useEffect(() => {
-    // Select a random wisdom when the component mounts
     setCurrentWisdom(wisdoms[Math.floor(Math.random() * wisdoms.length)]);
   }, []);
 
@@ -112,15 +111,19 @@ const DashboardPage = () => {
   }), [tasks, goals, habits]);
   
   const handleTasbeehClick = () => {
-    if (tasbeehCount + 1 === tasbeehTarget) {
+    if (tasbeehCount + 1 >= tasbeehTarget) {
         if (navigator.vibrate) {
             navigator.vibrate(200);
         }
-        setTasbeehCount(0);
+        setTasbeehCount(tasbeehTarget);
     } else {
         setTasbeehCount(tasbeehCount + 1);
     }
   };
+
+  const resetTasbeeh = () => {
+    setTasbeehCount(0);
+  }
 
   const getNewWisdom = () => {
     setCurrentWisdom(wisdoms[Math.floor(Math.random() * wisdoms.length)]);
@@ -153,7 +156,7 @@ const DashboardPage = () => {
         <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
             <Card className="h-full bg-card/70 border-border/50 backdrop-blur-sm">
                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">الوقت الحالي</CardTitle>
+                    <CardTitle className="text-sm font-medium">الوقت والتاريخ</CardTitle>
                  </CardHeader>
                  <CardContent>
                     <TimeWidget/>
@@ -279,15 +282,24 @@ const DashboardPage = () => {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div>
-                             <label className="text-muted-foreground mb-2 block">الهدف:</label>
-                            <Input
-                                type="number"
-                                value={tasbeehTarget}
-                                onChange={(e) => setTasbeehTarget(Number(e.target.value))}
-                                className="text-center"
-                                placeholder="الهدف"
-                            />
+                        <div className='grid grid-cols-2 gap-2'>
+                             <div>
+                                <label className="text-muted-foreground mb-2 block">الهدف:</label>
+                                <Input
+                                    type="number"
+                                    value={tasbeehTarget}
+                                    onChange={(e) => setTasbeehTarget(Number(e.target.value))}
+                                    className="text-center"
+                                    placeholder="الهدف"
+                                />
+                            </div>
+                             <div>
+                                <label className="text-muted-foreground mb-2 block opacity-0">إعادة تعيين</label>
+                                <Button onClick={resetTasbeeh} variant="outline" className="w-full">
+                                    <RotateCcw className="ml-2 h-4 w-4" />
+                                    إعادة تعيين
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </CardContent>
