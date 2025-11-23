@@ -52,6 +52,7 @@ import {
   CalendarHeart,
   ImagePlus,
   X,
+  BrainCircuit,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { JournalEntry } from '@/lib/types';
@@ -240,7 +241,7 @@ export default function JournalPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">المذكرات</h2>
+        <h2 className="text-3xl font-bold tracking-tight">الصندوق الشخصي</h2>
         <div className="flex items-center space-x-2 space-x-reverse">
            <Button variant={showOnThisDay ? "default" : "outline"} onClick={() => setShowOnThisDay(!showOnThisDay)}>
                 <CalendarHeart className="ml-2 h-4 w-4" />
@@ -326,8 +327,8 @@ export default function JournalPage() {
       {!isLoadingEntries && (!entries || entries.length === 0) && (
         <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
           <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
-            <Inbox className="h-16 w-16 text-muted-foreground" />
-            <h3 className="text-xl font-semibold">{showOnThisDay ? "لا توجد ذكريات في مثل هذا اليوم" : "لا توجد تدوينات بعد"}</h3>
+            <BrainCircuit className="h-16 w-16 text-muted-foreground" />
+            <h3 className="text-xl font-semibold">{showOnThisDay ? "لا توجد ذكريات في مثل هذا اليوم" : "صندوقك الشخصي فارغ"}</h3>
             <p className="text-muted-foreground">{showOnThisDay ? "ربما العام القادم؟" : "ابدأ بكتابة أول تدوينة لك."}</p>
              {!showOnThisDay && (
               <Button onClick={() => setIsDialogOpen(true)}>
@@ -384,5 +385,3 @@ export default function JournalPage() {
     </div>
   );
 }
-
-    

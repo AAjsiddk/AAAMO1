@@ -59,9 +59,9 @@ export function AppSidebar() {
     { name: 'الأهداف', href: '/dashboard/goals', icon: Target },
     { name: 'المهام', href: '/dashboard/tasks', icon: ClipboardCheck },
     { name: 'العادات', href: '/dashboard/habits', icon: Repeat },
-    { name: 'صندوق الأفكار', href: '/dashboard/notes', icon: StickyNote },
+    { name: 'الملاحظات', href: '/dashboard/notes', icon: StickyNote },
     { name: 'الملفات', href: '/dashboard/files', icon: File },
-    { name: 'المذكرات', href: '/dashboard/journal', icon: Camera },
+    { name: 'الصندوق الشخصي', href: '/dashboard/journal', icon: BrainCircuit },
   ];
 
   const selfDevelopmentSections = [
