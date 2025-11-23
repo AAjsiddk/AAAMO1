@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Camera, Loader2 } from 'lucide-react';
 import Image from 'next/image';
-import { format, isSameDay, subYears, addYears } from 'date-fns';
+import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -69,10 +69,10 @@ export default function MemoriesPage() {
               <Camera className="h-16 w-16 text-muted-foreground" />
               <h3 className="text-xl font-semibold">لا توجد ذكريات مصورة بعد</h3>
               <p className="text-muted-foreground max-w-md">
-                أضف تدوينات في "المذكرات" مع صور لبدء بناء أرشيف ذكرياتك.
+                أضف تدوينات في "الصندوق الشخصي" مع صور لبدء بناء أرشيف ذكرياتك.
               </p>
               <Button asChild className="mt-2">
-                <Link href="/dashboard/journal">اذهب إلى المذكرات</Link>
+                <Link href="/dashboard/personal-box">اذهب إلى الصندوق الشخصي</Link>
               </Button>
            </CardContent>
          </Card>
@@ -118,7 +118,7 @@ export default function MemoriesPage() {
                 <CardTitle>كل الذكريات</CardTitle>
                  <CardDescription>تصفح جميع لحظاتك المصورة.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                  {memories.map(memory => (
                      <div key={memory.id} className="group relative aspect-square overflow-hidden rounded-lg">
                          <Image src={memory.imageUrls[0]} alt={memory.title} layout="fill" objectFit="cover" className="transition-transform group-hover:scale-105" />

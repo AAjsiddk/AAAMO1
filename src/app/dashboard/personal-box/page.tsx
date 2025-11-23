@@ -53,6 +53,7 @@ import {
   ImagePlus,
   X,
   BrainCircuit,
+  Archive,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { JournalEntry } from '@/lib/types';
@@ -102,7 +103,7 @@ const analyzeMood = (text: string): JournalEntry['mood'] => {
     return 'neutral';
 };
 
-export default function JournalPage() {
+export default function PersonalBoxPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showOnThisDay, setShowOnThisDay] = useState(false);
@@ -144,6 +145,7 @@ export default function JournalPage() {
                    entryDate.getMonth() === today.getMonth();
         });
     }
+    // Filter out special entries from other sections
     return allEntries.filter(entry => entry.title !== 'Gratitude Entry' && entry.title !== 'My Beautiful Moment' && entry.title !== 'لحظة سعيدة');
   }, [allEntries, showOnThisDay, today]);
 
@@ -327,7 +329,7 @@ export default function JournalPage() {
       {!isLoadingEntries && (!entries || entries.length === 0) && (
         <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
           <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
-            <BrainCircuit className="h-16 w-16 text-muted-foreground" />
+            <Archive className="h-16 w-16 text-muted-foreground" />
             <h3 className="text-xl font-semibold">{showOnThisDay ? "لا توجد ذكريات في مثل هذا اليوم" : "صندوقك الشخصي فارغ"}</h3>
             <p className="text-muted-foreground">{showOnThisDay ? "ربما العام القادم؟" : "ابدأ بكتابة أول تدوينة لك."}</p>
              {!showOnThisDay && (

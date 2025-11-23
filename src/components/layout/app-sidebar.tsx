@@ -29,16 +29,15 @@ import {
   Package,
   Droplets,
   TrendingUp,
-  BrainCircuit,
   Coffee,
   Library,
   HandHeart,
-  FolderKanban,
   StickyNote,
   Clock,
   BookOpen,
   HeartPulse,
   Lightbulb,
+  Archive,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -61,7 +60,7 @@ export function AppSidebar() {
     { name: 'العادات', href: '/dashboard/habits', icon: Repeat },
     { name: 'الملاحظات', href: '/dashboard/notes', icon: StickyNote },
     { name: 'الملفات', href: '/dashboard/files', icon: File },
-    { name: 'الصندوق الشخصي', href: '/dashboard/journal', icon: BrainCircuit },
+    { name: 'الصندوق الشخصي', href: '/dashboard/personal-box', icon: Archive },
   ];
 
   const selfDevelopmentSections = [
