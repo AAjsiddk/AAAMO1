@@ -5,7 +5,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Save, Bold, Italic, Underline as UnderlineIcon, Strikethrough, List, ListOrdered, Quote, Minus, Link2 } from 'lucide-react';
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -89,7 +89,7 @@ export default function JournalingPage() {
   });
 
   useEffect(() => {
-    if (user && firestore && editor) {
+    if (user && firestore && editor && editor.isEditable) {
       setIsLoading(true);
       const journalDocRef = doc(firestore, `users/${user.uid}/journaling`, 'main');
       getDoc(journalDocRef)
