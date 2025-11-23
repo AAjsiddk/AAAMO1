@@ -80,5 +80,3 @@ const TiptapEditor = ({ content, onChange }: { content: string, onChange: (richT
 };
 
 export default TiptapEditor;
-
-    
