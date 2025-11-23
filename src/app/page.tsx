@@ -46,25 +46,25 @@ export default function Home() {
   
   const features = [
     {
-      icon: <Sparkles className="h-8 w-8 text-accent" />,
+      icon: <Sparkles className="h-8 w-8 text-primary" />,
       title: 'مساعدة ذكية بالذكاء الاصطناعي',
       description:
         'دع الذكاء الاصطناعي يساعدك في تنظيم معلوماتك واقتراح الأفكار ذات الصلة.',
     },
     {
-      icon: <Lock className="h-8 w-8 text-accent" />,
+      icon: <Lock className="h-8 w-8 text-primary" />,
       title: 'أمان وخصوصية تامة',
       description:
         'بياناتك معزولة ومشفّرة بالكامل. أنت المتحكم الوحيد في عالمك الشخصي.',
     },
     {
-      icon: <Palette className="h-8 w-8 text-accent" />,
+      icon: <Palette className="h-8 w-8 text-primary" />,
       title: 'تخصيص كامل للواجهة',
       description:
         'اختر بين الوضع النهاري والليلي، وخصص الألوان لتناسب ذوقك الفريد.',
     },
     {
-      icon: <Languages className="h-8 w-8 text-accent" />,
+      icon: <Languages className="h-8 w-8 text-primary" />,
       title: 'دعم كامل للغة العربية',
       description:
         'واجهة مصممة من اليمين إلى اليسار لتجربة استخدام سلسة وطبيعية.',
@@ -191,3 +191,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

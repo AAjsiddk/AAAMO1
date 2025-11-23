@@ -10,7 +10,7 @@ const TimeWidgetInternal = () => {
     const updateDates = () => {
       const now = new Date();
       // Time
-      setTime(now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }));
+      setTime(now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', hour12: true }));
     };
     
     updateDates();
@@ -26,3 +26,5 @@ const TimeWidgetInternal = () => {
 
 export const TimeWidget = memo(TimeWidgetInternal);
 TimeWidget.displayName = 'TimeWidget';
+
+    

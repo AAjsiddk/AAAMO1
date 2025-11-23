@@ -22,6 +22,7 @@ import {
   UploadCloud,
   ChevronRight,
   FolderOpen,
+  Download,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -391,7 +392,7 @@ export default function FilesPage() {
       )}
 
       {!isLoading && (!folders || folders.length === 0) && (!files || files.length === 0) && (
-        <Card className="card-glass">
+        <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
           <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
             <FolderIcon className="h-16 w-16 text-muted-foreground" />
             <h3 className="text-xl font-semibold">المجلد فارغ</h3>
@@ -407,7 +408,7 @@ export default function FilesPage() {
           {folders?.map((folder) => (
             <Card
               key={folder.id}
-              className="group relative flex flex-col justify-between card-glass"
+              className="group relative flex flex-col justify-between bg-card/70 border-border/50 backdrop-blur-sm"
             >
               <CardContent className="flex flex-col items-center justify-center p-6 cursor-pointer" onDoubleClick={() => navigateToFolder(folder.id, folder.name)}>
                 <FolderIcon className="h-16 w-16 text-primary" />
@@ -441,15 +442,15 @@ export default function FilesPage() {
             </Card>
           ))}
           {files?.map((file) => (
-            <Card key={file.id} className="group relative flex flex-col justify-between card-glass">
-              <CardContent className="flex flex-col items-center justify-center p-6">
+            <Card key={file.id} className="group relative flex flex-col justify-between bg-card/70 border-border/50 backdrop-blur-sm">
+              <CardContent className="flex flex-col items-center justify-center p-6 cursor-pointer" onDoubleClick={() => handleFileClick(file)}>
                 <FileIcon className="h-16 w-16 text-muted-foreground" />
                 <span className="mt-2 font-medium truncate w-full text-center">{file.name}</span>
               </CardContent>
                <CardFooter className="p-2 justify-center">
                  <Button variant="secondary" className="w-full" onClick={() => handleFileClick(file)}>
                     <Download className="ml-2 h-4 w-4"/>
-                    تحميل
+                    فتح
                  </Button>
               </CardFooter>
               <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -474,3 +475,5 @@ export default function FilesPage() {
     </div>
   );
 }
+
+    

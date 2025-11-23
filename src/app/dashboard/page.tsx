@@ -123,7 +123,7 @@ const DashboardPage = () => {
       </motion.div>
       
        <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="bg-primary/10 border-primary/20">
+            <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="flex justify-between items-center">
                         <span>{currentWisdom.type} اليوم</span>
@@ -194,13 +194,7 @@ const DashboardPage = () => {
                         <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false}/>
                         <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '0.5rem' }}/>
                         <Legend />
-                        <Bar dataKey="completed" fill="url(#colorUv)" name="المهام المنجزة" radius={[4, 4, 0, 0]} />
-                        <defs>
-                          <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.2}/>
-                          </linearGradient>
-                        </defs>
+                        <Bar dataKey="completed" fill="hsl(var(--primary))" name="المهام المنجزة" radius={[4, 4, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -227,7 +221,7 @@ const DashboardPage = () => {
                  ) : journalEntries && journalEntries.length > 0 ? (
                     <div className="space-y-4">
                         {journalEntries.map(entry => (
-                            <div key={entry.id} className="p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                            <div key={entry.id} className="p-3 bg-card/80 rounded-lg hover:bg-card transition-colors">
                                 <h4 className="font-semibold truncate">{entry.title}</h4>
                                 <p className="text-sm text-muted-foreground line-clamp-2">{entry.content}</p>
                                 <p className="text-xs text-muted-foreground mt-1">
@@ -253,7 +247,7 @@ const DashboardPage = () => {
                 <CardContent className="flex flex-col items-center justify-center gap-6">
                     <p className="text-lg text-muted-foreground">التسبيح الحالي: <span className="font-bold text-foreground">{currentTasbeeh}</span></p>
                      <div 
-                        className="w-48 h-48 rounded-full bg-gradient-to-br from-background to-secondary flex items-center justify-center text-6xl font-bold cursor-pointer select-none border-4 border-primary/50 shadow-lg active:scale-95 transition-transform"
+                        className="w-48 h-48 rounded-full bg-gradient-to-br from-background to-card flex items-center justify-center text-6xl font-bold cursor-pointer select-none border-4 border-primary/50 shadow-lg active:scale-95 transition-transform"
                         onClick={handleTasbeehClick}
                     >
                         {tasbeehCount}
@@ -317,3 +311,5 @@ const DashboardPage = () => {
 }
 
 export default memo(DashboardPage);
+
+    

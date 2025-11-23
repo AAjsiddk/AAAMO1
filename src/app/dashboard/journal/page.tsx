@@ -143,7 +143,7 @@ export default function JournalPage() {
                    entryDate.getMonth() === today.getMonth();
         });
     }
-    return allEntries.filter(entry => entry.title !== 'Gratitude Entry');
+    return allEntries.filter(entry => entry.title !== 'Gratitude Entry' && entry.title !== 'My Beautiful Moment' && entry.title !== 'لحظة سعيدة');
   }, [allEntries, showOnThisDay, today]);
 
   const onSubmit = async (values: z.infer<typeof journalSchema>) => {
@@ -324,7 +324,7 @@ export default function JournalPage() {
       {isLoadingEntries && <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}
 
       {!isLoadingEntries && (!entries || entries.length === 0) && (
-        <Card className="card-glass">
+        <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
           <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
             <Inbox className="h-16 w-16 text-muted-foreground" />
             <h3 className="text-xl font-semibold">{showOnThisDay ? "لا توجد ذكريات في مثل هذا اليوم" : "لا توجد تدوينات بعد"}</h3>
@@ -342,7 +342,7 @@ export default function JournalPage() {
       {!isLoadingEntries && entries && entries.length > 0 && (
         <div className="space-y-4">
           {entries.map((entry) => (
-            <Card key={entry.id} className="card-glass overflow-hidden">
+            <Card key={entry.id} className="bg-card/70 border-border/50 backdrop-blur-sm overflow-hidden">
               <CardHeader>
                 <CardTitle className="flex justify-between items-start">
                   <span>{entry.title}</span>
@@ -384,3 +384,5 @@ export default function JournalPage() {
     </div>
   );
 }
+
+    

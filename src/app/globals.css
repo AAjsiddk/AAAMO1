@@ -4,65 +4,65 @@
 
 @layer base {
   :root {
-    --background: 222 84% 5%; /* Deep Blue */
+    --background: 224 71% 4%; /* Deep Blue */
     --foreground: 210 40% 98%;
 
-    --card: 222 84% 8%;
+    --card: 223 60% 9%;
     --card-foreground: 210 40% 98%;
  
-    --popover: 222 84% 4%;
+    --popover: 224 71% 4%;
     --popover-foreground: 210 40% 98%;
  
-    --primary: 51 98% 50%; /* Vibrant Yellow */
-    --primary-foreground: 222 84% 5%;
+    --primary: 173 97% 40%; /* Teal/Cyan */
+    --primary-foreground: 224 71% 4%;
  
-    --secondary: 330 84% 60%; /* Hot Pink/Red */
+    --secondary: 217 33% 50%;
     --secondary-foreground: 210 40% 98%;
  
-    --muted: 210 40% 60%;
-    --muted-foreground: 210 40% 60%;
+    --muted: 217 33% 25%;
+    --muted-foreground: 215 28% 65%;
  
-    --accent: 270 90% 65%; /* Bright Purple */
+    --accent: 217 33% 50%;
     --accent-foreground: 210 40% 98%;
  
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 222 84% 15%;
-    --input: 222 84% 15%;
-    --ring: 51 98% 50%;
+    --border: 223 60% 15%;
+    --input: 223 60% 15%;
+    --ring: 173 97% 40%;
  
     --radius: 0.8rem;
   }
  
   .dark {
-    --background: 222 84% 5%; /* Deep Blue */
+    --background: 224 71% 4%; /* Deep Blue */
     --foreground: 210 40% 98%;
 
-    --card: 222 84% 8%;
+    --card: 223 60% 9%;
     --card-foreground: 210 40% 98%;
  
-    --popover: 222 84% 4%;
+    --popover: 224 71% 4%;
     --popover-foreground: 210 40% 98%;
  
-    --primary: 51 98% 50%; /* Vibrant Yellow */
-    --primary-foreground: 222 84% 5%;
+    --primary: 173 97% 40%; /* Teal/Cyan */
+    --primary-foreground: 224 71% 4%;
  
-    --secondary: 330 84% 60%; /* Hot Pink/Red */
+    --secondary: 217 33% 50%;
     --secondary-foreground: 210 40% 98%;
  
-    --muted: 210 40% 60%;
-    --muted-foreground: 210 40% 60%;
+    --muted: 217 33% 25%;
+    --muted-foreground: 215 28% 65%;
  
-    --accent: 270 90% 65%; /* Bright Purple */
+    --accent: 217 33% 50%;
     --accent-foreground: 210 40% 98%;
  
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 222 84% 15%;
-    --input: 222 84% 15%;
-    --ring: 51 98% 50%;
+    --border: 223 60% 15%;
+    --input: 223 60% 15%;
+    --ring: 173 97% 40%;
   }
 }
 
@@ -97,3 +97,5 @@
 .react-calendar-heatmap .color-scale-2 { fill: hsl(var(--primary) / 0.4); }
 .react-calendar-heatmap .color-scale-3 { fill: hsl(var(--primary) / 0.7); }
 .react-calendar-heatmap .color-scale-4 { fill: hsl(var(--primary) / 1.0); }
+
+    
