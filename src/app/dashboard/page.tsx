@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo, memo } from 'react';
+import { useState, useMemo, memo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -48,6 +48,15 @@ const wisdoms = [
   { type: "حديث", text: "الكلمة الطيبة صدقة." },
   { type: "حكمة", text: "الصبر مفتاح الفرج." },
   { type: "آية", text: "إِنَّ مَعَ الْعُسْرِ يُسْرًا" },
+  { type: "آية", text: "فَإِنَّ الذِّكْرَىٰ تَنفَعُ الْمُؤْمِنِينَ" },
+  { type: "حديث", text: "مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ." },
+  { type: "حكمة", text: "لا تؤجل عمل اليوم إلى الغد." },
+  { type: "آية", text: "وَقُلِ اعْمَلُوا فَسَيَرَى اللَّهُ عَمَلَكُمْ وَرَسُولُهُ وَالْمُؤْمِنُونَ" },
+  { type: "حديث", text: "أَحَبُّ الأَعْمَالِ إِلَى اللَّهِ أَدْوَمُهَا وَإِنْ قَلَّ." },
+  { type: "حكمة", text: "الوقت كالسيف إن لم تقطعه قطعك." },
+  { type: "آية", text: "لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا" },
+  { type: "حديث", text: "المؤمن القوي خير وأحب إلى الله من المؤمن الضعيف." },
+  { type: "حكمة", text: "من جد وجد ومن زرع حصد." },
 ];
 
 const DashboardPage = () => {
@@ -58,7 +67,12 @@ const DashboardPage = () => {
   const [tasbeehCount, setTasbeehCount] = useState(0);
   const [currentTasbeeh, setCurrentTasbeeh] = useState(tasbeehOptions[0]);
   const [tasbeehTarget, setTasbeehTarget] = useState(33);
-  const [currentWisdom, setCurrentWisdom] = useState(wisdoms[0]);
+  const [currentWisdom, setCurrentWisdom] = useState<{type: string, text: string} | null>(null);
+
+  useEffect(() => {
+    // Select a random wisdom when the component mounts
+    setCurrentWisdom(wisdoms[Math.floor(Math.random() * wisdoms.length)]);
+  }, []);
 
   const tasksQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/tasks`), orderBy('updatedAt', 'desc'), limit(10)) : null), [user, firestore]);
   const goalsQuery = useMemoFirebase(() => (user ? collection(firestore, `users/${user.uid}/goals`) : null), [user, firestore]);
@@ -109,8 +123,7 @@ const DashboardPage = () => {
   };
 
   const getNewWisdom = () => {
-    const newWisdom = wisdoms[Math.floor(Math.random() * wisdoms.length)];
-    setCurrentWisdom(newWisdom);
+    setCurrentWisdom(wisdoms[Math.floor(Math.random() * wisdoms.length)]);
   }
 
   return (
@@ -126,12 +139,12 @@ const DashboardPage = () => {
             <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="flex justify-between items-center">
-                        <span>{currentWisdom.type} اليوم</span>
+                        <span>{currentWisdom?.type} اليوم</span>
                          <Button variant="ghost" size="icon" onClick={getNewWisdom}><RefreshCw className="h-4 w-4"/></Button>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-lg font-semibold text-center">"{currentWisdom.text}"</p>
+                    <p className="text-lg font-semibold text-center">"{currentWisdom?.text}"</p>
                 </CardContent>
             </Card>
         </motion.div>
