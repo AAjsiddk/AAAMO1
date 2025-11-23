@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase';
 
-const APP_URL = "https://i.postimg.cc/xdHyLQT2/file-0000000048b871f597ddf2ad56aeec8c.png";
+const APP_URL = "https://i.postimg.cc/SsCZHxTH/sh-ar-asfr-ahmr-warjwany-hdyth-akadymyt-alt-lym-1.png";
 
 export const metadata: Metadata = {
   title: 'عالمك الشخصي الذكي | لوحة تحكم متكاملة',
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'عالمك الشخصي الذكي | لوحة تحكم متكاملة',
     description: 'منصة ذكية لتنظيم كل جوانب حياتك الشخصية بأمان وخصوصية.',
-    url: APP_URL,
+    url: "https://studio.chml.io",
     images: [
       {
         url: APP_URL,

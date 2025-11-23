@@ -4,65 +4,65 @@
 
 @layer base {
   :root {
-    --background: 220 40% 7%;
+    --background: 222 84% 5%; /* Deep Blue */
     --foreground: 210 40% 98%;
 
-    --card: 220 40% 12%;
+    --card: 222 84% 8%;
     --card-foreground: 210 40% 98%;
  
-    --popover: 220 40% 7%;
+    --popover: 222 84% 4%;
     --popover-foreground: 210 40% 98%;
  
-    --primary: 170 80% 45%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 51 98% 50%; /* Vibrant Yellow */
+    --primary-foreground: 222 84% 5%;
  
-    --secondary: 220 40% 15%;
+    --secondary: 330 84% 60%; /* Hot Pink/Red */
     --secondary-foreground: 210 40% 98%;
  
     --muted: 210 40% 60%;
     --muted-foreground: 210 40% 60%;
  
-    --accent: 170 80% 45%;
+    --accent: 270 90% 65%; /* Bright Purple */
     --accent-foreground: 210 40% 98%;
  
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 40% 18%;
-    --input: 220 40% 18%;
-    --ring: 170 80% 45%;
+    --border: 222 84% 15%;
+    --input: 222 84% 15%;
+    --ring: 51 98% 50%;
  
     --radius: 0.8rem;
   }
  
   .dark {
-    --background: 220 40% 7%;
+    --background: 222 84% 5%; /* Deep Blue */
     --foreground: 210 40% 98%;
 
-    --card: 220 40% 12%;
+    --card: 222 84% 8%;
     --card-foreground: 210 40% 98%;
  
-    --popover: 220 40% 7%;
+    --popover: 222 84% 4%;
     --popover-foreground: 210 40% 98%;
  
-    --primary: 170 80% 45%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 51 98% 50%; /* Vibrant Yellow */
+    --primary-foreground: 222 84% 5%;
  
-    --secondary: 220 40% 15%;
+    --secondary: 330 84% 60%; /* Hot Pink/Red */
     --secondary-foreground: 210 40% 98%;
  
     --muted: 210 40% 60%;
     --muted-foreground: 210 40% 60%;
  
-    --accent: 170 80% 45%;
+    --accent: 270 90% 65%; /* Bright Purple */
     --accent-foreground: 210 40% 98%;
  
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 40% 18%;
-    --input: 220 40% 18%;
-    --ring: 170 80% 45%;
+    --border: 222 84% 15%;
+    --input: 222 84% 15%;
+    --ring: 51 98% 50%;
   }
 }
 
@@ -88,3 +88,12 @@
   backdrop-filter: blur(12px);
   @apply rounded-2xl shadow-lg;
 }
+
+.react-calendar-heatmap .color-empty {
+  fill: hsl(var(--border) / 0.2);
+}
+
+.react-calendar-heatmap .color-scale-1 { fill: hsl(var(--primary) / 0.2); }
+.react-calendar-heatmap .color-scale-2 { fill: hsl(var(--primary) / 0.4); }
+.react-calendar-heatmap .color-scale-3 { fill: hsl(var(--primary) / 0.7); }
+.react-calendar-heatmap .color-scale-4 { fill: hsl(var(--primary) / 1.0); }

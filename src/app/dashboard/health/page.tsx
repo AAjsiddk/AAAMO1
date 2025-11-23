@@ -9,16 +9,17 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, where, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, where, addDoc, updateDoc, orderBy } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, Loader2, HeartPulse, Dumbbell, Apple, CircleHelp } from 'lucide-react';
+import { Plus, Trash2, Loader2, HeartPulse, Dumbbell, Apple, Info, Utensils, CalendarDays } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { HealthEntry } from '@/lib/types';
-import { format, subDays, startOfDay } from 'date-fns';
+import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
 import { Switch } from '@/components/ui/switch';
 import {
   Accordion,
@@ -26,6 +27,22 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Badge } from '@/components/ui/badge';
+
+
+const healthTips = [
+  "اشرب 8 أكواب من الماء يوميًا للحفاظ على رطوبة جسمك.",
+  "تناول 5 حصص من الفواكه والخضروات كل يوم.",
+  "احرص على النوم لمدة 7-8 ساعات كل ليلة.",
+  "مارس التمارين الرياضية لمدة 30 دقيقة على الأقل معظم أيام الأسبوع.",
+  "تناول وجبة فطور صحية لبدء يومك بنشاط.",
+  "قلل من تناول السكريات المصنعة والدهون المشبعة.",
+  "تجنب الأكل قبل النوم مباشرة بساعتين على الأقل.",
+  "امضغ طعامك ببطء للاستمتاع به وتحسين الهضم.",
+  "تأكد من الحصول على ما يكفي من البروتين في نظامك الغذائي.",
+  "خصص وقتًا للاسترخاء والتأمل لتقليل التوتر.",
+];
+
 
 const foodSchema = z.object({
   meal: z.string().min(1, "اسم الوجبة مطلوب"),
@@ -47,6 +64,12 @@ export default function HealthPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
+  const [selectedDate, setSelectedDate] = useState(todayString);
+  const [dailyTip, setDailyTip] = useState('');
+
+  useEffect(() => {
+    setDailyTip(healthTips[Math.floor(Math.random() * healthTips.length)]);
+  }, []);
 
   const form = useForm<FormData>({
     resolver: zodResolver(healthEntrySchema),
@@ -63,26 +86,37 @@ export default function HealthPage() {
     return collection(firestore, `users/${user.uid}/healthEntries`);
   }, [firestore, user]);
 
-  const todayEntryQuery = useMemoFirebase(() => {
+  const allEntriesQuery = useMemoFirebase(() => {
     if (!healthCollectionRef || !user?.uid) return null;
-    return query(healthCollectionRef, where('date', '==', todayString), where("userId", "==", user.uid));
+    return query(healthCollectionRef, orderBy('date', 'desc'));
   }, [healthCollectionRef, user?.uid]);
   
-  const { data: todayEntries, isLoading } = useCollection<HealthEntry>(todayEntryQuery);
-  const todayEntry = todayEntries?.[0];
+  const { data: allEntries, isLoading } = useCollection<HealthEntry>(allEntriesQuery);
+
+  const selectedEntry = useMemo(() => {
+    return allEntries?.find(entry => entry.date === selectedDate);
+  }, [allEntries, selectedDate]);
 
   useEffect(() => {
-    if (todayEntry) {
+    if (selectedEntry) {
       form.reset({
-        notes: todayEntry.notes,
-        foodIntake: todayEntry.foodIntake,
-        wentToGym: todayEntry.wentToGym,
+        notes: selectedEntry.notes,
+        foodIntake: selectedEntry.foodIntake,
+        wentToGym: selectedEntry.wentToGym,
       });
+    } else {
+        form.reset({ notes: '', foodIntake: [], wentToGym: false });
     }
-  }, [todayEntry, form]);
+  }, [selectedEntry, form, selectedDate]);
+  
+   const isToday = selectedDate === todayString;
 
   const onSubmit = async (values: FormData) => {
     if (!healthCollectionRef || !user) return;
+    if (!isToday) {
+        toast({ variant: 'destructive', title: 'خطأ', description: 'لا يمكنك تعديل سجل يوم سابق.' });
+        return;
+    }
     setIsSubmitting(true);
     
     try {
@@ -93,8 +127,8 @@ export default function HealthPage() {
         updatedAt: serverTimestamp(),
       };
 
-      if (todayEntry) {
-        const entryDocRef = doc(firestore, `users/${user.uid}/healthEntries`, todayEntry.id);
+      if (selectedEntry) {
+        const entryDocRef = doc(firestore, `users/${user.uid}/healthEntries`, selectedEntry.id);
         await updateDoc(entryDocRef, entryData);
         toast({ title: 'نجاح', description: 'تم تحديث سجل اليوم الصحي.' });
       } else {
@@ -114,23 +148,33 @@ export default function HealthPage() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">الصحة والغذاء</h2>
       </div>
+
+       <Card className="bg-primary/10 border-primary/20">
+            <CardContent className="p-4 text-center">
+                 <p className="font-semibold text-primary">{dailyTip}</p>
+            </CardContent>
+        </Card>
       
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className='flex items-center gap-2'><HeartPulse className="text-primary"/> سجل اليوم الصحي</CardTitle>
-              <CardDescription>سجل وجباتك، نشاطك الرياضي وملاحظاتك الصحية ليوم {todayString}.</CardDescription>
+              <CardTitle className='flex items-center gap-2'><HeartPulse className="text-primary"/> 
+              سجل يوم {format(new Date(selectedDate.replace(/-/g, '/')), 'd MMMM yyyy', { locale: ar })}
+              </CardTitle>
+              <CardDescription>
+                {isToday ? 'سجل وجباتك، نشاطك الرياضي وملاحظاتك الصحية لهذا اليوم.' : 'عرض سجل يوم سابق.'}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {isLoading ? <div className="flex justify-center"><Loader2 className="animate-spin" /></div> : (
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <div>
-                      <h3 className="text-lg font-medium mb-2 flex items-center gap-2"><Apple /> الوجبات</h3>
+                      <h3 className="text-lg font-medium mb-2 flex items-center gap-2"><Utensils /> الوجبات</h3>
                       <div className="space-y-4">
                         {fields.map((field, index) => (
-                          <div key={field.id} className="flex items-start gap-2 p-3 border rounded-md">
+                          <div key={field.id} className="flex items-start gap-2 p-3 border rounded-md bg-background/50">
                             <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4">
                               <FormField
                                 control={form.control}
@@ -138,7 +182,7 @@ export default function HealthPage() {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel>الوجبة</FormLabel>
-                                    <FormControl><Input placeholder="فطور، غداء..." {...field} /></FormControl>
+                                    <FormControl><Input placeholder="فطور، غداء..." {...field} disabled={!isToday} /></FormControl>
                                     <FormMessage />
                                   </FormItem>
                                 )}
@@ -149,33 +193,38 @@ export default function HealthPage() {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel>الوصف</FormLabel>
-                                    <FormControl><Input placeholder="شوفان وفواكه..." {...field} /></FormControl>
+                                    <FormControl><Input placeholder="شوفان وفواكه..." {...field} disabled={!isToday} /></FormControl>
                                     <FormMessage />
                                   </FormItem>
                                 )}
                               />
                             </div>
-                            <Button type="button" variant="ghost" size="icon" className="mt-8" onClick={() => remove(index)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                            {isToday && 
+                                <Button type="button" variant="ghost" size="icon" className="mt-8 text-destructive" onClick={() => remove(index)}>
+                                <Trash2 className="h-4 w-4" />
+                                </Button>
+                            }
                           </div>
                         ))}
+                         {fields.length === 0 && !isToday && <p className="text-muted-foreground text-center p-4">لم يتم تسجيل وجبات في هذا اليوم.</p>}
                       </div>
-                      <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => append({ meal: '', description: '' })}>
-                        <Plus className="h-4 w-4 ml-2" /> إضافة وجبة
-                      </Button>
+                      {isToday && 
+                        <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => append({ meal: '', description: '' })}>
+                            <Plus className="h-4 w-4 ml-2" /> إضافة وجبة
+                        </Button>
+                      }
                     </div>
 
                     <FormField
                       control={form.control}
                       name="wentToGym"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-background/50">
                           <div className="space-y-0.5">
-                            <FormLabel className="text-base flex items-center gap-2"><Dumbbell /> هل ذهبت إلى الجيم اليوم؟</FormLabel>
+                            <FormLabel className="text-base flex items-center gap-2"><Dumbbell /> هل ذهبت إلى الجيم؟</FormLabel>
                           </div>
                           <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            <Switch checked={field.value} onCheckedChange={field.onChange} disabled={!isToday} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -187,16 +236,18 @@ export default function HealthPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>ملاحظات صحية عامة</FormLabel>
-                          <FormControl><Textarea placeholder="كيف تشعر اليوم؟ هل شربت كمية كافية من الماء؟" {...field} /></FormControl>
+                          <FormControl><Textarea placeholder="كيف تشعر اليوم؟ هل شربت كمية كافية من الماء؟" {...field} disabled={!isToday} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
-                      {todayEntry ? 'تحديث سجل اليوم' : 'حفظ سجل اليوم'}
-                    </Button>
+                    {isToday && 
+                        <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
+                        {selectedEntry ? 'تحديث سجل اليوم' : 'حفظ سجل اليوم'}
+                        </Button>
+                    }
                   </form>
                 </Form>
               )}
@@ -204,43 +255,29 @@ export default function HealthPage() {
           </Card>
         </div>
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>نصائح وقوائم</CardTitle>
-              <CardDescription>قوائم مخصصة لمساعدتك في رحلتك الصحية.</CardDescription>
-            </CardHeader>
-            <CardContent>
-               <Accordion type="multiple" className="w-full">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger>أطعمة يُنصح بها</AccordionTrigger>
-                  <AccordionContent>
-                    هنا يمكنك إضافة قائمة بالأطعمة التي ترغب في التركيز عليها. (ميزة قيد التطوير)
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-2">
-                  <AccordionTrigger>أطعمة يجب تجنبها</AccordionTrigger>
-                  <AccordionContent>
-                    هنا يمكنك إضافة قائمة بالأطعمة التي تريد تجنبها أو التقليل منها. (ميزة قيد التطوير)
-                  </AccordionContent>
-                </AccordionItem>
-                 <AccordionItem value="item-3">
-                  <AccordionTrigger>تمارين مقترحة</AccordionTrigger>
-                  <AccordionContent>
-                    قائمة بتمارينك المفضلة أو التي تخطط للقيام بها. (ميزة قيد التطوير)
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardContent>
-          </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><CalendarDays /> الأيام السابقة</CardTitle>
+                </CardHeader>
+                <CardContent className="max-h-60 overflow-y-auto">
+                    <div className="space-y-2">
+                        {isLoading && <Loader2 className="animate-spin"/>}
+                        {allEntries?.map(entry => (
+                            <Button key={entry.id} variant={selectedDate === entry.date ? "secondary" : "ghost"} className="w-full justify-start" onClick={() => setSelectedDate(entry.date)}>
+                                {format(new Date(entry.date.replace(/-/g, '/')), 'EEEE, d MMMM yyyy', { locale: ar })}
+                            </Button>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
            <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><CircleHelp /> كيف أستخدم هذا القسم؟</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Info /> كيف أستخدم هذا القسم؟</CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm text-muted-foreground space-y-2">
-                   <p>1. **سجل وجباتك:** اضغط "إضافة وجبة" لتوثيق ما أكلته.</p>
-                   <p>2. **تابع نشاطك:** فعّل خيار "هل ذهبت إلى الجيم اليوم؟" لتسجيل نشاطك.</p>
-                   <p>3. **دوّن ملاحظاتك:** استخدم حقل الملاحظات لكتابة أي شيء يتعلق بصحتك.</p>
-                   <p>4. **احفظ تقدمك:** اضغط على زر الحفظ في نهاية اليوم لتوثيق كل شيء.</p>
+                   <p>1. **سجل يومك:** استخدم النموذج لتسجيل وجباتك، نشاطك الرياضي وملاحظاتك لليوم الحالي فقط.</p>
+                   <p>2. **احفظ تقدمك:** اضغط على زر الحفظ في نهاية اليوم لتوثيق كل شيء.</p>
+                   <p>3. **تصفح الماضي:** استخدم قائمة "الأيام السابقة" لاستعراض سجلاتك القديمة.</p>
                 </CardContent>
             </Card>
         </div>

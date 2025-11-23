@@ -6,13 +6,12 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, orderBy, limit, Timestamp, addDoc, serverTimestamp } from 'firebase/firestore';
 import type { Task, Goal, Habit, JournalEntry, Inspiration } from '@/lib/types';
-import { Loader2, ArrowLeft, Lightbulb } from 'lucide-react';
+import { Loader2, ArrowLeft, Lightbulb, RefreshCw } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
 const cardVariants = {
@@ -41,6 +40,16 @@ const tasbeehOptions = [
 ];
 
 
+const wisdoms = [
+  { type: "آية", text: "وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا وَيَرْزُقْهُ مِنْ حَيْثُ لَا يَحْتَسِبُ" },
+  { type: "حديث", text: "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى." },
+  { type: "حكمة", text: "العلم في الصغر كالنقش على الحجر." },
+  { type: "آية", text: "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ" },
+  { type: "حديث", text: "الكلمة الطيبة صدقة." },
+  { type: "حكمة", text: "الصبر مفتاح الفرج." },
+  { type: "آية", text: "إِنَّ مَعَ الْعُسْرِ يُسْرًا" },
+];
+
 const DashboardPage = () => {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -49,6 +58,7 @@ const DashboardPage = () => {
   const [tasbeehCount, setTasbeehCount] = useState(0);
   const [currentTasbeeh, setCurrentTasbeeh] = useState(tasbeehOptions[0]);
   const [tasbeehTarget, setTasbeehTarget] = useState(33);
+  const [currentWisdom, setCurrentWisdom] = useState(wisdoms[0]);
 
   const tasksQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/tasks`), orderBy('updatedAt', 'desc'), limit(10)) : null), [user, firestore]);
   const goalsQuery = useMemoFirebase(() => (user ? collection(firestore, `users/${user.uid}/goals`) : null), [user, firestore]);
@@ -98,6 +108,11 @@ const DashboardPage = () => {
     }
   };
 
+  const getNewWisdom = () => {
+    const newWisdom = wisdoms[Math.floor(Math.random() * wisdoms.length)];
+    setCurrentWisdom(newWisdom);
+  }
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between space-y-2">
@@ -106,9 +121,23 @@ const DashboardPage = () => {
             <p className="text-muted-foreground">نظرة عامة على عالمك الشخصي.</p>
         </div>
       </motion.div>
+      
+       <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
+            <Card className="bg-primary/10 border-primary/20">
+                <CardHeader>
+                    <CardTitle className="flex justify-between items-center">
+                        <span>{currentWisdom.type} اليوم</span>
+                         <Button variant="ghost" size="icon" onClick={getNewWisdom}><RefreshCw className="h-4 w-4"/></Button>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-lg font-semibold text-center">"{currentWisdom.text}"</p>
+                </CardContent>
+            </Card>
+        </motion.div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
+        <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
             <Card className="h-full bg-card/70 border-border/50 backdrop-blur-sm">
                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">الوقت الحالي</CardTitle>
@@ -118,7 +147,7 @@ const DashboardPage = () => {
                  </CardContent>
             </Card>
         </motion.div>
-        <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
+        <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants}>
              <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">المهام المنجزة (آخر 10)</CardTitle>
@@ -128,7 +157,7 @@ const DashboardPage = () => {
                 </CardContent>
             </Card>
         </motion.div>
-         <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants}>
+         <motion.div custom={3} initial="hidden" animate="visible" variants={cardVariants}>
             <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">الأهداف النشطة</CardTitle>
@@ -138,7 +167,7 @@ const DashboardPage = () => {
                 </CardContent>
             </Card>
         </motion.div>
-         <motion.div custom={3} initial="hidden" animate="visible" variants={cardVariants}>
+         <motion.div custom={4} initial="hidden" animate="visible" variants={cardVariants}>
             <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">العادات قيد التتبع</CardTitle>
@@ -151,7 +180,7 @@ const DashboardPage = () => {
       </div>
 
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-         <motion.div custom={4} initial="hidden" animate="visible" variants={cardVariants} className="lg:col-span-4">
+         <motion.div custom={5} initial="hidden" animate="visible" variants={cardVariants} className="lg:col-span-4">
             <Card className="h-full bg-card/70 border-border/50 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle>الإنتاجية الأسبوعية</CardTitle>
@@ -177,7 +206,7 @@ const DashboardPage = () => {
               </CardContent>
             </Card>
          </motion.div>
-         <motion.div custom={5} initial="hidden" animate="visible" variants={cardVariants} className="lg:col-span-3">
+         <motion.div custom={6} initial="hidden" animate="visible" variants={cardVariants} className="lg:col-span-3">
              <Card className="h-full bg-card/70 border-border/50 backdrop-blur-sm">
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -216,7 +245,7 @@ const DashboardPage = () => {
       </div>
 
        <div className="grid gap-4 md:grid-cols-2">
-         <motion.div custom={6} initial="hidden" animate="visible" variants={cardVariants}>
+         <motion.div custom={7} initial="hidden" animate="visible" variants={cardVariants}>
             <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="text-center text-2xl font-bold text-primary">السبحة الإلكترونية</CardTitle>
@@ -257,7 +286,7 @@ const DashboardPage = () => {
                 </CardContent>
             </Card>
         </motion.div>
-        <motion.div custom={7} initial="hidden" animate="visible" variants={cardVariants}>
+        <motion.div custom={8} initial="hidden" animate="visible" variants={cardVariants}>
              <Card className="bg-card/70 border-border/50 backdrop-blur-sm h-full">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
