@@ -161,22 +161,22 @@ export default function NotesPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">الملاحظات السريعة</h2>
+        <h2 className="text-3xl font-bold tracking-tight">صندوق الأفكار</h2>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>ملاحظة جديدة</CardTitle>
+          <CardTitle>فكرة سريعة؟</CardTitle>
           <CardDescription>
-            دوّن أفكارك وملاحظاتك بسرعة.
+            دوّن أفكارك وملاحظاتك بسرعة قبل أن تفلت منك.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(handleSaveNote)} className="space-y-4">
             <div className="grid w-full gap-2">
-              <Label htmlFor="note-content">ملاحظتك</Label>
+              <Label htmlFor="note-content">اكتب شيئًا...</Label>
               <Textarea
                 id="note-content"
-                placeholder="اكتب شيئًا..."
+                placeholder="ما الذي يدور في ذهنك؟"
                 {...form.register('content')}
                 rows={4}
               />
@@ -184,7 +184,7 @@ export default function NotesPage() {
             </div>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Send className="ml-2 h-4 w-4" />}
-              حفظ الملاحظة
+              حفظ في الصندوق
             </Button>
           </form>
         </CardContent>
@@ -192,23 +192,23 @@ export default function NotesPage() {
 
       <div className="mt-8">
         <CardHeader>
-          <CardTitle>أرشيف الملاحظات</CardTitle>
+          <CardTitle>محتويات الصندوق</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading && <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>}
           {!isLoading && (!sortedNotes || sortedNotes.length === 0) ? (
             <div className="flex flex-col items-center justify-center gap-4 p-8 text-center border-2 border-dashed rounded-lg">
               <Inbox className="h-12 w-12 text-muted-foreground" />
-              <h3 className="text-xl font-semibold">لا توجد ملاحظات بعد</h3>
+              <h3 className="text-xl font-semibold">صندوقك فارغ</h3>
               <p className="text-muted-foreground">
-                ملاحظاتك ستظهر هنا.
+                الملاحظات والأفكار التي تدونها ستظهر هنا.
               </p>
             </div>
           ) : (
             <DragDropContext onDragEnd={onDragEnd}>
                 <Droppable droppableId="notes">
                     {(provided) => (
-                        <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
+                        <div {...provided.droppableProps} ref={provided.innerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {sortedNotes?.map((note, index) => (
                                 <Draggable key={note.id} draggableId={note.id} index={index}>
                                     {(provided, snapshot) => (
@@ -218,10 +218,10 @@ export default function NotesPage() {
                                             {...provided.dragHandleProps}
                                             style={{...provided.draggableProps.style}}
                                         >
-                                          <Card className={cn("relative group", noteColors[note.color as NoteColor] || 'bg-muted/50', snapshot.isDragging && 'shadow-lg')}>
+                                          <Card className={cn("relative group h-full flex flex-col", noteColors[note.color as NoteColor] || 'bg-muted/50', snapshot.isDragging && 'shadow-lg')}>
                                             {note.pinned && <div className="absolute top-2 right-2 text-primary"><Pin className="h-5 w-5" /></div>}
-                                            <CardContent className="p-4">
-                                              <div className="flex justify-between items-start">
+                                            <CardContent className="p-4 flex-grow">
+                                              <div className="flex justify-between items-start h-full">
                                                 <p className="text-foreground whitespace-pre-wrap flex-1 mr-10">{note.content}</p>
                                                 <div className="absolute top-2 left-2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                   <DropdownMenu>
@@ -231,7 +231,7 @@ export default function NotesPage() {
                                                     <DropdownMenuContent>
                                                       {Object.entries(noteColors).map(([colorKey, colorClass]) => (
                                                         <DropdownMenuItem key={colorKey} onSelect={() => handleChangeColor(note.id, colorKey as NoteColor)}>
-                                                          <div className={cn("w-4 h-4 rounded-full mr-2", colorClass)} />
+                                                          <div className={cn("w-4 h-4 rounded-full mr-2", colorClass.replace('bg-','bg-'))} />
                                                           <span>{colorKey}</span>
                                                         </DropdownMenuItem>
                                                       ))}
@@ -245,10 +245,12 @@ export default function NotesPage() {
                                                   </Button>
                                                 </div>
                                               </div>
+                                            </CardContent>
+                                            <div className="p-4 pt-0">
                                               <p className="text-xs text-muted-foreground mt-2">
                                                 {note.createdAt ? `${formatDistanceToNow( (note.createdAt as any).toDate(), { addSuffix: true, locale: ar })}` : 'الآن'}
                                               </p>
-                                            </CardContent>
+                                            </div>
                                           </Card>
                                         </div>
                                     )}
