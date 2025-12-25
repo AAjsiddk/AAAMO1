@@ -9,33 +9,25 @@ import { doc, updateDoc } from 'firebase/firestore';
 export function ThemeToggle() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const [theme, setTheme] = React.useState('dark');
 
-  // Set initial theme from localStorage or default to 'dark'
-  const [theme, setTheme] = React.useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') || 'dark';
-    }
-    return 'dark';
-  });
-
-  // Effect to apply the theme to the document and localStorage
-  const applyTheme = React.useCallback((themeToApply: string) => {
-    const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(themeToApply);
-    localStorage.setItem('theme', themeToApply);
-    setTheme(themeToApply);
-  }, []);
-
-  // Sync theme from localStorage on initial mount
+  // This effect runs once on the client to set the initial theme from localStorage
   React.useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'dark';
-    applyTheme(savedTheme);
-  }, [applyTheme]);
+    setTheme(savedTheme);
+  }, []);
+
+  // This effect applies the theme to the document whenever the `theme` state changes
+  React.useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
-    applyTheme(newTheme);
+    setTheme(newTheme);
 
     // Save theme preference to Firestore for the logged-in user
     if (user && firestore) {
