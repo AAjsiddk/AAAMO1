@@ -96,8 +96,8 @@ export function AppSidebar() {
   
   const NavLink = ({ item, active }: { item: { href: string; name: string; icon: React.ElementType }, active: boolean }) => (
     <Link href={item.href} className={cn(
-        "group relative flex items-center p-3 rounded-lg text-foreground/80 hover:text-foreground hover:bg-white/10 transition-colors duration-200",
-        active && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+        "group relative flex items-center p-3 rounded-lg text-foreground/80 hover:text-foreground hover:bg-primary/10 transition-colors duration-200",
+        active && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
     )}>
         <item.icon className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
         <span className="mr-4 font-medium">{item.name}</span>

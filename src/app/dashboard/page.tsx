@@ -4,15 +4,14 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
-import { collection, query, orderBy, limit, Timestamp, addDoc, serverTimestamp } from 'firebase/firestore';
-import type { Task, Goal, Habit, JournalEntry, Inspiration } from '@/lib/types';
+import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
+import type { Task, Goal, Habit, JournalEntry } from '@/lib/types';
 import { Loader2, ArrowLeft, Lightbulb, RefreshCw, RotateCcw } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { useToast } from '@/hooks/use-toast';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -39,7 +38,6 @@ const tasbeehOptions = [
   "اللهم صل على محمد",
 ];
 
-
 const wisdoms = [
   { type: "آية", text: "وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا وَيَرْزُقْهُ مِنْ حَيْثُ لَا يَحْتَسِبُ" },
   { type: "حديث", text: "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى." },
@@ -59,10 +57,19 @@ const wisdoms = [
   { type: "حكمة", text: "من جد وجد ومن زرع حصد." },
 ];
 
+const getDailyWisdom = () => {
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).valueOf()) / 1000 / 60 / 60 / 24);
+    return wisdoms[dayOfYear % wisdoms.length];
+};
+
+const getRandomWisdom = () => {
+    return wisdoms[Math.floor(Math.random() * wisdoms.length)];
+};
+
+
 const DashboardPage = () => {
   const { user } = useUser();
   const firestore = useFirestore();
-  const { toast } = useToast();
 
   const [tasbeehCount, setTasbeehCount] = useState(0);
   const [currentTasbeeh, setCurrentTasbeeh] = useState(tasbeehOptions[0]);
@@ -70,12 +77,12 @@ const DashboardPage = () => {
   const [currentWisdom, setCurrentWisdom] = useState<{type: string, text: string} | null>(null);
 
   useEffect(() => {
-    setCurrentWisdom(wisdoms[Math.floor(Math.random() * wisdoms.length)]);
+    setCurrentWisdom(getDailyWisdom());
   }, []);
 
   const tasksQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/tasks`), orderBy('updatedAt', 'desc'), limit(10)) : null), [user, firestore]);
-  const goalsQuery = useMemoFirebase(() => (user ? collection(firestore, `users/${user.uid}/goals`) : null), [user, firestore]);
-  const habitsQuery = useMemoFirebase(() => (user ? collection(firestore, `users/${user.uid}/habits`) : null), [user, firestore]);
+  const goalsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/goals`), orderBy('updatedAt', 'desc')) : null), [user, firestore]);
+  const habitsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/habits`)) : null), [user, firestore]);
   const journalQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/journalEntries`), orderBy('createdAt', 'desc'), limit(3)) : null), [user, firestore]);
 
   const { data: tasks, isLoading: loadingTasks } = useCollection<Task>(tasksQuery);
@@ -126,7 +133,7 @@ const DashboardPage = () => {
   }
 
   const getNewWisdom = () => {
-    setCurrentWisdom(wisdoms[Math.floor(Math.random() * wisdoms.length)]);
+    setCurrentWisdom(getRandomWisdom());
   }
 
   return (
@@ -139,9 +146,9 @@ const DashboardPage = () => {
       </motion.div>
       
        <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
+            <Card className="bg-card/70 border-primary/20 backdrop-blur-sm">
                 <CardHeader>
-                    <CardTitle className="flex justify-between items-center">
+                    <CardTitle className="flex justify-between items-center text-primary">
                         <span>{currentWisdom?.type} اليوم</span>
                          <Button variant="ghost" size="icon" onClick={getNewWisdom}><RefreshCw className="h-4 w-4"/></Button>
                     </CardTitle>
@@ -225,7 +232,7 @@ const DashboardPage = () => {
                         <CardDescription>أحدث ما قمت بتدوينه.</CardDescription>
                     </div>
                     <Button asChild variant="ghost" size="sm">
-                        <Link href="/dashboard/journal">
+                        <Link href="/dashboard/personal-box">
                              الكل <ArrowLeft className="mr-2 h-4 w-4" />
                         </Link>
                     </Button>
