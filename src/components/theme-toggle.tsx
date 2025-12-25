@@ -3,28 +3,17 @@
 import * as React from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase'
-import { doc, updateDoc } from 'firebase/firestore'
+import { useUser, useFirestore } from '@/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 export function ThemeToggle() {
   const [theme, setTheme] = React.useState('dark');
   const { user } = useUser();
   const firestore = useFirestore();
 
-  // Effect to load theme from localStorage on initial mount
-  React.useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-      setTheme(savedTheme);
-    } else {
-      setTheme('dark'); // Default to dark
-    }
-  }, []);
-
-  // Effect to apply theme to the document and save to localStorage
-  React.useEffect(() => {
-    if (theme === 'light') {
-      document.documentElement.classList.add('light'); 
+  const applyTheme = (themeToApply: string) => {
+    if (themeToApply === 'light') {
+      document.documentElement.classList.add('light');
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     } else {
@@ -32,17 +21,24 @@ export function ThemeToggle() {
       document.documentElement.classList.remove('light');
       localStorage.setItem('theme', 'dark');
     }
-    
-    // Also save theme preference to Firestore if user is logged in
-    if(user && firestore) {
-        const userDocRef = doc(firestore, `users/${user.uid}`);
-        updateDoc(userDocRef, { theme: theme }).catch(console.error);
-    }
+  };
 
-  }, [theme, user, firestore]);
-  
+  React.useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const initialTheme = savedTheme && (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark';
+    setTheme(initialTheme);
+    applyTheme(initialTheme);
+  }, []);
+
   const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    applyTheme(newTheme);
+
+    if (user && firestore) {
+      const userDocRef = doc(firestore, `users/${user.uid}`);
+      updateDoc(userDocRef, { themeMode: newTheme }).catch(console.error);
+    }
   };
 
   return (

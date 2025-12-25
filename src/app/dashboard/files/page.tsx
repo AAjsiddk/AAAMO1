@@ -23,6 +23,7 @@ import {
   ChevronRight,
   FolderOpen,
   Download,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -170,7 +171,8 @@ export default function FilesPage() {
     
     try {
       const file = values.file[0];
-      
+      // In a real app, this would upload to Firebase Storage and get a URL.
+      // For now, we'll use a placeholder.
       const newFile: Omit<FileType, 'id'> = {
         name: values.name,
         userId: user.uid,
@@ -201,6 +203,7 @@ export default function FilesPage() {
             const foldersToDelete = new Set<string>([itemToDelete.id]);
             const foldersToCheck = [itemToDelete.id];
 
+            // Recursively find all subfolders
             while (foldersToCheck.length > 0) {
                 const currentId = foldersToCheck.pop()!;
                 const subFoldersQuery = query(collection(firestore, `users/${user.uid}/folders`), where('parentId', '==', currentId));
@@ -213,12 +216,14 @@ export default function FilesPage() {
 
             const batch = writeBatch(firestore);
 
+            // Delete all files in all folders to be deleted
             for (const folderId of foldersToDelete) {
                 const filesInFolderQuery = query(collection(firestore, `users/${user.uid}/files`), where('folderId', '==', folderId));
                 const filesSnapshot = await getDocs(filesInFolderQuery);
                 filesSnapshot.forEach(doc => batch.delete(doc.ref));
             }
             
+            // Delete all the folders
             foldersToDelete.forEach(id => {
                 const folderRef = doc(firestore, `users/${user.uid}/folders`, id);
                 batch.delete(folderRef);
@@ -254,10 +259,10 @@ export default function FilesPage() {
       }
   };
 
-  const handleFileClick = (file: FileType) => {
+  const handleFileAction = (file: FileType, action: 'view' | 'download') => {
     toast({
-      title: 'ميزة عرض الملفات قيد التطوير',
-      description: `سيتم فتح ملف "${file.name}" في المستقبل.`,
+      title: `ميزة ${action === 'view' ? 'العرض' : 'التنزيل'} قيد التطوير`,
+      description: `سيتم ${action === 'view' ? 'فتح' : 'تنزيل'} ملف "${file.name}" في المستقبل.`,
     });
   };
 
@@ -410,7 +415,7 @@ export default function FilesPage() {
               key={folder.id}
               className="group relative flex flex-col justify-between bg-card/70 border-border/50 backdrop-blur-sm"
             >
-              <CardContent className="flex flex-col items-center justify-center p-6 cursor-pointer" onDoubleClick={() => navigateToFolder(folder.id, folder.name)}>
+              <CardContent className="flex flex-col items-center justify-center p-6 cursor-pointer" onClick={() => navigateToFolder(folder.id, folder.name)}>
                 <FolderIcon className="h-16 w-16 text-primary" />
                 <span className="mt-2 font-medium truncate w-full text-center">{folder.name}</span>
               </CardContent>
@@ -443,14 +448,18 @@ export default function FilesPage() {
           ))}
           {files?.map((file) => (
             <Card key={file.id} className="group relative flex flex-col justify-between bg-card/70 border-border/50 backdrop-blur-sm">
-              <CardContent className="flex flex-col items-center justify-center p-6 cursor-pointer" onDoubleClick={() => handleFileClick(file)}>
+              <CardContent className="flex flex-col items-center justify-center p-6">
                 <FileIcon className="h-16 w-16 text-muted-foreground" />
                 <span className="mt-2 font-medium truncate w-full text-center">{file.name}</span>
               </CardContent>
-               <CardFooter className="p-2 justify-center">
-                 <Button variant="secondary" className="w-full" onClick={() => handleFileClick(file)}>
+               <CardFooter className="p-2 grid grid-cols-2 gap-2">
+                 <Button variant="secondary" onClick={() => handleFileAction(file, 'view')}>
+                    <Eye className="ml-2 h-4 w-4"/>
+                    عرض
+                 </Button>
+                 <Button variant="outline" onClick={() => handleFileAction(file, 'download')}>
                     <Download className="ml-2 h-4 w-4"/>
-                    فتح
+                    تنزيل
                  </Button>
               </CardFooter>
               <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
