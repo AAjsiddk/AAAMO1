@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { useUser, useAuth, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import {
@@ -277,7 +276,6 @@ export function Header() {
                   </Button>
                 </>
               )}
-              <ThemeToggle />
             </div>
           </div>
         </div>

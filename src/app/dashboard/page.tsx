@@ -2,7 +2,6 @@
 import { useState, useMemo, memo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import type { Task, Goal, Habit, JournalEntry } from '@/lib/types';
@@ -83,7 +82,7 @@ const DashboardPage = () => {
   const tasksQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/tasks`), orderBy('updatedAt', 'desc'), limit(10)) : null), [user, firestore]);
   const goalsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/goals`), orderBy('updatedAt', 'desc')) : null), [user, firestore]);
   const habitsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/habits`)) : null), [user, firestore]);
-  const journalQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/journalEntries`), orderBy('createdAt', 'desc'), limit(3)) : null), [user, firestore]);
+  const journalQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/journalEntries`), orderBy('createdAt', 'desc'), limit(5)) : null), [user, firestore]);
 
   const { data: tasks, isLoading: loadingTasks } = useCollection<Task>(tasksQuery);
   const { data: goals, isLoading: loadingGoals } = useCollection<Goal>(goalsQuery);
@@ -91,25 +90,6 @@ const DashboardPage = () => {
   const { data: journalEntries, isLoading: loadingJournal } = useCollection<JournalEntry>(journalQuery);
 
   const isLoading = loadingTasks || loadingGoals || loadingHabits || loadingJournal;
-
-  const tasksCompletedWeeklyData = useMemo(() => {
-    if (!tasks) return [];
-    const weekCounts = Array(7).fill(0).map((_, i) => ({
-        name: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'][i],
-        completed: 0,
-    }));
-
-    tasks.forEach(task => {
-        if (task.status === 'completed' && task.updatedAt) {
-            const date = (task.updatedAt as Timestamp)?.toDate();
-            if (date) {
-                const dayOfWeek = date.getDay();
-                weekCounts[dayOfWeek].completed++;
-            }
-        }
-    });
-    return weekCounts;
-  }, [tasks]);
 
   const stats = useMemo(() => ({
     tasksCompleted: tasks?.filter(t => t.status === 'completed').length || 0,
@@ -202,28 +182,8 @@ const DashboardPage = () => {
         </motion.div>
       </div>
 
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-         <motion.div custom={5} initial="hidden" animate="visible" variants={cardVariants} className="lg:col-span-4">
-            <Card className="h-full bg-card/70 border-border/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>الإنتاجية الأسبوعية</CardTitle>
-                <CardDescription>عدد المهام التي أنجزتها خلال هذا الأسبوع.</CardDescription>
-              </CardHeader>
-              <CardContent className="pl-2">
-                 <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={tasksCompletedWeeklyData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false}/>
-                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false}/>
-                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '0.5rem' }}/>
-                        <Legend />
-                        <Bar dataKey="completed" fill="hsl(var(--primary))" name="المهام المنجزة" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-         </motion.div>
-         <motion.div custom={6} initial="hidden" animate="visible" variants={cardVariants} className="lg:col-span-3">
+       <div className="grid gap-4 grid-cols-1">
+         <motion.div custom={5} initial="hidden" animate="visible" variants={cardVariants}>
              <Card className="h-full bg-card/70 border-border/50 backdrop-blur-sm">
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -240,7 +200,7 @@ const DashboardPage = () => {
               </CardHeader>
               <CardContent>
                  {loadingJournal ? (
-                    <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+                    <div className="flex items-center justify-center h-full py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
                  ) : journalEntries && journalEntries.length > 0 ? (
                     <div className="space-y-4">
                         {journalEntries.map(entry => (
