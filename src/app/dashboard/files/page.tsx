@@ -272,7 +272,7 @@ export default function ImportantFilesPage() {
                         {(provided) => (
                         <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
                             {sortedFiles.map((file, index) => {
-                                const importanceData = file.importance ? importanceMap[file.importance] : { text: 'غير محدد', className: 'bg-gray-500/20 text-gray-500 border-gray-500/30' };
+                                const importanceData = importanceMap[file.importance] || { text: 'غير محدد', className: 'bg-gray-500/20 text-gray-500 border-gray-500/30' };
                                 return (
                                 <Draggable key={file.id} draggableId={file.id} index={index}>
                                     {(provided) => (
