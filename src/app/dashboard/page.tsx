@@ -303,5 +303,3 @@ const DashboardPage = () => {
 }
 
 export default memo(DashboardPage);
-
-    

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUser, useFirestore, useAuth }from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
@@ -18,7 +18,6 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Palette, Lock, Moon, Sun } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
 // Helper function to convert HSL string "h s% l%" to a hex color
@@ -334,5 +333,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
