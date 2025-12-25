@@ -10,20 +10,24 @@ export function ThemeToggle() {
   const { user } = useUser();
   const firestore = useFirestore();
   const [theme, setTheme] = React.useState('dark');
+  const [isMounted, setIsMounted] = React.useState(false);
 
-  // This effect runs once on the client to set the initial theme from localStorage
+  // This effect runs once on the client to set the initial theme
   React.useEffect(() => {
+    setIsMounted(true);
     const savedTheme = localStorage.getItem('theme') || 'dark';
     setTheme(savedTheme);
   }, []);
 
-  // This effect applies the theme to the document whenever the `theme` state changes
+  // This effect applies the theme to the document whenever `theme` state changes
   React.useEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+    if (isMounted) {
+      const root = window.document.documentElement;
+      root.classList.remove('light', 'dark');
+      root.classList.add(theme);
+      localStorage.setItem('theme', theme);
+    }
+  }, [theme, isMounted]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -35,6 +39,17 @@ export function ThemeToggle() {
       updateDoc(userDocRef, { themeMode: newTheme }).catch(console.error);
     }
   };
+
+  // Render nothing on the server to avoid hydration mismatch
+  if (!isMounted) {
+    return (
+        <Button variant="ghost" size="icon" disabled>
+            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">تبديل السمة</span>
+        </Button>
+    );
+  }
 
   return (
     <Button variant="ghost" size="icon" onClick={toggleTheme}>

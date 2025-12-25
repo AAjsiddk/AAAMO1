@@ -15,7 +15,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -42,7 +41,7 @@ import {
   PlusCircle,
   Trash2,
   Loader2,
-  Inbox,
+  Archive,
   Calendar,
   Smile,
   Frown,
@@ -52,7 +51,6 @@ import {
   CalendarHeart,
   ImagePlus,
   X,
-  Archive,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { JournalEntry } from '@/lib/types';
@@ -266,7 +264,7 @@ export default function PersonalBoxPage() {
                     <FormItem><FormLabel>المحتوى</FormLabel><FormControl><Textarea placeholder="ماذا يدور في خلدك؟" {...field} rows={6} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormItem>
-                    <FormLabel>إضافة صور (حتى {MAX_FILES} صور)</FormLabel>
+                    <FormLabel>إضافة صور (حتى ${MAX_FILES} صور)</FormLabel>
                      <FormControl>
                         <div 
                             className="mt-1 flex justify-center rounded-lg border border-dashed border-input px-6 py-10 cursor-pointer"
