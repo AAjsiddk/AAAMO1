@@ -68,11 +68,14 @@ export type Goal = {
     updatedAt: FieldValue;
 };
 
-export type Folder = {
+export type ImportantFile = {
     id: string;
     userId: string;
     name: string;
-    parentId: string | null;
+    location: string;
+    importance: 'normal' | 'important' | 'very_important';
+    pinned: boolean;
+    order: number;
     createdAt: FieldValue;
 }
 
