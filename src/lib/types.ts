@@ -73,7 +73,7 @@ export type ImportantFile = {
     userId: string;
     name: string;
     location: string;
-    importance: 'normal' | 'important' | 'very_important';
+    importance: 'low' | 'normal' | 'high' | 'urgent';
     pinned: boolean;
     order: number;
     createdAt: FieldValue;

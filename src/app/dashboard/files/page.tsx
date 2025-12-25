@@ -59,13 +59,14 @@ import { Badge } from '@/components/ui/badge';
 const importantFileSchema = z.object({
   name: z.string().min(1, { message: 'اسم الملف مطلوب.' }),
   location: z.string().min(1, { message: 'موقع الملف مطلوب.' }),
-  importance: z.enum(['normal', 'important', 'very_important']),
+  importance: z.enum(['low', 'normal', 'high', 'urgent']),
 });
 
 const importanceMap: { [key in ImportantFile['importance']]: { text: string; className: string } } = {
-  normal: { text: 'عادي', className: 'bg-gray-500/10 text-gray-500 border-gray-500/20' },
-  important: { text: 'مهم', className: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
-  very_important: { text: 'مهم جدًا', className: 'bg-red-500/10 text-red-500 border-red-500/20' },
+  urgent: { text: 'عاجل', className: 'bg-red-500/20 text-red-500 border-red-500/30' },
+  high: { text: 'مرتفع', className: 'bg-orange-500/20 text-orange-500 border-orange-500/30' },
+  normal: { text: 'متوسط', className: 'bg-blue-500/20 text-blue-500 border-blue-500/30' },
+  low: { text: 'منخفض', className: 'bg-gray-500/20 text-gray-500 border-gray-500/30' },
 };
 
 
@@ -105,7 +106,7 @@ export default function ImportantFilesPage() {
   }, [files]);
   
   const onDragEnd = (result: DropResult) => {
-    if (!result.destination || !sortedFiles || !firestore) return;
+    if (!result.destination || !sortedFiles || !firestore || !user) return;
 
     const items = Array.from(sortedFiles);
     const [reorderedItem] = items.splice(result.source.index, 1);
@@ -185,13 +186,10 @@ export default function ImportantFilesPage() {
   };
   
   const handleDownload = (file: ImportantFile) => {
-    // This is a placeholder for a real download logic
     toast({
         title: 'قيد التطوير',
         description: `جاري محاكاة تنزيل ملف: ${file.name}`
     });
-    // In a real implementation you would fetch the file from a URL/storage
-    // and trigger a download.
   }
 
   return (
