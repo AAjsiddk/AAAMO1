@@ -25,6 +25,7 @@ import {
 } from 'recharts'
 import { Loader2 } from 'lucide-react'
 import { useMemo } from 'react'
+import {ChartTooltipContent, ChartTooltip, ChartContainer} from '@/components/ui/chart'
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE', '#00C49F', '#FFBB28'];
 
@@ -93,6 +94,23 @@ export default function AnalyticsPage() {
       </div>
     )
   }
+  
+  if (!tasks || tasks.length === 0) {
+      return (
+           <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+              <h2 className="text-3xl font-bold tracking-tight">التحليلات</h2>
+                <Card>
+                    <CardContent className="flex flex-col items-center justify-center gap-4 p-16 text-center">
+                        <BarChart className="h-16 w-16 text-muted-foreground" />
+                        <h3 className="text-xl font-semibold">لا توجد بيانات لعرضها</h3>
+                        <p className="text-muted-foreground max-w-md">
+                           ابدأ بإضافة بعض المهام لترى تحليلات مفصلة عن إنتاجيتك.
+                        </p>
+                    </CardContent>
+                </Card>
+           </div>
+      )
+  }
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -128,7 +146,10 @@ export default function AnalyticsPage() {
                     />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => `${value} مهمة`}/>
+                <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent indicator="dot" />}
+                />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -147,9 +168,12 @@ export default function AnalyticsPage() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip />
+                    <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent indicator="dot" />}
+                    />
                     <Legend />
-                    <Bar dataKey="completed" fill="#82ca9d" name="المهام المنجزة" />
+                    <Bar dataKey="completed" fill="hsl(var(--primary))" name="المهام المنجزة" radius={4} />
                 </BarChart>
             </ResponsiveContainer>
           </CardContent>

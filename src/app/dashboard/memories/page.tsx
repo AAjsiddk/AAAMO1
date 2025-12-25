@@ -10,6 +10,8 @@ import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import type { JournalEntry } from '@/lib/types';
+
 
 type Memory = {
     id: string;
@@ -27,7 +29,7 @@ export default function MemoriesPage() {
         return query(collection(firestore, `users/${user.uid}/journalEntries`), orderBy('createdAt', 'desc'));
     }, [user, firestore]);
 
-    const { data: journalEntries, isLoading } = useCollection<any>(journalQuery);
+    const { data: journalEntries, isLoading } = useCollection<JournalEntry>(journalQuery);
 
     const memories = useMemo<Memory[]>(() => {
         if (!journalEntries) return [];
@@ -37,13 +39,14 @@ export default function MemoriesPage() {
                 id: entry.id,
                 title: entry.title,
                 imageUrls: entry.imageUrls,
-                createdAt: entry.createdAt,
+                createdAt: entry.createdAt as Timestamp,
             }));
     }, [journalEntries]);
 
     const onThisDayMemories = useMemo(() => {
         const today = new Date();
         return memories.filter(memory => {
+            if (!memory.createdAt) return false;
             const memoryDate = memory.createdAt.toDate();
             return memoryDate.getDate() === today.getDate() &&
                    memoryDate.getMonth() === today.getMonth() &&
@@ -93,7 +96,7 @@ export default function MemoriesPage() {
                           <Card>
                             <CardContent className="flex flex-col items-center justify-center p-6 space-y-4">
                                <div className="relative w-full aspect-video overflow-hidden rounded-lg">
-                                 <Image src={memory.imageUrls[0]} alt={memory.title} layout="fill" objectFit="cover" />
+                                 <Image src={memory.imageUrls[0]} alt={memory.title} fill={true} objectFit="cover" />
                                </div>
                                <div className="text-center">
                                     <h4 className="font-semibold">{memory.title}</h4>
@@ -121,7 +124,7 @@ export default function MemoriesPage() {
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                  {memories.map(memory => (
                      <div key={memory.id} className="group relative aspect-square overflow-hidden rounded-lg">
-                         <Image src={memory.imageUrls[0]} alt={memory.title} layout="fill" objectFit="cover" className="transition-transform group-hover:scale-105" />
+                         <Image src={memory.imageUrls[0]} alt={memory.title} fill={true} className="object-cover transition-transform group-hover:scale-105" />
                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                          <div className="absolute bottom-0 left-0 right-0 p-4">
                             <h4 className="font-semibold text-white truncate">{memory.title}</h4>

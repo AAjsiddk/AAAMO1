@@ -11,7 +11,7 @@ export function ThemeToggle() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const applyTheme = (themeToApply: string) => {
+  const applyTheme = React.useCallback((themeToApply: string) => {
     if (themeToApply === 'light') {
       document.documentElement.classList.add('light');
       document.documentElement.classList.remove('dark');
@@ -21,18 +21,17 @@ export function ThemeToggle() {
       document.documentElement.classList.remove('light');
       localStorage.setItem('theme', 'dark');
     }
-  };
+    setTheme(themeToApply);
+  }, []);
 
   React.useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     const initialTheme = savedTheme && (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark';
-    setTheme(initialTheme);
     applyTheme(initialTheme);
-  }, []);
+  }, [applyTheme]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
     applyTheme(newTheme);
 
     if (user && firestore) {
