@@ -42,7 +42,7 @@ import type { JournalEntry } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   LogOut,
-  LayoutDashboard,
+  Settings,
   Smile,
   Frown,
   Meh,
@@ -129,6 +129,7 @@ export function Header() {
           userId: user.uid,
           mood: mood,
           createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
         };
 
         if (values.imageUrl) {
@@ -255,7 +256,7 @@ export function Header() {
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
-                        <LayoutDashboard className="ml-2 h-4 w-4" />
+                        <Settings className="ml-2 h-4 w-4" />
                         <span>الإعدادات</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -283,3 +284,5 @@ export function Header() {
     </>
   );
 }
+
+    
