@@ -271,35 +271,38 @@ export default function ImportantFilesPage() {
                     <Droppable droppableId="importantFiles">
                         {(provided) => (
                         <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
-                            {sortedFiles.map((file, index) => (
-                            <Draggable key={file.id} draggableId={file.id} index={index}>
-                                {(provided) => (
-                                <div ref={provided.innerRef} {...provided.draggableProps} className={cn("rounded-lg border p-4 bg-background flex flex-col sm:flex-row items-start sm:items-center gap-4", file.pinned && "border-primary/50 bg-primary/5")}>
-                                    <div className="flex items-center gap-4 flex-grow">
-                                        <div {...provided.dragHandleProps} className="cursor-grab text-muted-foreground"><GripVertical /></div>
-                                        <FileIcon className="h-6 w-6 text-primary flex-shrink-0" />
-                                        <div className="flex-grow">
-                                            <h4 className="font-semibold">{file.name}</h4>
-                                            <p className="text-sm text-muted-foreground">{file.location}</p>
+                            {sortedFiles.map((file, index) => {
+                                const importanceData = file.importance ? importanceMap[file.importance] : { text: 'غير محدد', className: 'bg-gray-500/20 text-gray-500 border-gray-500/30' };
+                                return (
+                                <Draggable key={file.id} draggableId={file.id} index={index}>
+                                    {(provided) => (
+                                    <div ref={provided.innerRef} {...provided.draggableProps} className={cn("rounded-lg border p-4 bg-background flex flex-col sm:flex-row items-start sm:items-center gap-4", file.pinned && "border-primary/50 bg-primary/5")}>
+                                        <div className="flex items-center gap-4 flex-grow">
+                                            <div {...provided.dragHandleProps} className="cursor-grab text-muted-foreground"><GripVertical /></div>
+                                            <FileIcon className="h-6 w-6 text-primary flex-shrink-0" />
+                                            <div className="flex-grow">
+                                                <h4 className="font-semibold">{file.name}</h4>
+                                                <p className="text-sm text-muted-foreground">{file.location}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 self-end sm:self-center w-full sm:w-auto">
+                                            <Badge variant="outline" className={cn("flex-shrink-0", importanceData.className)}>{importanceData.text}</Badge>
+                                            <div className="flex items-center sm:ml-auto">
+                                                <Button variant="ghost" size="icon" onClick={() => handleDownload(file)} title='تنزيل'>
+                                                    <Download className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleTogglePin(file)} title={file.pinned ? 'إلغاء التثبيت' : 'تثبيت'}>
+                                                    {file.pinned ? <PinOff className="h-4 w-4 text-primary" /> : <Pin className="h-4 w-4" />}
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(file)}><Edit className="h-4 w-4" /></Button>
+                                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteFile(file.id)}><Trash2 className="h-4 w-4" /></Button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 self-end sm:self-center w-full sm:w-auto">
-                                        <Badge variant="outline" className={cn("flex-shrink-0", importanceMap[file.importance].className)}>{importanceMap[file.importance].text}</Badge>
-                                        <div className="flex items-center sm:ml-auto">
-                                            <Button variant="ghost" size="icon" onClick={() => handleDownload(file)} title='تنزيل'>
-                                                <Download className="h-4 w-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" onClick={() => handleTogglePin(file)} title={file.pinned ? 'إلغاء التثبيت' : 'تثبيت'}>
-                                                {file.pinned ? <PinOff className="h-4 w-4 text-primary" /> : <Pin className="h-4 w-4" />}
-                                            </Button>
-                                            <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(file)}><Edit className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteFile(file.id)}><Trash2 className="h-4 w-4" /></Button>
-                                        </div>
-                                    </div>
-                                </div>
-                                )}
-                            </Draggable>
-                            ))}
+                                    )}
+                                </Draggable>
+                                )
+                            })}
                             {provided.placeholder}
                         </div>
                         )}
