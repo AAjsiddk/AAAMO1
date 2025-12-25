@@ -13,20 +13,17 @@ export function ThemeToggle() {
 
   const applyTheme = React.useCallback((themeToApply: string) => {
     if (themeToApply === 'light') {
-      document.documentElement.classList.add('light');
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
     } else {
       document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-      localStorage.setItem('theme', 'dark');
     }
+    localStorage.setItem('theme', themeToApply);
     setTheme(themeToApply);
   }, []);
 
   React.useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
-    const initialTheme = savedTheme && (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark';
+    const initialTheme = savedTheme === 'light' ? 'light' : 'dark';
     applyTheme(initialTheme);
   }, [applyTheme]);
 

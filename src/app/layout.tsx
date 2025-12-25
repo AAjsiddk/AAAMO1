@@ -47,7 +47,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={cn('min-h-screen bg-background font-body antialiased')}>
+      <body className={cn('min-h-screen font-body antialiased', 'dark')}>
         <FirebaseClientProvider>{children}</FirebaseClientProvider>
         <Toaster />
       </body>

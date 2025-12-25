@@ -15,29 +15,22 @@ import {
   PlusCircle,
   Loader2,
   File as FileIcon,
-  MoreVertical,
   Trash2,
   Edit,
   ExternalLink,
   Inbox,
   Pin,
   PinOff,
-  GripVertical
+  GripVertical,
+  Download,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
@@ -59,7 +52,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 
@@ -190,6 +183,16 @@ export default function ImportantFilesPage() {
       toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تغيير حالة التثبيت.' });
     }
   };
+  
+  const handleDownload = (file: ImportantFile) => {
+    // This is a placeholder for a real download logic
+    toast({
+        title: 'قيد التطوير',
+        description: `جاري محاكاة تنزيل ملف: ${file.name}`
+    });
+    // In a real implementation you would fetch the file from a URL/storage
+    // and trigger a download.
+  }
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
@@ -273,20 +276,27 @@ export default function ImportantFilesPage() {
                             {sortedFiles.map((file, index) => (
                             <Draggable key={file.id} draggableId={file.id} index={index}>
                                 {(provided) => (
-                                <div ref={provided.innerRef} {...provided.draggableProps} className={cn("rounded-lg border p-4 bg-background flex items-center gap-4", file.pinned && "border-primary/50 bg-primary/5")}>
-                                    <div {...provided.dragHandleProps} className="cursor-grab text-muted-foreground"><GripVertical /></div>
-                                    <FileIcon className="h-6 w-6 text-primary flex-shrink-0" />
-                                    <div className="flex-grow">
-                                        <h4 className="font-semibold">{file.name}</h4>
-                                        <p className="text-sm text-muted-foreground">{file.location}</p>
+                                <div ref={provided.innerRef} {...provided.draggableProps} className={cn("rounded-lg border p-4 bg-background flex flex-col sm:flex-row items-start sm:items-center gap-4", file.pinned && "border-primary/50 bg-primary/5")}>
+                                    <div className="flex items-center gap-4 flex-grow">
+                                        <div {...provided.dragHandleProps} className="cursor-grab text-muted-foreground"><GripVertical /></div>
+                                        <FileIcon className="h-6 w-6 text-primary flex-shrink-0" />
+                                        <div className="flex-grow">
+                                            <h4 className="font-semibold">{file.name}</h4>
+                                            <p className="text-sm text-muted-foreground">{file.location}</p>
+                                        </div>
                                     </div>
-                                    <Badge variant="outline" className={cn(importanceMap[file.importance].className)}>{importanceMap[file.importance].text}</Badge>
-                                    <div className="flex items-center">
-                                        <Button variant="ghost" size="icon" onClick={() => handleTogglePin(file)} title={file.pinned ? 'إلغاء التثبيت' : 'تثبيت'}>
-                                            {file.pinned ? <PinOff className="h-4 w-4 text-primary" /> : <Pin className="h-4 w-4" />}
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(file)}><Edit className="h-4 w-4" /></Button>
-                                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteFile(file.id)}><Trash2 className="h-4 w-4" /></Button>
+                                    <div className="flex items-center gap-2 self-end sm:self-center w-full sm:w-auto">
+                                        <Badge variant="outline" className={cn("flex-shrink-0", importanceMap[file.importance].className)}>{importanceMap[file.importance].text}</Badge>
+                                        <div className="flex items-center sm:ml-auto">
+                                            <Button variant="ghost" size="icon" onClick={() => handleDownload(file)} title='تنزيل'>
+                                                <Download className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" onClick={() => handleTogglePin(file)} title={file.pinned ? 'إلغاء التثبيت' : 'تثبيت'}>
+                                                {file.pinned ? <PinOff className="h-4 w-4 text-primary" /> : <Pin className="h-4 w-4" />}
+                                            </Button>
+                                            <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(file)}><Edit className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteFile(file.id)}><Trash2 className="h-4 w-4" /></Button>
+                                        </div>
                                     </div>
                                 </div>
                                 )}
