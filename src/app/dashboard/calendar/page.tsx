@@ -81,27 +81,24 @@ export default function CalendarPage() {
     }, [selectedDate, eventsByDate]);
     
     const DayWithTasks = (dayProps: DayProps) => {
-        const { date, modifiers } = dayProps;
-        const eventsForDay = eventsByDate.get(format(date, 'yyyy-MM-dd'));
-        
+        const { date, displayMonth } = dayProps;
         // This is a workaround to avoid passing non-DOM props to the button element
         const buttonProps: any = { ...dayProps };
         delete buttonProps.displayMonth;
-        delete buttonProps.date;
-        delete buttonProps.modifiers;
-
-        const safeModifiers = modifiers || {};
         
+        const eventsForDay = eventsByDate.get(format(date, 'yyyy-MM-dd'));
+        const isOutside = dayProps.displayMonth.getMonth() !== date.getMonth();
+
         return (
              <div className="relative">
                 <Button 
                     name="day"
-                    {...buttonProps}
-                    variant={safeModifiers.selected ? 'default' : safeModifiers.today ? 'outline' : 'ghost'} 
+                    variant={isSameDay(date, selectedDate || new Date()) ? 'default' : isSameDay(date, new Date()) ? 'outline' : 'ghost'}
                     className={cn(
                         'h-9 w-9 p-0 font-normal',
-                        !safeModifiers.disabled && safeModifiers.outside && 'text-muted-foreground opacity-50'
+                        isOutside && 'text-muted-foreground opacity-50'
                     )}
+                    onClick={() => setSelectedDate(date)}
                  >
                     {date.getDate()}
                  </Button>
@@ -119,7 +116,7 @@ export default function CalendarPage() {
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">التقويم المتكامل (الزمن الذكي)</h2>
             </div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
                 <Card className="lg:col-span-2">
                     <CardContent className="p-2 md:p-4">
                         <CalendarComponent

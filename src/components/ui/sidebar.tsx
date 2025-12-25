@@ -63,8 +63,14 @@ const SidebarProvider = ({
     <SidebarContext.Provider value={contextValue}>
       <div 
         onClickCapture={(e) => {
-          if (isMobile && e.target instanceof HTMLAnchorElement && e.target.href) {
-            closeSidebar();
+          // Close sidebar on mobile when a link is clicked
+          let target = e.target as HTMLElement;
+          while (target && target.parentElement) {
+            if (target instanceof HTMLAnchorElement && target.href) {
+              closeSidebar();
+              return;
+            }
+            target = target.parentElement;
           }
         }}
         {...props}
