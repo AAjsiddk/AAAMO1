@@ -62,10 +62,14 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error(error);
+      let description = 'فشل تسجيل الدخول. الرجاء المحاولة مرة أخرى.';
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        description = 'البريد الإلكتروني أو كلمة المرور غير صحيحة. الرجاء التحقق من بياناتك والمحاولة مرة أخرى.';
+      }
       toast({
         variant: 'destructive',
-        title: 'حدث خطأ',
-        description: 'فشل تسجيل الدخول. الرجاء التحقق من بريدك الإلكتروني وكلمة المرور.',
+        title: 'فشل تسجيل الدخول',
+        description: description,
       });
     } finally {
         setIsLoading(false);
