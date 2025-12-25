@@ -139,7 +139,7 @@ export default function CalendarPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
-                         <ScrollArea className="h-96">
+                         <ScrollArea className="h-[450px]">
                         {tasksLoading || goalsLoading ? (
                              <div className="flex justify-center items-center h-full">
                                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -147,7 +147,7 @@ export default function CalendarPage() {
                         ) : selectedDayEvents.length > 0 ? (
                             <div className="space-y-3">
                                 {selectedDayEvents.map(event => (
-                                    <div key={event.id} className="p-3 bg-muted rounded-md flex items-start gap-3">
+                                    <div key={event.id} className="p-3 bg-muted/50 rounded-md flex items-start gap-3">
                                         <div className="mt-1">
                                             {event.type === 'task' ? <ClipboardCheck className="h-5 w-5 text-primary" /> : <Target className="h-5 w-5 text-primary" />}
                                         </div>
