@@ -5,12 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import type { Task, Goal, Habit, JournalEntry, Inspiration } from '@/lib/types';
-import { Loader2, ArrowLeft, Lightbulb, RefreshCw, RotateCcw } from 'lucide-react';
+import { Loader2, ArrowLeft, Lightbulb, RefreshCw } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Particles } from '@/components/dashboard/Particles';
 
 const cardVariants = {
@@ -25,18 +23,6 @@ const cardVariants = {
     },
   }),
 };
-
-const tasbeehOptions = [
-  "سبحان الله",
-  "الحمد لله",
-  "لا إله إلا الله",
-  "الله أكبر",
-  "سبحان الله وبحمده",
-  "سبحان الله العظيم",
-  "لا حول ولا قوة إلا بالله",
-  "أستغفر الله",
-  "اللهم صل على محمد",
-];
 
 const wisdoms = [
   { type: "آية", text: "وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا وَيَرْزُقْهُ مِنْ حَيْثُ لَا يَحْتَسِبُ" },
@@ -71,9 +57,6 @@ const DashboardPage = () => {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const [tasbeehCount, setTasbeehCount] = useState(0);
-  const [currentTasbeeh, setCurrentTasbeeh] = useState(tasbeehOptions[0]);
-  const [tasbeehTarget, setTasbeehTarget] = useState(33);
   const [currentWisdom, setCurrentWisdom] = useState<{type: string, text: string} | null>(null);
 
   useEffect(() => {
@@ -102,21 +85,6 @@ const DashboardPage = () => {
     activeHabits: habits?.length || 0,
   }), [tasks, goals, habits]);
   
-  const handleTasbeehClick = () => {
-    if (tasbeehCount + 1 >= tasbeehTarget) {
-        if (typeof window !== 'undefined' && navigator.vibrate) {
-            navigator.vibrate(200);
-        }
-        setTasbeehCount(tasbeehTarget);
-    } else {
-        setTasbeehCount(tasbeehCount + 1);
-    }
-  };
-
-  const resetTasbeeh = () => {
-    setTasbeehCount(0);
-  }
-
   const getNewWisdom = () => {
     setCurrentWisdom(getRandomWisdom());
   }
@@ -188,7 +156,7 @@ const DashboardPage = () => {
         </motion.div>
       </div>
 
-       <div className="grid gap-4 grid-cols-1">
+       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
          <motion.div custom={5} initial="hidden" animate="visible" variants={cardVariants}>
              <Card className="h-full card-glass">
               <CardHeader>
@@ -225,60 +193,7 @@ const DashboardPage = () => {
               </CardContent>
             </Card>
          </motion.div>
-      </div>
-
-       <div className="grid gap-4 md:grid-cols-2">
-         <motion.div custom={7} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="card-glass">
-                <CardHeader>
-                    <CardTitle className="text-center text-2xl font-bold text-primary">السبحة الإلكترونية</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col items-center justify-center gap-6">
-                    <p className="text-lg text-muted-foreground">التسبيح الحالي: <span className="font-bold text-foreground">{currentTasbeeh}</span></p>
-                     <div 
-                        className="w-48 h-48 rounded-full bg-gradient-to-br from-background to-card flex items-center justify-center text-6xl font-bold cursor-pointer select-none border-4 border-primary/50 shadow-lg active:scale-95 transition-transform"
-                        onClick={handleTasbeehClick}
-                    >
-                        {tasbeehCount}
-                    </div>
-                    <div className="w-full max-w-sm flex flex-col gap-4">
-                         <div>
-                            <label className="text-muted-foreground mb-2 block">اختر نوع التسبيح:</label>
-                            <Select defaultValue={currentTasbeeh} onValueChange={setCurrentTasbeeh}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="اختر نوع التسبيح" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {tasbeehOptions.map(option => (
-                                        <SelectItem key={option} value={option}>{option}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className='grid grid-cols-2 gap-2'>
-                             <div>
-                                <label className="text-muted-foreground mb-2 block">الهدف:</label>
-                                <Input
-                                    type="number"
-                                    value={tasbeehTarget}
-                                    onChange={(e) => setTasbeehTarget(Number(e.target.value))}
-                                    className="text-center"
-                                    placeholder="الهدف"
-                                />
-                            </div>
-                             <div>
-                                <label className="text-muted-foreground mb-2 block opacity-0">إعادة تعيين</label>
-                                <Button onClick={resetTasbeeh} variant="outline" className="w-full">
-                                    <RotateCcw className="ml-2 h-4 w-4" />
-                                    إعادة تعيين
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </motion.div>
-        <motion.div custom={8} initial="hidden" animate="visible" variants={cardVariants}>
+        <motion.div custom={6} initial="hidden" animate="visible" variants={cardVariants}>
              <Card className="card-glass h-full">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -316,7 +231,6 @@ const DashboardPage = () => {
                 </CardContent>
             </Card>
         </motion.div>
-
        </div>
 
     </div>

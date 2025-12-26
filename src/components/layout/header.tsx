@@ -77,7 +77,7 @@ export function Header() {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setTheme] = useState<'light' | 'dark' | null>(null);
 
 
   const [isJournalDialogOpen, setIsJournalDialogOpen] = useState(false);
@@ -90,24 +90,30 @@ export function Header() {
   
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const initialTheme = storedTheme || 'dark';
+    const initialTheme = storedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     setTheme(initialTheme);
     if (initialTheme === 'light') {
         document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
     } else {
         document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
     }
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    if (newTheme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else {
-      document.documentElement.classList.add('dark');
-    }
+    setTheme(prevTheme => {
+        const newTheme = prevTheme === 'light' ? 'dark' : 'light';
+        localStorage.setItem('theme', newTheme);
+        if (newTheme === 'light') {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+        } else {
+            document.documentElement.classList.add('dark');
+            document.documentElement.classList.remove('light');
+        }
+        return newTheme;
+    });
   };
 
 
@@ -173,6 +179,17 @@ export function Header() {
         setIsSubmitting(false);
     }
   };
+
+  if (theme === null) {
+      return (
+          <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/50 backdrop-blur-xl">
+             <div className="container flex h-16 max-w-screen-2xl items-center justify-between">
+                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+            </div>
+        </header>
+      );
+  }
 
 
   return (

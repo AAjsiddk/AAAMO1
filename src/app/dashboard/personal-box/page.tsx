@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -49,29 +49,15 @@ import {
   Sparkles,
   Annoyed,
   CalendarHeart,
-  ImagePlus,
-  X,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { JournalEntry } from '@/lib/types';
 import { format, isSameDay } from 'date-fns';
 import Image from 'next/image';
 
-const MAX_FILES = 5;
-
-// Placeholder for a real storage upload function
-async function uploadImage(file: File): Promise<string> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target?.result as string);
-    reader.readAsDataURL(file);
-  });
-}
-
 const journalSchema = z.object({
   title: z.string().min(1, { message: 'العنوان مطلوب.' }),
   content: z.string().min(1, { message: 'المحتوى مطلوب.' }),
-  imageFiles: z.instanceof(FileList).optional(),
 });
 
 
@@ -104,8 +90,6 @@ export default function PersonalBoxPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showOnThisDay, setShowOnThisDay] = useState(false);
-  const [previewImages, setPreviewImages] = useState<string[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -116,7 +100,6 @@ export default function PersonalBoxPage() {
     defaultValues: { title: '', content: '' },
   });
   
-  const imageFileRef = form.register('imageFiles');
 
   const journalCollectionRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -152,14 +135,7 @@ export default function PersonalBoxPage() {
     
     try {
         const mood = analyzeMood(values.content);
-        let imageUrls: string[] = [];
-
-        if (values.imageFiles && values.imageFiles.length > 0) {
-            const files = Array.from(values.imageFiles);
-            const uploadPromises = files.map(file => uploadImage(file));
-            imageUrls = await Promise.all(uploadPromises);
-        }
-
+        
         const newEntry: Omit<JournalEntry, 'id'> = {
           title: values.title,
           content: values.content,
@@ -167,14 +143,13 @@ export default function PersonalBoxPage() {
           mood: mood,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-          imageUrls: imageUrls,
+          imageUrls: [],
         };
         
         await addDoc(journalCollectionRef, newEntry);
         
         toast({ title: 'نجاح', description: 'تمت إضافة تدوينتك بنجاح.' });
         form.reset();
-        setPreviewImages([]);
         setIsDialogOpen(false);
     } catch (error) {
         console.error("Error creating journal entry: ", error);
@@ -203,39 +178,6 @@ export default function PersonalBoxPage() {
     return format(timestamp.toDate(), 'PPP p');
   };
   
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-        const fileArray = Array.from(files);
-        if (fileArray.length > MAX_FILES) {
-            toast({
-                variant: 'destructive',
-                title: 'خطأ',
-                description: `لا يمكنك رفع أكثر من ${MAX_FILES} صورة.`,
-            });
-            if(fileInputRef.current) fileInputRef.current.value = "";
-            return;
-        }
-        const newPreviews = fileArray.map(file => URL.createObjectURL(file));
-        setPreviewImages(newPreviews);
-    }
-  };
-
-  const removePreviewImage = (index: number) => {
-    const newPreviews = [...previewImages];
-    newPreviews.splice(index, 1);
-    setPreviewImages(newPreviews);
-
-    const dataTransfer = new DataTransfer();
-    const currentFiles = form.getValues('imageFiles');
-    if (currentFiles) {
-        Array.from(currentFiles)
-            .filter((_, i) => i !== index)
-            .forEach(file => dataTransfer.items.add(file));
-    }
-    form.setValue('imageFiles', dataTransfer.files);
-  };
-
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -246,7 +188,7 @@ export default function PersonalBoxPage() {
                 <CalendarHeart className="ml-2 h-4 w-4" />
                 في مثل هذا اليوم
             </Button>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) { form.reset(); setPreviewImages([]); } setIsDialogOpen(open); }}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) { form.reset(); } setIsDialogOpen(open); }}>
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="ml-2 h-4 w-4" />
@@ -263,50 +205,7 @@ export default function PersonalBoxPage() {
                   <FormField name="content" control={form.control} render={({ field }) => (
                     <FormItem><FormLabel>المحتوى</FormLabel><FormControl><Textarea placeholder="ماذا يدور في خلدك؟" {...field} rows={6} /></FormControl><FormMessage /></FormItem>
                   )} />
-                  <FormItem>
-                    <FormLabel>إضافة صور (حتى ${MAX_FILES} صور)</FormLabel>
-                     <FormControl>
-                        <div 
-                            className="mt-1 flex justify-center rounded-lg border border-dashed border-input px-6 py-10 cursor-pointer"
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                        <div className="text-center">
-                            {previewImages.length === 0 ? (
-                                <>
-                                    <ImagePlus className="mx-auto h-12 w-12 text-gray-400" />
-                                    <p className="mt-4 text-sm leading-6 text-muted-foreground">اسحب وأفلت صور أو انقر للاختيار</p>
-                                </>
-                            ) : (
-                               <div className="grid grid-cols-3 gap-2">
-                                {previewImages.map((src, index) => (
-                                    <div key={index} className="relative group aspect-square">
-                                        <Image src={src} alt={`Preview ${index + 1}`} fill className="object-cover rounded-md" />
-                                        <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); removePreviewImage(index); }}
-                                            className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100"
-                                        >
-                                            <X className="h-3 w-3" />
-                                        </button>
-                                    </div>
-                                ))}
-                               </div>
-                            )}
-                        </div>
-                        <Input 
-                            {...imageFileRef}
-                            ref={fileInputRef}
-                            id="image-upload"
-                            type="file"
-                            className="sr-only"
-                            accept="image/*"
-                            multiple
-                            onChange={handleFileChange}
-                        />
-                        </div>
-                    </FormControl>
-                  </FormItem>
-
+                  
                   <DialogFooter>
                     <DialogClose asChild><Button type="button" variant="secondary">إلغاء</Button></DialogClose>
                     <Button type="submit" disabled={isSubmitting}>

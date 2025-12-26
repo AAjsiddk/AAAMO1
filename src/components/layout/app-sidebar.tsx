@@ -81,7 +81,6 @@ export function AppSidebar() {
       { name: 'مكتبتي المعرفية', href: '/dashboard/library', icon: Library },
       { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: Clock },
       { name: 'مخطط الترفيه', href: '/dashboard/relax', icon: Coffee },
-      { name: 'AI', href: '/dashboard/ai', icon: BrainCircuit },
   ];
 
   const analysisSections = [
