@@ -190,7 +190,7 @@ export default function ImportantFilesPage() {
         title: 'قيد التطوير',
         description: `جاري محاكاة تنزيل ملف: ${file.name}`
     });
-  }
+  };
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
@@ -286,7 +286,7 @@ export default function ImportantFilesPage() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 self-end sm:self-center w-full sm:w-auto">
-                                            <Badge variant="outline" className={cn("flex-shrink-0", importanceData.className)}>{importanceData.text}</Badge>
+                                            <Badge variant="outline" className={cn("flex-shrink-0", importanceData?.className)}>{importanceData?.text}</Badge>
                                             <div className="flex items-center sm:ml-auto">
                                                 <Button variant="ghost" size="icon" onClick={() => handleDownload(file)} title='تنزيل'>
                                                     <Download className="h-4 w-4" />
@@ -310,4 +310,7 @@ export default function ImportantFilesPage() {
                     </DragDropContext>
                 )}
             </CardContent>
-       </Card
+       </Card>
+    </div>
+   );
+}
