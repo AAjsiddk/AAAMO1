@@ -154,7 +154,7 @@ export default function FaithPage() {
                                     <form onSubmit={worshipForm.handleSubmit(handleWorshipSubmit)} className="p-4 border rounded-lg space-y-4">
                                         <h4 className="font-semibold">{editingWorshipId ? 'تعديل عبادة' : 'إضافة عبادة جديدة'}</h4>
                                         <FormField control={worshipForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>العبادة</FormLabel><FormControl><Input placeholder="قراءة قرآن" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                        <FormField control={worshipForm.control} name="notes" render={({ field }) => (<FormItem><FormLabel>ملاحظات وتفاصيل</FormLabel><FormControl><Textarea placeholder="سورة البقرة، دعاء الاستفتاح..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={worshipForm.control} name="notes" render={({ field }) => (<FormItem><FormLabel>ملاحظات وتفاصيل</FormLabel><FormControl><Textarea placeholder="سورة البقرة، دعاء الاستفتاح..." {...field} rows={4} /></FormControl><FormMessage /></FormItem>)}/>
                                         <div className="flex gap-2">
                                             <Button type="submit">{editingWorshipId ? 'حفظ التعديلات' : 'إضافة عبادة'}</Button>
                                             {editingWorshipId && <Button type="button" variant="ghost" onClick={cancelEditWorship}>إلغاء</Button>}

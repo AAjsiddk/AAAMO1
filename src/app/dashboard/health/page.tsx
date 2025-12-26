@@ -419,7 +419,7 @@ export default function HealthPage() {
                         </div>
                     )}
                 </CardContent>
-            </Card>
+        </Card>
         </div>
       </div>
     </div>
