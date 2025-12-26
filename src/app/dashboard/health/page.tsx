@@ -160,7 +160,8 @@ export default function HealthPage() {
   const handleForbiddenFoodSubmit = async (values: z.infer<typeof forbiddenFoodSchema>) => {
     if (!firestore || !user) return;
     const forbiddenFoodsCollectionRef = collection(firestore, `users/${user.uid}/forbiddenFoods`);
-    const docRef = editingForbiddenFood ? doc(firestore, `users/${user.uid}/forbiddenFoods`, editingForbiddenFood.id) : doc(forbiddenFoodsCollectionRef);
+    const docId = editingForbiddenFood ? editingForbiddenFood.id : uuidv4();
+    const docRef = doc(firestore, `users/${user.uid}/forbiddenFoods`, docId);
     
     try {
         await setDoc(docRef, {...values, userId: user.uid, createdAt: editingForbiddenFood?.createdAt || serverTimestamp() }, {merge: true});
@@ -183,7 +184,7 @@ export default function HealthPage() {
   const handleDeleteForbiddenFood = async (id: string) => {
       if(!firestore || !user) return;
       try {
-        await doc(firestore, `users/${user.uid}/forbiddenFoods`, id).delete();
+        await deleteDoc(doc(firestore, `users/${user.uid}/forbiddenFoods`, id));
         toast({title: 'تم الحذف'})
       } catch (error) {
           toast({variant: 'destructive', title: 'خطأ', description: 'فشل حذف العنصر.'})
@@ -195,14 +196,14 @@ export default function HealthPage() {
       const workout = workouts[workoutIndex];
       if (workout) {
         const updatedExercises = [...(workout.exercises || []), { id: uuidv4(), name: '', sets: [{ reps: 8, weight: 0 }] }];
-        form.setValue(`workouts.${workoutIndex}.exercises`, updatedExercises);
+        form.setValue(`workouts.${workoutIndex}.exercises`, updatedExercises, { shouldDirty: true });
       }
   };
   
   const removeExercise = (workoutIndex: number, exerciseIndex: number) => {
       const exercises = form.getValues(`workouts.${workoutIndex}.exercises`) || [];
       const updatedExercises = exercises.filter((_, i) => i !== exerciseIndex);
-      form.setValue(`workouts.${workoutIndex}.exercises`, updatedExercises);
+      form.setValue(`workouts.${workoutIndex}.exercises`, updatedExercises, { shouldDirty: true });
   };
   
   const addSet = (workoutIndex: number, exerciseIndex: number) => {
@@ -210,14 +211,14 @@ export default function HealthPage() {
       const exercise = exercises?.[exerciseIndex];
       if (exercise) {
         const updatedSets = [...(exercise.sets || []), { reps: 8, weight: 0 }];
-        form.setValue(`workouts.${workoutIndex}.exercises.${exerciseIndex}.sets`, updatedSets);
+        form.setValue(`workouts.${workoutIndex}.exercises.${exerciseIndex}.sets`, updatedSets, { shouldDirty: true });
       }
   };
 
   const removeSet = (workoutIndex: number, exerciseIndex: number, setIndex: number) => {
       const sets = form.getValues(`workouts.${workoutIndex}.exercises.${exerciseIndex}.sets`);
       const updatedSets = sets?.filter((_, i) => i !== setIndex);
-      form.setValue(`workouts.${workoutIndex}.exercises.${exerciseIndex}.sets`, updatedSets);
+      form.setValue(`workouts.${workoutIndex}.exercises.${exerciseIndex}.sets`, updatedSets, { shouldDirty: true });
   };
 
   const weekDays = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
@@ -308,7 +309,7 @@ export default function HealthPage() {
                                <Card key={workoutField.id} className="p-4 bg-muted/30">
                                    <div className="flex justify-between items-center mb-4">
                                        <FormField control={form.control} name={`workouts.${workoutIndex}.title`} render={({ field }) => (
-                                           <FormItem className="flex-1"><FormLabel>عنوان التمرين</FormLabel><FormControl><Input placeholder="مثال: تمرين صدر" {...field} /></FormControl><FormMessage /></FormItem>
+                                           <FormItem className="flex-1"><FormLabel>عنوان جلسة التمرين (مثال: تمرين صدر)</FormLabel><FormControl><Input placeholder="عنوان الجلسة" {...field} /></FormControl><FormMessage /></FormItem>
                                        )} />
                                        <Button type="button" variant="ghost" size="icon" className="mr-2 mt-8 text-destructive" onClick={() => removeWorkout(workoutIndex)}><Trash2 className="h-4 w-4" /></Button>
                                    </div>
@@ -321,7 +322,7 @@ export default function HealthPage() {
                                                 <Card key={exercise.id} className="p-3 bg-background/50">
                                                     <div className="flex justify-between items-center mb-2">
                                                         <FormField control={form.control} name={`workouts.${workoutIndex}.exercises.${exerciseIndex}.name`} render={({ field }) => (
-                                                            <FormItem className="flex-1"><FormLabel>التمرين</FormLabel><FormControl><Input placeholder="ضغط بنش" {...field}/></FormControl><FormMessage/></FormItem>
+                                                            <FormItem className="flex-1"><FormLabel>التمرين (مثال: ضغط بنش)</FormLabel><FormControl><Input placeholder="اسم التمرين" {...field}/></FormControl><FormMessage/></FormItem>
                                                         )}/>
                                                         <Button type="button" variant="ghost" size="icon" className="mr-2 mt-8 text-destructive" onClick={() => removeExercise(workoutIndex, exerciseIndex)}><Trash2 className="h-4 w-4" /></Button>
                                                     </div>
@@ -348,7 +349,7 @@ export default function HealthPage() {
                                    <Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => addExercise(workoutIndex)}><Plus className="h-4 w-4 ml-1"/>إضافة تمرين</Button>
                                </Card>
                            ))}
-                           {workoutFields.length === 0 && <p className="text-muted-foreground text-center p-4">لم يتم تسجيل تمارين.</p>}
+                           {workoutFields.length === 0 && <p className="text-muted-foreground text-center p-4">لم يتم تسجيل جلسات تمارين.</p>}
                            <Button type="button" variant="outline" className="mt-4" onClick={() => appendWorkout({ id: uuidv4(), title: '', exercises: [] })}><Plus className="h-4 w-4 ml-2" /> إضافة جلسة تمرين</Button>
                       </div>
                     
@@ -424,3 +425,5 @@ export default function HealthPage() {
     </>
   );
 }
+
+    
