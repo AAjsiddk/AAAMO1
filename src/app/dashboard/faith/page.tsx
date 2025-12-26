@@ -68,7 +68,7 @@ export default function FaithPage() {
     const fetchAndSetPrayerTimes = useCallback(() => {
         setIsLoadingTimes(true);
         getPrayerTimes().then(times => {
-            prayerForm.reset({ times: { Fajr: times.Fajr, Dhuhr: times.Dhuhr, Asr: times.Asr, Maghrib: times.Magrib || times.Maghrib, Isha: times.Isha } });
+            prayerForm.reset({ times: { Fajr: times.Fajr || '00:00', Dhuhr: times.Dhuhr || '00:00', Asr: times.Asr || '00:00', Maghrib: times.Maghrib || '00:00', Isha: times.Isha || '00:00' } });
         }).catch(error => {
             toast({ variant: 'destructive', title: 'خطأ', description: 'فشل في جلب أوقات الصلاة تلقائيًا.' });
             console.error(error);

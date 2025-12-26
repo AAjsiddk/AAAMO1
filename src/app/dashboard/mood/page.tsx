@@ -1,15 +1,24 @@
 'use client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Smile, Loader2 } from 'lucide-react';
+import { Smile, Loader2, Edit, Trash2 } from 'lucide-react';
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
-import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp, doc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { JournalEntry } from '@/lib/types';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { Tooltip as ReactTooltip } from 'react-tooltip'
 import { subYears, format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 const moodTranslations: { [key in NonNullable<JournalEntry['mood']>]: string } = {
     happy: 'سعيد',
@@ -35,10 +44,22 @@ const heatmapColors = {
   sad: 'rgba(59, 130, 246, 1)',
 };
 
+const moodEntrySchema = z.object({
+  title: z.string().min(1, 'العنوان مطلوب.'),
+  content: z.string().min(1, 'المحتوى مطلوب.'),
+});
+
 
 export default function MoodPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
+  const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
+
+  const form = useForm<z.infer<typeof moodEntrySchema>>({
+    resolver: zodResolver(moodEntrySchema),
+    defaultValues: { title: '', content: '' },
+  });
 
   const journalQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -68,11 +89,62 @@ export default function MoodPage() {
     return entries.filter(e => e.mood && e.createdAt).map(entry => ({
         date: format((entry.createdAt as Timestamp).toDate(), 'yyyy-MM-dd'),
         mood: entry.mood,
+        entry: entry, // Keep the full entry for tooltip/actions
     }));
   }, [entries]);
 
+  const handleDelete = async (entryId: string) => {
+    if (!user) return;
+    const docRef = doc(firestore, `users/${user.uid}/journalEntries`, entryId);
+    try {
+      await deleteDoc(docRef);
+      toast({ title: 'نجاح', description: 'تم حذف السجل.' });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'خطأ', description: 'فشل حذف السجل.' });
+    }
+  };
+
+  const handleOpenEditDialog = (entry: JournalEntry) => {
+    setEditingEntry(entry);
+    form.reset({ title: entry.title, content: entry.content });
+  };
+
+  const handleEditSubmit = async (values: z.infer<typeof moodEntrySchema>) => {
+    if (!user || !editingEntry) return;
+    const docRef = doc(firestore, `users/${user.uid}/journalEntries`, editingEntry.id);
+    try {
+      await updateDoc(docRef, { ...values, updatedAt: serverTimestamp() });
+      toast({ title: 'نجاح', description: 'تم تحديث السجل.' });
+      setEditingEntry(null);
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحديث السجل.' });
+    }
+  };
+
 
   return (
+    <>
+      <Dialog open={!!editingEntry} onOpenChange={(isOpen) => !isOpen && setEditingEntry(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>تعديل سجل المزاج</DialogTitle></DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleEditSubmit)} className="space-y-4">
+               <FormField control={form.control} name="title" render={({ field }) => (
+                <FormItem><FormLabel>العنوان</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="content" render={({ field }) => (
+                <FormItem><FormLabel>المحتوى</FormLabel><FormControl><Textarea {...field} rows={5} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <DialogFooter>
+                <DialogClose asChild><Button type="button" variant="secondary">إلغاء</Button></DialogClose>
+                <Button type="submit">حفظ التعديلات</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">مرآة الذات اليومية</h2>
@@ -91,7 +163,7 @@ export default function MoodPage() {
             </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
             <Card>
                 <CardHeader>
                     <CardTitle>توزيع الحالات المزاجية</CardTitle>
@@ -124,15 +196,21 @@ export default function MoodPage() {
                             if (!value || !value.mood) { return 'color-empty'; }
                             return `color-mood-${value.mood}`;
                         }}
-                        tooltipDataAttrs={(value: {date: string, mood: keyof typeof moodTranslations}) => {
+                        tooltipDataAttrs={(value: any) => {
                              if (!value || !value.date) return {};
                              return {
                                 'data-tooltip-id': 'heatmap-tooltip',
-                                'data-tooltip-content': `${value.date}: ${moodTranslations[value.mood] || 'غير معروف'}`,
+                                'data-tooltip-html': `
+                                  <div class="flex flex-col gap-1">
+                                    <span class="font-bold">${value.date}: ${moodTranslations[value.mood as keyof typeof moodTranslations] || 'غير معروف'}</span>
+                                    <span class="text-xs">${value.entry?.title || ''}</span>
+                                  </div>
+                                `,
                              };
                         }}
+                        onClick={(value) => value && value.entry && handleOpenEditDialog(value.entry)}
                     />
-                    <ReactTooltip id="heatmap-tooltip" />
+                    <ReactTooltip id="heatmap-tooltip" html />
                     <style>{`
                         .react-calendar-heatmap .color-mood-happy { fill: ${heatmapColors.happy}; }
                         .react-calendar-heatmap .color-mood-excited { fill: ${heatmapColors.excited}; }
@@ -146,5 +224,6 @@ export default function MoodPage() {
       )}
 
     </div>
+    </>
   );
 }

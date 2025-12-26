@@ -226,8 +226,10 @@ export type StudySubtask = {
 
 export type StudyPlan = {
   id: string;
+  userId: string;
   title: string;
   status: 'pending' | 'completed' | 'not_completed';
   subtasks: StudySubtask[];
   order: number;
+  createdAt: FieldValue;
 };

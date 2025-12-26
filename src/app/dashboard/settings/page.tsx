@@ -14,6 +14,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Separator } from '@/components/ui/separator';
 
+// Helper functions for color conversion
 function hslStringToHex(hslStr: string): string {
   if (!hslStr) return '#000000';
   const [h, s, l] = hslStr.match(/(\d+(\.\d+)?)/g)?.map(Number) || [0, 0, 0];
@@ -28,12 +29,16 @@ function hslStringToHex(hslStr: string): string {
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
-function hexToHslString(hex: string): string {
+function hexToHsl(hex: string): { h: number; s: number; l: number } {
   let r = 0, g = 0, b = 0;
   if (hex.length === 4) {
-    r = parseInt(hex[1] + hex[1], 16); g = parseInt(hex[2] + hex[2], 16); b = parseInt(hex[3] + hex[3], 16);
+    r = parseInt(hex[1] + hex[1], 16);
+    g = parseInt(hex[2] + hex[2], 16);
+    b = parseInt(hex[3] + hex[3], 16);
   } else if (hex.length === 7) {
-    r = parseInt(hex.substring(1, 3), 16); g = parseInt(hex.substring(3, 5), 16); b = parseInt(hex.substring(5, 7), 16);
+    r = parseInt(hex.substring(1, 3), 16);
+    g = parseInt(hex.substring(3, 5), 16);
+    b = parseInt(hex.substring(5, 7), 16);
   }
   r /= 255; g /= 255; b /= 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
@@ -48,38 +53,45 @@ function hexToHslString(hex: string): string {
     }
     h /= 6;
   }
-  h = Math.round(h * 360); s = Math.round(s * 100); l = Math.round(l * 100);
-  return `${h} ${s}% ${l}%`;
+  return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
 }
+
 
 function ColorPicker({ value, onChange }: { value: string; onChange: (newColor: string) => void }) {
     const [isPickerOpen, setIsPickerOpen] = useState(false);
+    
+    // value is "H S% L%"
     const hexValue = useMemo(() => hslStringToHex(value), [value]);
 
     const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        onChange(hexToHslString(e.target.value));
+        const { h, s, l } = hexToHsl(e.target.value);
+        onChange(`${h} ${s}% ${l}%`);
     };
 
     return (
         <div className="relative">
-            <div
+            <button
+                type="button"
                 className="w-16 h-10 rounded-md border cursor-pointer"
                 style={{ backgroundColor: `hsl(${value})` }}
                 onClick={() => setIsPickerOpen(!isPickerOpen)}
             />
             {isPickerOpen && (
-                <div className="absolute z-10 top-full mt-2 p-2 rounded-md border bg-popover shadow-lg">
+                 <div className="absolute z-10 top-full mt-2 p-4 rounded-md border bg-popover shadow-lg w-72">
                     <Input
                         type="color"
                         value={hexValue}
                         onChange={handleHexChange}
-                        className="w-full h-12 p-0 cursor-pointer"
+                        className="w-full h-24 p-0 cursor-pointer"
                     />
-                     <Input 
-                        className="font-mono text-sm mt-2"
-                        value={value}
-                        onChange={(e) => onChange(e.target.value)}
-                     />
+                    <div className="mt-4 space-y-2">
+                       <div className="text-sm font-medium">HSL</div>
+                        <Input 
+                            className="font-mono text-sm"
+                            value={value}
+                            onChange={(e) => onChange(e.target.value)}
+                         />
+                    </div>
                 </div>
             )}
         </div>

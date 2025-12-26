@@ -19,25 +19,8 @@ import { PlusCircle, Trash2, Loader2, Inbox, GripVertical, Plus, Edit, Check, X,
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import type { StudyPlan, StudySubtask } from '@/lib/types';
 
-// Define schemas
-const studySubtaskSchema = z.object({
-  id: z.string(),
-  content: z.string().min(1, 'المحتوى مطلوب'),
-  status: z.enum(['pending', 'completed', 'not_completed']).default('pending'),
-  order: z.number(),
-});
-
-const studyPlanSchema = z.object({
-  id: z.string(),
-  title: z.string().min(1, 'العنوان مطلوب'),
-  status: z.enum(['pending', 'completed', 'not_completed']).default('pending'),
-  subtasks: z.array(studySubtaskSchema),
-  order: z.number(),
-});
-
-type StudyPlan = z.infer<typeof studyPlanSchema>;
-type StudySubtask = z.infer<typeof studySubtaskSchema>;
 
 const formSchema = z.object({
   title: z.string().min(1, { message: 'العنوان مطلوب' }),
@@ -66,7 +49,12 @@ export default function StudyPlannerPage() {
 
   const sortedPlans = useMemo(() => {
     if (!plans) return [];
-    return [...plans].sort((a, b) => a.order - b.order);
+    // Ensure subtasks are also sorted by their order property
+    const sorted = [...plans].sort((a, b) => a.order - b.order);
+    return sorted.map(plan => ({
+        ...plan,
+        subtasks: plan.subtasks ? [...plan.subtasks].sort((a,b) => a.order - b.order) : []
+    }));
   }, [plans]);
 
   // Handlers
@@ -87,8 +75,8 @@ export default function StudyPlannerPage() {
     ids: { planId: string; subtaskId?: string },
     newStatus: StudyPlan['status']
   ) => {
-    if (!firestore || !user) return;
-    const plan = plans?.find(p => p.id === ids.planId);
+    if (!firestore || !user || !plans) return;
+    const plan = plans.find(p => p.id === ids.planId);
     if (!plan) return;
 
     if (type === 'plan') {
@@ -107,12 +95,12 @@ export default function StudyPlannerPage() {
   };
 
   const onDragEnd = async (result: DropResult) => {
-    if (!result.destination || !plans || !firestore || !user) return;
+    if (!result.destination || !sortedPlans || !firestore || !user) return;
 
     const { source, destination, type } = result;
     
     if (type === 'plans') {
-        const items = Array.from(plans);
+        const items = Array.from(sortedPlans);
         const [reorderedItem] = items.splice(source.index, 1);
         items.splice(destination.index, 0, reorderedItem);
 
@@ -124,7 +112,7 @@ export default function StudyPlannerPage() {
         await batch.commit();
     } else if (type.startsWith('subtasks-')) {
         const planId = type.split('-')[1];
-        const plan = plans.find(p => p.id === planId);
+        const plan = sortedPlans.find(p => p.id === planId);
         if (!plan) return;
 
         const newSubtasks = Array.from(plan.subtasks);
@@ -140,10 +128,10 @@ export default function StudyPlannerPage() {
   };
   
   const handleDelete = async (planId: string, subtaskId?: string) => {
-    if(!user || !firestore) return;
+    if(!user || !firestore || !plans) return;
     
     if (subtaskId) {
-        const plan = plans?.find(p => p.id === planId);
+        const plan = plans.find(p => p.id === planId);
         if (!plan) return;
         const newSubtasks = plan.subtasks.filter(st => st.id !== subtaskId);
         const planRef = doc(firestore, `users/${user.uid}/studyPlans`, planId);
@@ -157,7 +145,7 @@ export default function StudyPlannerPage() {
   }
 
   const handleSubmit = async (values: { title: string }) => {
-    if (!user || !plansCollectionRef) return;
+    if (!user || !plansCollectionRef || !plans) return;
     setIsSubmitting(true);
     try {
       if (editingPlan) {
@@ -171,7 +159,7 @@ export default function StudyPlannerPage() {
           title: values.title,
           status: 'pending',
           subtasks: [],
-          order: plans?.length || 0,
+          order: plans.length || 0,
           userId: user.uid,
           createdAt: serverTimestamp(),
         });
@@ -187,14 +175,14 @@ export default function StudyPlannerPage() {
   };
   
   const handleSubtaskSubmit = async (values: { title: string }) => {
-    if (!user || !parentPlanId) return;
-    const plan = plans?.find(p => p.id === parentPlanId);
+    if (!user || !parentPlanId || !plans) return;
+    const plan = plans.find(p => p.id === parentPlanId);
     if (!plan) return;
     
     setIsSubmitting(true);
     try {
         const newSubtask: StudySubtask = {
-            id: Date.now().toString(), // simple unique id
+            id: doc(collection(firestore, 'tmp')).id,
             content: values.title,
             status: 'pending',
             order: plan.subtasks.length,
@@ -215,8 +203,8 @@ export default function StudyPlannerPage() {
   
   const StatusButtons = ({ type, ids, currentStatus }: { type: 'plan' | 'subtask', ids: {planId: string, subtaskId?: string}, currentStatus: StudyPlan['status']}) => (
      <div className="flex gap-1 flex-shrink-0">
-        <Button size="icon" variant={currentStatus === 'completed' ? 'default' : 'ghost'} className="h-8 w-8" onClick={() => handleStatusChange(type, ids, 'completed')}><Check className="h-4 w-4" /></Button>
-        <Button size="icon" variant={currentStatus === 'not_completed' ? 'destructive' : 'ghost'} className="h-8 w-8" onClick={() => handleStatusChange(type, ids, 'not_completed')}><X className="h-4 w-4" /></Button>
+        <Button size="icon" variant={currentStatus === 'completed' ? 'default' : 'ghost'} className="h-8 w-8" onClick={() => handleStatusChange(type, ids, currentStatus === 'completed' ? 'pending' : 'completed')}><Check className="h-4 w-4" /></Button>
+        <Button size="icon" variant={currentStatus === 'not_completed' ? 'destructive' : 'ghost'} className="h-8 w-8" onClick={() => handleStatusChange(type, ids, currentStatus === 'not_completed' ? 'pending' : 'not_completed')}><X className="h-4 w-4" /></Button>
     </div>
   );
 
@@ -289,7 +277,7 @@ export default function StudyPlannerPage() {
                                <Droppable droppableId={plan.id} type={`subtasks-${plan.id}`}>
                                 {(provided) => (
                                     <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
-                                        {plan.subtasks.sort((a,b) => a.order - b.order).map((subtask, subIndex) => (
+                                        {plan.subtasks.map((subtask, subIndex) => (
                                              <Draggable key={subtask.id} draggableId={subtask.id} index={subIndex}>
                                                 {(provided) => (
                                                     <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="flex items-center justify-between p-2 rounded-md bg-background border">
