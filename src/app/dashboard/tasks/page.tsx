@@ -67,6 +67,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import type { Task } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,6 +92,7 @@ const taskSchema = z.object({
     'waiting_for',
     'archived',
   ]),
+  progress: z.coerce.number().min(0).max(100).optional().default(0),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
   parentId: z.string().nullable().optional(),
@@ -142,8 +144,7 @@ const TaskItem = memo(function TaskItem({ task, level = 0, onEdit, onDelete, onA
                   {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               )}
-               {level > 0 && task.subtasks?.length === 0 && <div className="w-6" />}
-               {level > 0 && !task.subtasks && <div className="w-6" />}
+               {level > 0 && (!task.subtasks || task.subtasks.length === 0) && <div className="w-6" />}
               <CardTitle className={cn("text-lg font-semibold truncate", task.status === 'completed' && 'line-through text-muted-foreground')}>
                 {task.title}
               </CardTitle>
@@ -178,6 +179,19 @@ const TaskItem = memo(function TaskItem({ task, level = 0, onEdit, onDelete, onA
           </div>
           {task.description && <CardDescription className="pt-2 pl-8">{task.description}</CardDescription>}
         </CardHeader>
+        
+        <CardContent className="p-4 pt-0 pl-8 space-y-3">
+          {typeof task.progress === 'number' && (
+            <div>
+              <div className="flex justify-between items-center mb-1 text-xs">
+                <span className="font-medium text-muted-foreground">التقدم</span>
+                <span className="font-mono">{task.progress}%</span>
+              </div>
+              <Progress value={task.progress} />
+            </div>
+          )}
+        </CardContent>
+
         {(task.status || startDate || endDate) &&
             <CardFooter className="p-4 pt-0 pl-8">
                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
@@ -227,7 +241,7 @@ export default function TasksPage() {
 
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
-    defaultValues: { title: '', description: '', status: 'pending', parentId: null },
+    defaultValues: { title: '', description: '', status: 'pending', parentId: null, progress: 0 },
   });
 
   const tasksCollectionRef = useMemoFirebase(() => {
@@ -270,6 +284,7 @@ export default function TasksPage() {
         title: task.title,
         description: task.description || '',
         status: task.status,
+        progress: task.progress || 0,
         startDate: task.startDate ? (task.startDate as Timestamp).toDate() : undefined,
         endDate: task.endDate ? (task.endDate as Timestamp).toDate() : undefined,
         parentId: task.parentId
@@ -279,6 +294,7 @@ export default function TasksPage() {
         title: '',
         description: '',
         status: 'pending',
+        progress: 0,
         startDate: undefined,
         endDate: undefined,
         parentId: parentId,
@@ -298,12 +314,13 @@ export default function TasksPage() {
     setIsSubmitting(true);
     
     try {
-        const taskData: Omit<Task, 'id' | 'subtasks' | 'updatedAt'> & { updatedAt: FieldValue } = {
+        const taskData: Omit<Task, 'id' | 'subtasks' | 'updatedAt' | 'order'> & { updatedAt: FieldValue } = {
             userId: user.uid,
             updatedAt: serverTimestamp(),
             title: values.title,
             description: values.description,
             status: values.status,
+            progress: values.progress,
             startDate: values.startDate || null,
             endDate: values.endDate || null,
             parentId: values.parentId || null,
@@ -377,12 +394,12 @@ export default function TasksPage() {
               إضافة مشروع / مهمة
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{editingTask ? 'تعديل المهمة' : (parentTask ? 'مهمة فرعية جديدة' : 'مشروع أو مهمة جديدة')}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[80vh] overflow-y-auto p-1">
                 <FormField
                   control={form.control}
                   name="title"
@@ -405,6 +422,20 @@ export default function TasksPage() {
                       <FormControl>
                         <Textarea placeholder="وصف قصير للمهمة" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="progress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>التقدم</FormLabel>
+                      <FormControl>
+                         <Input type="number" min="0" max="100" {...field} />
+                      </FormControl>
+                       <Progress value={field.value} className="mt-2" />
                       <FormMessage />
                     </FormItem>
                   )}

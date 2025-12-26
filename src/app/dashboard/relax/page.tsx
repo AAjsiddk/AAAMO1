@@ -9,100 +9,103 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, addDoc, deleteDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, writeBatch, addDoc, deleteDoc, updateDoc, orderBy, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Trash2, Loader2, Inbox, GripVertical, Plus, Edit, Check, X, Pin, PinOff, Wind } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { PlusCircle, Trash2, Loader2, Inbox, GripVertical, Plus, Edit, Check, X, Pin, PinOff, Wind, CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import type { RelaxationActivity, RelaxationSubtask } from '@/lib/types';
-
+import type { RelaxationActivity } from '@/lib/types';
+import { format } from 'date-fns';
 
 const formSchema = z.object({
   title: z.string().min(1, { message: 'العنوان مطلوب' }),
+  description: z.string().optional(),
+  status: z.enum(['pending', 'completed', 'not_completed']).default('pending'),
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
 });
+type FormSchema = z.infer<typeof formSchema>;
+
 
 export default function RelaxPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSubtaskDialogOpen, setIsSubtaskDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingItem, setEditingItem] = useState<RelaxationActivity | RelaxationSubtask | null>(null);
+  const [editingItem, setEditingItem] = useState<RelaxationActivity | null>(null);
   const [parentPlanId, setParentPlanId] = useState<string | null>(null);
   
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
-    defaultValues: { title: '' },
+    defaultValues: { title: '', description: '', status: 'pending' },
   });
 
   const plansCollectionRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/relaxationActivities`) : null, [user, firestore]);
-  const { data: plans, isLoading } = useCollection<RelaxationActivity>(plansCollectionRef);
+  const plansQuery = useMemoFirebase(() => plansCollectionRef ? query(plansCollectionRef) : null, [plansCollectionRef]);
+  const { data: plans, isLoading } = useCollection<RelaxationActivity>(plansQuery);
 
  const plansTree = useMemo(() => {
     if (!plans) return [];
-    
-    const planMap = new Map<string, RelaxationActivity & { subtasks: any[] }>();
-    const rootPlans: (RelaxationActivity & { subtasks: any[] })[] = [];
+    const planMap = new Map<string, RelaxationActivity & { subtasks: RelaxationActivity[] }>();
+    const rootPlans: (RelaxationActivity & { subtasks: RelaxationActivity[] })[] = [];
 
-    plans.forEach(p => {
-        planMap.set(p.id, { ...p, subtasks: [] });
-    });
-
+    plans.forEach(p => planMap.set(p.id, { ...p, subtasks: [] }));
     plans.forEach(p => {
         const currentPlan = planMap.get(p.id);
         if (currentPlan) {
-            if ((p as any).parentId && planMap.has((p as any).parentId)) {
-                const parent = planMap.get((p as any).parentId);
-                parent?.subtasks.push(currentPlan);
+            if (p.parentId && planMap.has(p.parentId)) {
+                planMap.get(p.parentId)?.subtasks.push(currentPlan);
             } else {
                 rootPlans.push(currentPlan);
             }
         }
     });
 
-    const sortRecursively = (items: (RelaxationActivity & { subtasks: any[] })[]) => {
+    const sortRecursively = (items: (RelaxationActivity & { subtasks: RelaxationActivity[] })[]) => {
       items.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       items.forEach(item => {
-        if (item.subtasks && item.subtasks.length > 0) {
-          sortRecursively(item.subtasks);
-        }
+        if (item.subtasks && item.subtasks.length > 0) sortRecursively(item.subtasks);
       });
     };
-    
     sortRecursively(rootPlans);
 
-    return rootPlans.sort((a,b) => (a.pinned && !b.pinned) ? -1 : (!a.pinned && b.pinned) ? 1 : (a.order ?? 0) - (b.order ?? 0));
+    return rootPlans;
 }, [plans]);
 
-
-  const handleOpenDialog = (item: RelaxationActivity | RelaxationSubtask | null, parentId: string | null = null) => {
+  const handleOpenDialog = (item: RelaxationActivity | null, parentId: string | null = null) => {
     setEditingItem(item);
     setParentPlanId(parentId);
-    if(item && 'title' in item) form.reset({ title: item.title });
-    else if(item && 'content' in item) form.reset({ title: item.content });
-    else form.reset({ title: '' });
-    
+    if(item) {
+      form.reset({
+        title: item.title,
+        description: item.description,
+        status: item.status,
+        startDate: item.startDate ? (item.startDate as Timestamp).toDate() : undefined,
+        endDate: item.endDate ? (item.endDate as Timestamp).toDate() : undefined,
+      });
+    } else {
+      form.reset({ title: '', description: '', status: 'pending', startDate: undefined, endDate: undefined });
+    }
     setIsDialogOpen(true);
   };
   
-  const handleStatusChange = async (
-    item: RelaxationActivity | RelaxationSubtask,
-    newStatus: RelaxationActivity['status']
-  ) => {
+  const handleStatusChange = async (planId: string, newStatus: RelaxationActivity['status']) => {
     if (!firestore || !user) return;
-    const currentStatus = item.status;
-    const finalStatus = currentStatus === newStatus ? 'pending' : newStatus;
-    
-    const docRef = doc(firestore, `users/${user.uid}/relaxationActivities`, 'parentId' in item ? (item as any).parentId : item.id);
-    await updateDoc(docRef, { status: finalStatus });
-
+    const planRef = doc(firestore, `users/${user.uid}/relaxationActivities`, planId);
+    const currentPlan = plans?.find(p => p.id === planId);
+    if (!currentPlan) return;
+    const finalStatus = currentPlan.status === newStatus ? 'pending' : newStatus;
+    await updateDoc(planRef, { status: finalStatus });
   };
   
   const handleTogglePin = async (plan: RelaxationActivity) => {
@@ -114,73 +117,27 @@ export default function RelaxPage() {
   const onDragEnd = async (result: DropResult) => {
     const { source, destination, draggableId } = result;
     if (!destination || !plans || !firestore || !user) return;
-
-    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
     
     const batch = writeBatch(firestore);
-    
-    const findAndReorder = (items: RelaxationActivity[]): RelaxationActivity[] => {
-        const newItems = Array.from(items);
-        let movedItem: RelaxationActivity | undefined;
-
-        // Find and remove item from old position
-        for (let i = 0; i < newItems.length; i++) {
-            if (newItems[i].id === draggableId) {
-                [movedItem] = newItems.splice(i, 1);
-                break;
-            }
-            if (newItems[i].subtasks) {
-                newItems[i].subtasks = findAndReorder(newItems[i].subtasks as any) as any;
-            }
-        }
-        
-        return newItems;
-    };
-    
-    let allItems = JSON.parse(JSON.stringify(plansTree));
-    const movedItem = plans.find(p => p.id === draggableId);
-    if(!movedItem) return;
-
-    // Remove from old position
-    let parentId = movedItem.parentId || null;
-    if(parentId){
-        const parent = plans.find(p => p.id === parentId);
-    } else {
-        allItems = allItems.filter((p: any) => p.id !== draggableId);
-    }
-    
-    // Add to new position
-    if (destination.droppableId === 'root-droppable') {
-        movedItem.parentId = null;
-        allItems.splice(destination.index, 0, movedItem);
-    } else {
-        movedItem.parentId = destination.droppableId;
-    }
-    
-    const reorder = (items: RelaxationActivity[], parentId: string | null = null) => {
-        items.forEach((item, index) => {
-             const docRef = doc(firestore, `users/${user.uid}/relaxationActivities`, item.id);
-             batch.update(docRef, { order: index, parentId: parentId });
-             if (item.subtasks && item.subtasks.length > 0) {
-                 reorder(item.subtasks, item.id);
-             }
-        });
-    }
-
-    // Logic to update Firestore based on drag and drop result
-    // This is complex and requires careful state management and batch writes.
-    // For this prototype, a simplified version:
-    
     const docRef = doc(firestore, `users/${user.uid}/relaxationActivities`, draggableId);
-    batch.update(docRef, { parentId: destination.droppableId === 'root-droppable' ? null : destination.droppableId });
     
-    // You would also need to re-calculate the 'order' for siblings
-    
+    if (source.droppableId !== destination.droppableId) {
+      batch.update(docRef, { parentId: destination.droppableId === 'root-droppable' ? null : destination.droppableId });
+    }
+
+    const list = plans.filter(p => (p.parentId || 'root-droppable') === destination.droppableId);
+    const [movedItem] = list.splice(source.index, 1);
+    list.splice(destination.index, 0, movedItem);
+
+    list.forEach((item, index) => {
+      const itemRef = doc(firestore, `users/${user.uid}/relaxationActivities`, item.id);
+      batch.update(itemRef, { order: index });
+    });
+
     await batch.commit().catch(e => {
         toast({variant: 'destructive', title: "Error reordering"});
         console.error(e);
     });
-
   };
   
   const handleDelete = async (planId: string) => {
@@ -189,23 +146,31 @@ export default function RelaxPage() {
     toast({title: "تم حذف الخطة"});
   }
 
-  const handleSubmit = async (values: { title: string }) => {
+  const handleSubmit = async (values: FormSchema) => {
     if (!user || !plansCollectionRef) return;
     setIsSubmitting(true);
     try {
-      if (editingItem && 'title' in editingItem) {
-        const planRef = doc(firestore, `users/${user.uid}/relaxationActivities`, editingItem.id);
-        await updateDoc(planRef, { title: values.title });
-      } else {
-        await addDoc(plansCollectionRef, {
-          title: values.title, status: 'pending', pinned: false, order: plans?.length || 0,
-          userId: user.uid, createdAt: serverTimestamp(), parentId: parentPlanId,
-        });
-      }
-      toast({ title: 'نجاح', description: 'تم حفظ الخطة.' });
-      setIsDialogOpen(false);
-      setEditingItem(null);
-      setParentPlanId(null);
+        const data = {
+            ...values,
+            userId: user.uid,
+            createdAt: serverTimestamp(),
+            order: editingItem ? editingItem.order : (plans?.length || 0),
+            pinned: editingItem ? editingItem.pinned : false,
+            parentId: parentPlanId,
+            startDate: values.startDate ? Timestamp.fromDate(values.startDate) : null,
+            endDate: values.endDate ? Timestamp.fromDate(values.endDate) : null,
+        };
+
+        if (editingItem) {
+            const planRef = doc(firestore, `users/${user.uid}/relaxationActivities`, editingItem.id);
+            await updateDoc(planRef, data);
+        } else {
+            await addDoc(plansCollectionRef, data);
+        }
+        toast({ title: 'نجاح', description: 'تم حفظ الخطة.' });
+        setIsDialogOpen(false);
+        setEditingItem(null);
+        setParentPlanId(null);
     } catch (e) {
       toast({ variant: 'destructive', title: 'خطأ', description: `فشل الحفظ.` });
     } finally {
@@ -213,21 +178,17 @@ export default function RelaxPage() {
     }
   };
   
-  const StatusButtons = ({ item }: { item: RelaxationActivity | RelaxationSubtask }) => (
+  const StatusButtons = ({ item }: { item: RelaxationActivity }) => (
      <div className="flex gap-1 flex-shrink-0">
-        <Button size="icon" variant={item.status === 'completed' ? 'default' : 'ghost'} className="h-8 w-8" onClick={() => handleStatusChange(item, 'completed')}><Check className="h-4 w-4" /></Button>
-        <Button size="icon" variant={item.status === 'not_completed' ? 'destructive' : 'ghost'} className="h-8 w-8" onClick={() => handleStatusChange(item, 'not_completed')}><X className="h-4 w-4" /></Button>
+        <Button size="icon" variant={item.status === 'completed' ? 'default' : 'ghost'} className="h-8 w-8" onClick={() => handleStatusChange(item.id, 'completed')}><Check className="h-4 w-4" /></Button>
+        <Button size="icon" variant={item.status === 'not_completed' ? 'destructive' : 'ghost'} className="h-8 w-8" onClick={() => handleStatusChange(item.id, 'not_completed')}><X className="h-4 w-4" /></Button>
     </div>
   );
 
-  const PlanItem = ({ plan, index, level = 0 }: { plan: RelaxationActivity & { subtasks: any[] }, index: number, level: number }) => (
+  const PlanItem = ({ plan, index, level = 0 }: { plan: RelaxationActivity & { subtasks: RelaxationActivity[] }, index: number, level: number }) => (
     <Draggable key={plan.id} draggableId={plan.id} index={index}>
       {(provided) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          className="my-2"
-        >
+        <div ref={provided.innerRef} {...provided.draggableProps} className="my-2">
           <Card className={cn("relative", plan.pinned && "border-primary")}>
             <CardHeader {...provided.dragHandleProps} className="flex flex-row items-center justify-between p-3 cursor-grab bg-muted/30">
               <div className="flex items-center gap-2">
@@ -242,20 +203,19 @@ export default function RelaxPage() {
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(plan.id)}><Trash2 className="h-4 w-4" /></Button>
               </div>
             </CardHeader>
-            {(plan.subtasks && plan.subtasks.length > 0) && (
-              <CardContent className="p-3 pl-8">
-                <Droppable droppableId={plan.id} type="subtasks">
+            <CardContent className="p-3 pl-8">
+              {plan.description && <p className="text-sm text-muted-foreground mb-2">{plan.description}</p>}
+               <Droppable droppableId={plan.id} type="subtasks">
                   {(provided) => (
                     <div {...provided.droppableProps} ref={provided.innerRef}>
-                      {plan.subtasks.map((subtask: any, subIndex: number) => (
+                      {plan.subtasks.map((subtask, subIndex) => (
                         <PlanItem key={subtask.id} plan={subtask} index={subIndex} level={level + 1} />
                       ))}
                       {provided.placeholder}
                     </div>
                   )}
-                </Droppable>
-              </CardContent>
-            )}
+               </Droppable>
+            </CardContent>
           </Card>
         </div>
       )}
@@ -267,10 +227,24 @@ export default function RelaxPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editingItem ? 'تعديل الخطة' : (parentPlanId ? 'مهمة فرعية جديدة' : 'خطة جديدة')}</DialogTitle></DialogHeader>
-          <Form {...form}><form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <Form {...form}><form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 max-h-[80vh] overflow-y-auto p-1">
             <FormField control={form.control} name="title" render={({ field }) => (
               <FormItem><FormLabel>العنوان</FormLabel><FormControl><Input placeholder="مثال: رحلة نهاية الأسبوع" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
+             <FormField control={form.control} name="description" render={({ field }) => (
+              <FormItem><FormLabel>الوصف (اختياري)</FormLabel><FormControl><Textarea placeholder="تفاصيل الخطة" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={form.control} name="startDate" render={({ field }) => (
+                <FormItem className="flex flex-col"><FormLabel>تاريخ البدء</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant='outline' className={cn('w-full pl-3 text-left font-normal',!field.value && 'text-muted-foreground')}>{field.value ? format(field.value, 'PPP') : <span>اختر تاريخ</span>}<CalendarIcon className="mr-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="endDate" render={({ field }) => (
+                <FormItem className="flex flex-col"><FormLabel>تاريخ الانتهاء</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant='outline' className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}>{field.value ? format(field.value, 'PPP') : <span>اختر تاريخ</span>}<CalendarIcon className="mr-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>
+              )} />
+            </div>
+             <FormField control={form.control} name="status" render={({ field }) => (
+                <FormItem><FormLabel>الحالة</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} dir="rtl"><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="pending">قيد الانتظار</SelectItem><SelectItem value="completed">مكتمل</SelectItem><SelectItem value="not_completed">لم يكتمل</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+             )} />
             <DialogFooter>
               <DialogClose asChild><Button type="button" variant="secondary">إلغاء</Button></DialogClose>
               <Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="animate-spin ml-2" />} {editingItem ? 'حفظ' : 'إضافة'}</Button>

@@ -13,7 +13,6 @@ export type Task = {
   relatedHabitId?: string;
   updatedAt: FieldValue;
   parentId?: string | null;
-  order: number;
   // Client-side only
   subtasks?: Task[];
 };
@@ -129,22 +128,18 @@ export type WorshipAct = {
   createdAt: FieldValue;
 }
 
-export type RelaxationSubtask = {
-  id: string;
-  content: string;
-  status: 'pending' | 'completed' | 'not_completed';
-  order: number;
-};
-
 export type RelaxationActivity = {
   id: string;
   userId: string;
   title: string;
+  description?: string;
   status: 'pending' | 'completed' | 'not_completed';
   pinned: boolean;
   order: number;
   createdAt: FieldValue;
   parentId: string | null;
+  startDate?: Timestamp | Date | null;
+  endDate?: Timestamp | Date | null;
   // Client side
   subtasks: RelaxationActivity[];
 };
@@ -229,20 +224,19 @@ export type Saving = {
   createdAt: FieldValue;
 };
 
-export type StudySubtask = {
-  id: string;
-  content: string;
-  status: 'pending' | 'completed' | 'not_completed';
-  order: number;
-};
-
 export type StudyPlan = {
   id: string;
   userId: string;
   title: string;
+  description?: string;
   status: 'pending' | 'completed' | 'not_completed';
+  progress?: number;
   pinned: boolean;
-  subtasks: StudySubtask[];
   order: number;
   createdAt: FieldValue;
+  parentId: string | null;
+  startDate?: Timestamp | Date | null;
+  endDate?: Timestamp | Date | null;
+   // Client side
+  subtasks: StudyPlan[];
 };
