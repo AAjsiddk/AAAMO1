@@ -52,29 +52,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  const theme = localStorage.getItem('theme');
-                  if (theme) {
-                    document.documentElement.className = theme;
-                  } else {
-                    // If no theme is stored, default to dark
-                    document.documentElement.className = 'dark';
-                  }
-                } catch (e) {
-                  // Fallback for environments where localStorage is not available
-                  document.documentElement.className = 'dark';
-                }
-              })();
-            `,
-          }}
-        />
-      </head>
+    <html lang="ar" dir="rtl" className="dark" suppressHydrationWarning>
+      <head />
       <body className={cn('min-h-screen font-body antialiased', fontCairo.variable, fontReadex.variable)}>
         <FirebaseClientProvider>{children}</FirebaseClientProvider>
         <Toaster />

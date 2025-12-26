@@ -148,9 +148,10 @@ function ThemeLoader() {
   const firestore = useFirestore();
 
   useEffect(() => {
+    // This effect runs only on the client
     if (user && firestore) {
       const userDocRef = doc(firestore, 'users', user.uid);
-      getDoc(userDocRef).then(userDoc => {
+      const unsub = onSnapshot(userDocRef, (userDoc) => {
         if (userDoc.exists()) {
           const userData = userDoc.data();
            if (userData.theme) {
@@ -159,29 +160,11 @@ function ThemeLoader() {
              if (background) document.documentElement.style.setProperty('--background', background);
              if (accent) document.documentElement.style.setProperty('--accent', accent);
            }
-           const themeMode = userData.themeMode || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-           localStorage.setItem('theme', themeMode);
-           if (themeMode === 'light') {
-             document.documentElement.classList.add('light');
-             document.documentElement.classList.remove('dark');
-           } else {
-             document.documentElement.classList.add('dark');
-             document.documentElement.classList.remove('light');
-           }
         }
       });
-    } else if (!isUserLoading && !user) {
-        // Fallback for logged-out users
-        const theme = localStorage.getItem('theme') || 'dark'; // Default to dark if no preference
-        if (theme === 'light') {
-            document.documentElement.classList.add('light');
-            document.documentElement.classList.remove('dark');
-        } else {
-            document.documentElement.classList.add('dark');
-            document.documentElement.classList.remove('light');
-        }
+      return () => unsub(); // Cleanup listener on unmount
     }
-  }, [user, firestore, isUserLoading]);
+  }, [user, firestore]);
 
   return null; // This component doesn't render anything
 }

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Loader2, Palette, Lock, Moon, Sun } from 'lucide-react';
+import { Loader2, Palette, Lock } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Separator } from '@/components/ui/separator';
@@ -110,7 +110,6 @@ export default function SettingsPage() {
   const [primaryColor, setPrimaryColor] = useState('0 0% 0%');
   const [backgroundColor, setBackgroundColor] = useState('0 0% 0%');
   const [accentColor, setAccentColor] = useState('0 0% 0%');
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
   const [isSaving, setIsSaving] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -123,9 +122,6 @@ export default function SettingsPage() {
         setPrimaryColor(computedStyle.getPropertyValue('--primary').trim());
         setBackgroundColor(computedStyle.getPropertyValue('--background').trim());
         setAccentColor(computedStyle.getPropertyValue('--accent').trim());
-        const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-        if (storedTheme) setThemeMode(storedTheme);
-        else setThemeMode(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     }
   }, []);
 
@@ -141,7 +137,7 @@ export default function SettingsPage() {
     }
     setIsSaving(true);
     const userDocRef = doc(firestore, 'users', user.uid);
-    const themeData = { theme: { primary: primaryColor, background: backgroundColor, accent: accentColor }, themeMode: themeMode };
+    const themeData = { theme: { primary: primaryColor, background: backgroundColor, accent: accentColor } };
     try {
       await updateDoc(userDocRef, themeData);
       toast({ title: "تم الحفظ", description: "تم حفظ إعدادات المظهر بنجاح." });
@@ -150,17 +146,6 @@ export default function SettingsPage() {
        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userDocRef.path, operation: 'update', requestResourceData: themeData }));
     } finally {
         setIsSaving(false);
-    }
-  }
-
-  const toggleTheme = () => {
-    const newTheme = themeMode === 'light' ? 'dark' : 'light';
-    setThemeMode(newTheme);
-    localStorage.setItem('theme', newTheme);
-    if (newTheme === 'light') {
-        document.documentElement.classList.add('light'); document.documentElement.classList.remove('dark');
-    } else {
-        document.documentElement.classList.add('dark'); document.documentElement.classList.remove('light');
     }
   }
 
@@ -203,7 +188,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><Palette/> تخصيص المظهر</CardTitle><CardDescription>قم بتخصيص ألوان التطبيق لتناسب ذوقك. انقر على مربع اللون لاختيار لون جديد.</CardDescription></CardHeader>
         <CardContent className="space-y-6">
-            <div className="flex items-center space-x-2 space-x-reverse"><Button onClick={toggleTheme} variant="outline" size="icon">{themeMode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}</Button><Label>{themeMode === 'dark' ? 'الوضع الليلي' : 'الوضع النهاري'}</Label></div>
+            <p className="text-sm text-muted-foreground">التطبيق الآن في الوضع الليلي بشكل دائم.</p>
             <Separator />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                 <div className="space-y-2"><Label htmlFor="primaryColor">اللون الأساسي (Primary)</Label><ColorPicker value={primaryColor} onChange={(color) => handleColorChange(setPrimaryColor, '--primary', color)} /></div>

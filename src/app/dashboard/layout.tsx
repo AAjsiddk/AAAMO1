@@ -1,3 +1,5 @@
+'use client';
+
 import { Header } from '@/components/layout/header';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
@@ -8,6 +10,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+
   return (
     <AuthGuard>
       <SidebarProvider>

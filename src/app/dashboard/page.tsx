@@ -9,6 +9,7 @@ import { Loader2, ArrowLeft, Lightbulb, RefreshCw } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
+import { JournalDialog } from '@/components/dashboard/JournalDialog';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -51,15 +52,30 @@ const getRandomWisdom = () => {
     return wisdoms[Math.floor(Math.random() * wisdoms.length)];
 };
 
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) {
+    return "صباح الخير، جاهز لتبدأ يومك؟";
+  }
+  if (hour < 18) {
+    return "مساء الخير، كيف كان يومك حتى الآن؟";
+  }
+  return "مساء الخير، نتمنى لك أمسية هادئة.";
+};
+
 
 const DashboardPage = () => {
   const { user } = useUser();
   const firestore = useFirestore();
 
   const [currentWisdom, setCurrentWisdom] = useState<{type: string, text: string} | null>(null);
+  const [greeting, setGreeting] = useState('');
+  const [isJournalOpen, setIsJournalOpen] = useState(false);
+
 
   useEffect(() => {
     setCurrentWisdom(getDailyWisdom());
+    setGreeting(getGreeting());
   }, []);
 
   const tasksQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/tasks`), limit(10)) : null), [user, firestore]);
@@ -89,12 +105,22 @@ const DashboardPage = () => {
   }
 
   return (
+    <>
+    <JournalDialog open={isJournalOpen} onOpenChange={setIsJournalOpen} />
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 relative overflow-hidden">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between space-y-2">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0"
+      >
         <div>
-            <h2 className="text-3xl font-bold tracking-tight">لوحة التحكم</h2>
+            <h2 className="text-3xl font-bold tracking-tight">{greeting}</h2>
             <p className="text-muted-foreground">نظرة عامة على عالمك الشخصي.</p>
         </div>
+         <Button onClick={() => setIsJournalOpen(true)} size="lg">
+              <PlusCircle className="ml-2 h-5 w-5" />
+              اكتب مذكرتك الآن
+            </Button>
       </motion.div>
       
        <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
@@ -230,8 +256,8 @@ const DashboardPage = () => {
             </Card>
         </motion.div>
        </div>
-
     </div>
+    </>
   );
 }
 
