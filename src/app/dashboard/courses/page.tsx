@@ -212,7 +212,8 @@ export default function CoursesPage() {
                              <Button asChild variant="secondary"><Link href={course.url} target="_blank">الانتقال إلى الدورة <LinkIcon className="mr-2 h-4 w-4"/></Link></Button>
                             <div className="flex items-center">
                               <Button variant="ghost" size="icon" onClick={() => handleTogglePin(course)}>{course.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}</Button>
-                              <Button variant="ghost" size="icon" onClick={() => openDialog(course)}><Trash2 className="h-4 w-4 text-destructive" onClick={(e) => {e.stopPropagation(); handleDeleteCourse(course.id)}} /></Button>
+                              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openDialog(course); }}><Edit className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" className="text-destructive" onClick={(e) => {e.stopPropagation(); handleDeleteCourse(course.id)}} ><Trash2 className="h-4 w-4" /></Button>
                             </div>
                           </CardFooter>
                         </Card>

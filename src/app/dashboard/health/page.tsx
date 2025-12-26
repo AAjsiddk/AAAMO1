@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, where, addDoc, updateDoc, orderBy, deleteDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, where, addDoc, updateDoc, orderBy, deleteDoc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -20,7 +20,7 @@ import { Plus, Trash2, Loader2, HeartPulse, Dumbbell, Apple, Info, Utensils, Cal
 import { useToast } from '@/hooks/use-toast';
 import type { HealthEntry, ForbiddenFood, Exercise } from '@/lib/types';
 import { format } from 'date-fns';
-import { ar } from 'date-ns/locale';
+import { ar } from 'date-fns/locale';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { v4 as uuidv4 } from 'uuid';
@@ -165,7 +165,8 @@ export default function HealthPage() {
         await updateDoc(entryDocRef, entryData);
         toast({ title: 'نجاح', description: 'تم تحديث سجل اليوم الصحي.' });
       } else {
-        await addDoc(healthCollectionRef, { ...entryData, createdAt: serverTimestamp() });
+        const entryDocRef = doc(healthCollectionRef, todayString);
+        await setDoc(entryDocRef, { ...entryData, createdAt: serverTimestamp() });
         toast({ title: 'نجاح', description: 'تم تسجيل بيانات اليوم الصحية.' });
       }
     } catch (error) {

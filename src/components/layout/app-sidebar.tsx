@@ -60,7 +60,7 @@ export function AppSidebar() {
   
   const organizationSections = [
     { name: 'الأهداف', href: '/dashboard/goals', icon: Target },
-    { name: 'المهام', href: '/dashboard/tasks', icon: ClipboardCheck },
+    { name: 'المشاريع والمهام', href: '/dashboard/tasks', icon: ClipboardCheck },
     { name: 'العادات', href: '/dashboard/habits', icon: Repeat },
     { name: 'الملاحظات', href: '/dashboard/notes', icon: StickyNote },
     { name: 'الملفات', href: '/dashboard/files', icon: File },

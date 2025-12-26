@@ -4,7 +4,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, where, writeBatch, Timestamp, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, query, where, writeBatch, Timestamp, serverTimestamp, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -56,12 +56,18 @@ const worshipActSchema = z.object({
 type WorshipFormData = z.infer<typeof worshipActSchema>;
 
 async function getPrayerTimes() {
-    const response = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Dubai&country=AE&method=8`);
-    if (!response.ok) {
-        throw new Error('Failed to fetch prayer times');
+    try {
+        const response = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Dubai&country=AE&method=8`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch prayer times');
+        }
+        const data = await response.json();
+        return data.data.timings;
+    } catch (error) {
+        console.error("Could not fetch prayer times, using defaults.", error);
+        // Return default times if API fails
+        return { Fajr: '04:30', Dhuhr: '12:30', Asr: '16:00', Maghrib: '19:00', Isha: '20:30' };
     }
-    const data = await response.json();
-    return data.data.timings;
 }
 
 export default function FaithPage() {
@@ -123,7 +129,7 @@ export default function FaithPage() {
                     Fajr: times.Fajr,
                     Dhuhr: times.Dhuhr,
                     Asr: times.Asr,
-                    Maghrib: times.Magrib,
+                    Maghrib: times.Magrib || times.Maghrib, // API sometimes returns Magrib
                     Isha: times.Isha,
                 },
             });
@@ -145,14 +151,14 @@ export default function FaithPage() {
         const docRef = doc(firestore, `users/${user.uid}/prayers`, id);
         
         try {
-            const dataToUpdate = {
+            const dataToUpdate: Partial<Prayer> & { updatedAt: any } = {
                 [field]: value,
                 userId: user.uid,
                 date: todayString,
                 prayerName: prayerName,
                 updatedAt: serverTimestamp(),
             };
-            await writeBatch(firestore).set(docRef, dataToUpdate, { merge: true }).commit();
+            await setDoc(docRef, dataToUpdate, { merge: true });
         } catch (error) {
             console.error('Error updating prayer:', error);
             toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحديث بيانات الصلاة.' });

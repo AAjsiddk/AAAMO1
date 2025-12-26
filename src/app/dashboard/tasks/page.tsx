@@ -369,17 +369,17 @@ export default function TasksPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">المهام</h2>
+        <h2 className="text-3xl font-bold tracking-tight">المشاريع والمهام</h2>
         <Dialog open={isDialogOpen} onOpenChange={(open) => { if(!open) handleDialogClose()}}>
           <DialogTrigger asChild>
             <Button onClick={() => handleDialogOpen(null)}>
               <PlusCircle className="ml-2 h-4 w-4" />
-              إضافة مهمة رئيسية
+              إضافة مشروع / مهمة
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>{editingTask ? 'تعديل المهمة' : (parentTask ? 'مهمة فرعية جديدة' : 'مهمة جديدة')}</DialogTitle>
+              <DialogTitle>{editingTask ? 'تعديل المهمة' : (parentTask ? 'مهمة فرعية جديدة' : 'مشروع أو مهمة جديدة')}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -516,7 +516,7 @@ export default function TasksPage() {
               <Inbox className="h-12 w-12 text-muted-foreground" />
               <h3 className="text-xl font-semibold">لا توجد مهام بعد</h3>
               <p className="text-muted-foreground">
-                ابدأ بإضافة مهمتك الأولى لتنظيم يومك.
+                ابدأ بإضافة مشروعك أو مهمتك الأولى لتنظيم عملك.
               </p>
            </CardContent>
          </Card>
