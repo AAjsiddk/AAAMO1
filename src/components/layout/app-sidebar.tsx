@@ -40,6 +40,24 @@ import {
   Wind,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import React from 'react'
+
+const SidebarLink = React.memo(({ href, icon: Icon, name, isActive }: { href: string; icon: React.ElementType; name: string, isActive: boolean }) => (
+  <Link
+    href={href}
+    className={cn(
+      'flex items-center gap-3 rounded-md p-2 text-sm transition-colors',
+      isActive
+        ? 'bg-primary text-primary-foreground'
+        : 'text-foreground/70 hover:bg-muted hover:text-foreground'
+    )}
+  >
+    <Icon className="h-5 w-5" />
+    <span>{name}</span>
+  </Link>
+));
+SidebarLink.displayName = 'SidebarLink';
+
 
 export function AppSidebar() {
   const pathname = usePathname()
@@ -61,9 +79,9 @@ export function AppSidebar() {
     { name: 'المشاريع والمهام', href: '/dashboard/tasks', icon: ClipboardCheck },
     { name: 'العادات', href: '/dashboard/habits', icon: Repeat },
     { name: 'الملاحظات', href: '/dashboard/notes', icon: StickyNote },
-    { name: 'الملفات', href: '/dashboard/files', icon: File },
+    { name: 'الملفات الهامة', href: '/dashboard/files', icon: File },
     { name: 'الصندوق الشخصي', href: '/dashboard/personal-box', icon: Archive },
-    { name: 'المذكرة', href: '/dashboard/journaling', icon: BookText },
+    { name: 'المذكرة الخارجية', href: '/dashboard/journaling', icon: BookText },
   ];
 
   const selfDevelopmentSections = [
@@ -72,7 +90,7 @@ export function AppSidebar() {
       { name: 'يومي الجميل', href: '/dashboard/beautiful-day', icon: Sparkles },
       { name: 'العبادات', href: '/dashboard/faith', icon: HandHeart },
       { name: 'الصحة والغذاء', href: '/dashboard/health', icon: HeartPulse },
-      { name: 'الإلهامات', href: '/dashboard/inspirations', icon: Lightbulb },
+      { name: 'صندوق الإلهام', href: '/dashboard/inspirations', icon: Lightbulb },
   ];
   
   const toolsSections = [
@@ -92,8 +110,10 @@ export function AppSidebar() {
     { name: 'رسائل لنفسي', href: '/dashboard/messages', icon: MessageSquare },
     { name: 'الذكريات', href: '/dashboard/memories', icon: Camera },
     { name: 'الثيمات الديناميكية', href: '/dashboard/dynamic-themes', icon: Droplets },
-    { name: 'الإعدادات', href: '/dashboard/settings', icon: Settings },
   ];
+  
+  const settingsSection = { name: 'الإعدادات', href: '/dashboard/settings', icon: Settings };
+
 
   const SidebarSection = ({ title, items }: { title: string, items: { name: string, href: string, icon: React.ElementType }[] }) => (
     <>
@@ -101,18 +121,7 @@ export function AppSidebar() {
       <h2 className="px-2 py-1 text-xs font-semibold text-muted-foreground/80">{title}</h2>
       {items.map((item) => (
         <SidebarMenuItem key={item.name}>
-          <Link
-            href={item.href}
-            className={cn(
-              'flex items-center gap-3 rounded-md p-2 text-sm transition-colors',
-              isActive(item.href)
-                ? 'bg-primary text-primary-foreground'
-                : 'text-foreground/70 hover:bg-muted hover:text-foreground'
-            )}
-          >
-            <item.icon className="h-5 w-5" />
-            <span>{item.name}</span>
-          </Link>
+          <SidebarLink href={item.href} icon={item.icon} name={item.name} isActive={isActive(item.href)} />
         </SidebarMenuItem>
       ))}
     </>
@@ -127,18 +136,7 @@ export function AppSidebar() {
         <SidebarMenu>
           {mainSections.map((item) => (
              <SidebarMenuItem key={item.name}>
-              <Link
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-md p-2 text-sm transition-colors',
-                  isActive(item.href)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground/70 hover:bg-muted hover:text-foreground'
-                )}
-              >
-                <item.icon className="h-5 w-5" />
-                <span>{item.name}</span>
-              </Link>
+                <SidebarLink href={item.href} icon={item.icon} name={item.name} isActive={isActive(item.href)} />
             </SidebarMenuItem>
           ))}
           <SidebarSection title="التنظيم" items={organizationSections} />
@@ -148,6 +146,13 @@ export function AppSidebar() {
           <SidebarSection title="أخرى" items={otherSections} />
         </SidebarMenu>
       </SidebarContent>
+       <SidebarFooter>
+        <SidebarMenu>
+            <SidebarMenuItem>
+               <SidebarLink href={settingsSection.href} icon={settingsSection.icon} name={settingsSection.name} isActive={isActive(settingsSection.href)} />
+            </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   )
 }

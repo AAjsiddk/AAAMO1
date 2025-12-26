@@ -63,12 +63,12 @@ const SidebarProvider = ({
     <SidebarContext.Provider value={contextValue}>
       <div 
         onClickCapture={(e) => {
-          // Close sidebar on mobile when a link is clicked
           let target = e.target as HTMLElement;
           while (target && target.parentElement) {
             if (target instanceof HTMLAnchorElement && target.href) {
-              closeSidebar();
-              return;
+                if(target.hasAttribute('data-no-close-on-click')) return;
+                closeSidebar();
+                return;
             }
             target = target.parentElement;
           }
@@ -111,12 +111,14 @@ const Sidebar = React.forwardRef<
       ref={ref}
       className={cn(
         "bg-background text-foreground flex-shrink-0 flex flex-col transition-all duration-300 ease-in-out border-l",
-        isOpen ? 'w-64' : 'w-20',
+        isOpen ? 'w-64' : 'w-0 border-none', // Collapse completely
         className
       )}
       {...props}
     >
-      {children}
+      <div className={cn("flex flex-col h-full transition-opacity", isOpen ? "opacity-100" : "opacity-0 pointer-events-none")}>
+        {children}
+      </div>
     </aside>
   )
 })
@@ -133,11 +135,11 @@ const SidebarTrigger = React.forwardRef<
       ref={ref}
       variant="ghost"
       size="icon"
-      className={cn("h-8 w-8", isMobile ? '' : 'hidden md:inline-flex', className)}
+      className={cn("h-8 w-8", className)}
       onClick={toggleSidebar}
       {...props}
     >
-      {isMobile ? <PanelLeft /> : isOpen ? <X /> : <PanelLeft/>}
+      <PanelLeft/>
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
@@ -153,8 +155,8 @@ const SidebarHeader = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "flex items-center justify-center p-4 border-b h-14",
-        !isOpen && "h-14",
+        "flex items-center justify-center p-4 border-b h-16",
+        !isOpen && "h-16",
         className
         )}
       {...props}
