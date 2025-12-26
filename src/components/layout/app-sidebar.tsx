@@ -40,7 +40,8 @@ import {
   Archive,
   BookText,
   Swords,
-  BrainCircuit
+  BrainCircuit,
+  PiggyBank
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -81,6 +82,7 @@ export function AppSidebar() {
       { name: 'مكتبتي المعرفية', href: '/dashboard/library', icon: Library },
       { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: Clock },
       { name: 'مخطط الترفيه', href: '/dashboard/relax', icon: Coffee },
+      { name: 'تحويشتي', href: '/dashboard/savings', icon: PiggyBank },
   ];
 
   const analysisSections = [

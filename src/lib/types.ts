@@ -198,3 +198,11 @@ export type Prayer = {
     notes?: string;
     updatedAt: FieldValue;
 }
+
+export type Saving = {
+  id: string;
+  userId: string;
+  amount: number;
+  note: string;
+  createdAt: FieldValue;
+};
