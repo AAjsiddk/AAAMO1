@@ -11,7 +11,7 @@ import {
 } from '@/firebase';
 import { collection, doc, serverTimestamp, query, writeBatch, addDoc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -124,12 +124,10 @@ export default function StudyPlannerPage() {
     const batch = writeBatch(firestore);
     const docRef = doc(firestore, `users/${user.uid}/studyPlans`, draggableId);
     
-    // Handle reparenting
     if (source.droppableId !== destination.droppableId) {
       batch.update(docRef, { parentId: destination.droppableId === 'root-droppable' ? null : destination.droppableId });
     }
 
-    // Handle reordering
     const list = plans.filter(p => (p.parentId || 'root-droppable') === destination.droppableId);
     const [movedItem] = list.splice(source.index, 1);
     list.splice(destination.index, 0, movedItem);
@@ -227,6 +225,12 @@ export default function StudyPlannerPage() {
                   )}
                </Droppable>
             </CardContent>
+            {(plan.startDate || plan.endDate) && (
+              <CardFooter className="p-3 text-xs text-muted-foreground">
+                <CalendarIcon className="h-4 w-4 ml-2" />
+                {plan.startDate ? format((plan.startDate as Timestamp).toDate(), 'P') : '...'} - {plan.endDate ? format((plan.endDate as Timestamp).toDate(), 'P') : '...'}
+              </CardFooter>
+            )}
           </Card>
         </div>
       )}
