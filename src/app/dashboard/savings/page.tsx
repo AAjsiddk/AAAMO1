@@ -36,14 +36,15 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Trash2, Loader2, PiggyBank, Inbox, Banknote, Calendar } from 'lucide-react';
+import { PlusCircle, Trash2, Loader2, PiggyBank, Inbox, Banknote, Calendar, TrendingUp, TrendingDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Saving } from '@/lib/types';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 const savingSchema = z.object({
-  amount: z.coerce.number().positive({ message: 'يجب أن يكون المبلغ أكبر من صفر.' }),
+  amount: z.coerce.number().refine(val => val !== 0, { message: 'يجب أن لا يكون المبلغ صفرًا.' }),
   note: z.string().optional(),
 });
 
@@ -87,13 +88,13 @@ export default function SavingsPage() {
       });
       toast({
         title: 'تم الحفظ',
-        description: `تمت إضافة ${values.amount} إلى تحويشتك.`,
+        description: `تمت إضافة معاملة بمبلغ ${values.amount}.`,
       });
       form.reset({amount: 0, note: ''});
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Error saving:", error);
-      toast({ variant: 'destructive', title: 'خطأ', description: 'فشل حفظ المبلغ.' });
+      toast({ variant: 'destructive', title: 'خطأ', description: 'فشل حفظ المعاملة.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -117,23 +118,23 @@ export default function SavingsPage() {
         <h2 className="text-3xl font-bold tracking-tight">تحويشتي</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button><PlusCircle className="ml-2 h-4 w-4" /> إضافة مبلغ</Button>
+            <Button><PlusCircle className="ml-2 h-4 w-4" /> إضافة معاملة</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>إضافة مبلغ جديد</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>إضافة معاملة جديدة</DialogTitle></DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSave)} className="space-y-4">
                 <FormField control={form.control} name="amount" render={({ field }) => (
                   <FormItem>
                     <FormLabel>المبلغ</FormLabel>
-                    <FormControl><Input type="number" step="any" placeholder="0.00" {...field} /></FormControl>
+                    <FormControl><Input type="number" step="any" placeholder="مبلغ موجب للإضافة، وسالب للخصم" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="note" render={({ field }) => (
                   <FormItem>
                     <FormLabel>ملاحظة (اختياري)</FormLabel>
-                    <FormControl><Input placeholder="من وين جا المبلغ؟" {...field} /></FormControl>
+                    <FormControl><Input placeholder="مثال: من الراتب، شراء قهوة..." {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -162,8 +163,8 @@ export default function SavingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>سجل الإيداعات</CardTitle>
-          <CardDescription>هنا تظهر كل المبالغ اللي حوشتها.</CardDescription>
+          <CardTitle>سجل المعاملات</CardTitle>
+          <CardDescription>هنا تظهر كل المبالغ التي أضفتها أو خصمتها.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading && <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>}
@@ -176,12 +177,14 @@ export default function SavingsPage() {
           ) : (
              <div className="space-y-4">
                 {savings?.map(item => (
-                  <Card key={item.id} className="bg-muted/50">
+                  <Card key={item.id} className={cn("bg-muted/50", item.amount > 0 ? "border-green-500/20" : "border-red-500/20")}>
                     <CardContent className="p-4 flex justify-between items-center">
                         <div className="flex items-center gap-4">
-                            <Banknote className="h-6 w-6 text-green-500" />
+                            {item.amount > 0 ? <TrendingUp className="h-6 w-6 text-green-500" /> : <TrendingDown className="h-6 w-6 text-red-500" />}
                             <div>
-                                <p className="font-bold text-lg">{item.amount.toLocaleString('ar-SA', { style: 'currency', currency: 'SAR' })}</p>
+                                <p className={cn("font-bold text-lg", item.amount > 0 ? "text-green-500" : "text-red-500")}>
+                                    {item.amount.toLocaleString('ar-SA', { style: 'currency', currency: 'SAR' })}
+                                </p>
                                 <p className="text-sm text-muted-foreground">{item.note}</p>
                                 <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                                     <Calendar className="h-3 w-3" />
