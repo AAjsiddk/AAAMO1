@@ -66,7 +66,10 @@ export default function StudyPlannerPage() {
         const currentPlan = planMap.get(p.id);
         if (currentPlan) {
             if (p.parentId && planMap.has(p.parentId)) {
-                planMap.get(p.parentId)?.subtasks.push(currentPlan);
+                const parent = planMap.get(p.parentId);
+                if (parent) {
+                  parent.subtasks.push(currentPlan);
+                }
             } else {
                 rootPlans.push(currentPlan);
             }

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, memo } from 'react';
-import { CircularProgressbar, CircularProgressbarWithChildren, buildStyles } from 'react-circular-progressbar';
+import { CircularProgressbarWithChildren, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 
 const TimeWidgetInternal = () => {
@@ -18,7 +18,6 @@ const TimeWidgetInternal = () => {
       try {
         setHijriDate(new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {day: 'numeric', month: 'long', year: 'numeric'}).format(now));
       } catch (e) {
-        // Fallback for browsers that don't support islamic calendar
         console.error("Hijri calendar not supported", e);
         setHijriDate("التقويم الهجري غير مدعوم");
       }
@@ -38,8 +37,8 @@ const TimeWidgetInternal = () => {
   return (
      <div className="flex flex-col items-center justify-center text-center h-full">
         <div style={{ width: 160, height: 160, position: 'relative' }}>
-          <div style={{ position: 'absolute', width: '100%', height: '100%' }}>
-            <CircularProgressbar
+          <div style={{ position: 'absolute', width: '100%', height: '100%', filter: 'drop-shadow(0 0 5px hsl(var(--primary) / 0.5))' }}>
+            <CircularProgressbarWithChildren
               value={minutesPercentage}
               strokeWidth={2}
               styles={buildStyles({
@@ -47,21 +46,22 @@ const TimeWidgetInternal = () => {
                 trailColor: 'hsl(var(--muted) / 0.3)',
                 pathTransitionDuration: 0.2,
               })}
-            />
-          </div>
-          <div style={{ position: 'absolute', width: '75%', height: '75%', top: '12.5%', left: '12.5%' }}>
-            <CircularProgressbarWithChildren
-              value={secondsPercentage}
-              strokeWidth={4}
-              styles={buildStyles({
-                pathColor: `hsl(var(--primary))`,
-                trailColor: 'transparent',
-                pathTransitionDuration: 0.1,
-              })}
             >
-              <div className="flex flex-col items-center">
-                <div className="text-3xl font-bold tracking-tight text-foreground">{time.split(' ')[0]}</div>
-                <div className="text-sm text-muted-foreground">{time.split(' ')[1]}</div>
+              <div style={{ position: 'absolute', width: '75%', height: '75%', top: '12.5%', left: '12.5%' }}>
+                <CircularProgressbarWithChildren
+                  value={secondsPercentage}
+                  strokeWidth={4}
+                  styles={buildStyles({
+                    pathColor: `hsl(var(--primary))`,
+                    trailColor: 'transparent',
+                    pathTransitionDuration: 0.1,
+                  })}
+                >
+                  <div className="flex flex-col items-center">
+                    <div className="text-3xl font-bold tracking-tight text-foreground">{time.split(' ')[0]}</div>
+                    <div className="text-sm text-muted-foreground">{time.split(' ')[1]}</div>
+                  </div>
+                </CircularProgressbarWithChildren>
               </div>
             </CircularProgressbarWithChildren>
           </div>
