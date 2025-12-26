@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
-import type { Task, Goal, Habit, JournalEntry } from '@/lib/types';
+import type { Task, Goal, Habit, JournalEntry, Inspiration } from '@/lib/types';
 import { Loader2, ArrowLeft, Lightbulb, RefreshCw, RotateCcw } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
@@ -84,13 +84,17 @@ const DashboardPage = () => {
   const goalsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/goals`), orderBy('updatedAt', 'desc')) : null), [user, firestore]);
   const habitsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/habits`)) : null), [user, firestore]);
   const journalQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/journalEntries`), orderBy('createdAt', 'desc'), limit(5)) : null), [user, firestore]);
+  const inspirationsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/inspirations`), orderBy('createdAt', 'desc'), limit(1)) : null), [user, firestore]);
+
 
   const { data: tasks, isLoading: loadingTasks } = useCollection<Task>(tasksQuery);
   const { data: goals, isLoading: loadingGoals } = useCollection<Goal>(goalsQuery);
   const { data: habits, isLoading: loadingHabits } = useCollection<Habit>(habitsQuery);
   const { data: journalEntries, isLoading: loadingJournal } = useCollection<JournalEntry>(journalQuery);
+  const { data: latestInspiration, isLoading: loadingInspiration } = useCollection<Inspiration>(inspirationsQuery);
 
-  const isLoading = loadingTasks || loadingGoals || loadingHabits || loadingJournal;
+
+  const isLoading = loadingTasks || loadingGoals || loadingHabits || loadingJournal || loadingInspiration;
 
   const stats = useMemo(() => ({
     tasksCompleted: tasks?.filter(t => t.status === 'completed').length || 0,
@@ -282,18 +286,33 @@ const DashboardPage = () => {
                         صندوق الإلهام
                     </CardTitle>
                     <CardDescription>
-                       أفكارك السريعة ستظهر هنا. يمكنك إضافتها من صفحة الإلهامات.
+                       آخر فكرة سريعة قمت بتدوينها.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col h-full items-center justify-center">
-                   <div className="text-center">
-                    <p className="text-muted-foreground">اذهب إلى صفحة الإلهامات لتدوين أفكارك.</p>
-                     <Button asChild variant="link" className="mt-2">
-                        <Link href="/dashboard/inspirations">
-                             الذهاب إلى الإلهامات <ArrowLeft className="mr-2 h-4 w-4" />
-                        </Link>
-                    </Button>
-                   </div>
+                   {loadingInspiration ? (
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                   ) : latestInspiration && latestInspiration.length > 0 ? (
+                       <div className="text-center">
+                           <blockquote className="border-r-2 border-primary pr-4 italic text-foreground text-lg">
+                            "{latestInspiration[0].content}"
+                           </blockquote>
+                           <Button asChild variant="link" className="mt-4">
+                                <Link href="/dashboard/inspirations">
+                                    عرض كل الإلهامات <ArrowLeft className="mr-2 h-4 w-4" />
+                                </Link>
+                            </Button>
+                       </div>
+                   ) : (
+                       <div className="text-center">
+                           <p className="text-muted-foreground">اذهب إلى صفحة الإلهامات لتدوين أفكارك.</p>
+                           <Button asChild variant="link" className="mt-2">
+                                <Link href="/dashboard/inspirations">
+                                    الذهاب إلى الإلهامات <ArrowLeft className="mr-2 h-4 w-4" />
+                                </Link>
+                           </Button>
+                       </div>
+                   )}
                 </CardContent>
             </Card>
         </motion.div>

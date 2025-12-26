@@ -8,7 +8,7 @@ import { collection, doc, query, where, writeBatch, Timestamp, serverTimestamp }
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Loader2, Check, X, Edit2, Save, Landmark, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Check, X, Edit2, Save, Landmark, Plus, Trash2, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Prayer, WorshipAct } from '@/lib/types';
 import { format, startOfDay } from 'date-fns';
@@ -19,6 +19,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import Link from 'next/link';
+
 
 const prayerNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'] as const;
 type PrayerName = typeof prayerNames[number];
@@ -180,6 +182,22 @@ export default function FaithPage() {
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">العبادات</h2>
             </div>
+            <Card className="bg-card/70 border-primary/20">
+                <CardHeader>
+                    <CardTitle>حصن المسلم</CardTitle>
+                    <CardDescription>
+                        بوابتك اليومية للأذكار والأدعية.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild>
+                        <Link href="https://remembrances-1.vercel.app/" target="_blank">
+                            <ExternalLink className="ml-2 h-4 w-4"/>
+                            افتح الأذكار
+                        </Link>
+                    </Button>
+                </CardContent>
+            </Card>
              <Accordion type="multiple" defaultValue={['item-1', 'item-2']} className="w-full">
                 <AccordionItem value="item-1">
                     <AccordionTrigger>
