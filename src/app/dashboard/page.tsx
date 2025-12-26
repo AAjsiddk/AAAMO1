@@ -3,7 +3,7 @@ import { useState, useMemo, memo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
-import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, limit, Timestamp, where } from 'firebase/firestore';
 import type { Task, Goal, Habit, JournalEntry, Inspiration } from '@/lib/types';
 import { Loader2, ArrowLeft, Lightbulb, RefreshCw } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
