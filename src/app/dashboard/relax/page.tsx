@@ -153,7 +153,7 @@ export default function RelaxPage() {
         const data = {
             ...values,
             userId: user.uid,
-            createdAt: serverTimestamp(),
+            createdAt: editingItem?.createdAt ?? serverTimestamp(),
             order: editingItem?.order ?? (plans?.length || 0),
             pinned: editingItem?.pinned ?? false,
             parentId: parentPlanId,
@@ -207,7 +207,7 @@ export default function RelaxPage() {
               {plan.description && <p className="text-sm text-muted-foreground mb-2">{plan.description}</p>}
                <Droppable droppableId={plan.id} type="subtasks">
                   {(provided) => (
-                    <div {...provided.droppableProps} ref={provided.innerRef}>
+                    <div {...provided.droppableProps} ref={provided.innerRef} className="min-h-[10px]">
                       {plan.subtasks.map((subtask, subIndex) => (
                         <PlanItem key={subtask.id} plan={subtask} index={subIndex} level={level + 1} />
                       ))}

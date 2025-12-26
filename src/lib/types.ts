@@ -136,7 +136,7 @@ export type RelaxationActivity = {
   status: 'pending' | 'completed' | 'not_completed';
   pinned: boolean;
   order: number;
-  createdAt: FieldValue;
+  createdAt: FieldValue | Timestamp;
   parentId: string | null;
   startDate?: Timestamp | Date | null;
   endDate?: Timestamp | Date | null;
@@ -233,7 +233,7 @@ export type StudyPlan = {
   progress?: number;
   pinned: boolean;
   order: number;
-  createdAt: FieldValue;
+  createdAt: FieldValue | Timestamp;
   parentId: string | null;
   startDate?: Timestamp | Date | null;
   endDate?: Timestamp | Date | null;

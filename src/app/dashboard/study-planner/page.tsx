@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, writeBatch, addDoc, deleteDoc, updateDoc, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, writeBatch, addDoc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -124,10 +124,12 @@ export default function StudyPlannerPage() {
     const batch = writeBatch(firestore);
     const docRef = doc(firestore, `users/${user.uid}/studyPlans`, draggableId);
     
+    // Handle reparenting
     if (source.droppableId !== destination.droppableId) {
       batch.update(docRef, { parentId: destination.droppableId === 'root-droppable' ? null : destination.droppableId });
     }
 
+    // Handle reordering
     const list = plans.filter(p => (p.parentId || 'root-droppable') === destination.droppableId);
     const [movedItem] = list.splice(source.index, 1);
     list.splice(destination.index, 0, movedItem);
@@ -156,7 +158,7 @@ export default function StudyPlannerPage() {
         const data = {
             ...values,
             userId: user.uid,
-            createdAt: serverTimestamp(),
+            createdAt: editingItem?.createdAt ?? serverTimestamp(),
             order: editingItem?.order ?? (plans?.length || 0),
             pinned: editingItem?.pinned ?? false,
             parentId: parentPlanId,
@@ -216,7 +218,7 @@ export default function StudyPlannerPage() {
                )}
                <Droppable droppableId={plan.id} type="subtasks">
                   {(provided) => (
-                    <div {...provided.droppableProps} ref={provided.innerRef}>
+                    <div {...provided.droppableProps} ref={provided.innerRef} className="min-h-[10px]">
                       {plan.subtasks.map((subtask, subIndex) => (
                         <PlanItem key={subtask.id} plan={subtask} index={subIndex} level={level + 1} />
                       ))}
