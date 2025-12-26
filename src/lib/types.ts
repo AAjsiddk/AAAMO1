@@ -149,14 +149,26 @@ export type Exercise = {
   sets: ExerciseSet[];
 };
 
+export type WorkoutSession = {
+  id: string;
+  title: string; // e.g., "Chest Day"
+  exercises: Exercise[];
+};
+
+export type FoodIntake = {
+    id: string;
+    type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+    category: 'meal' | 'supplement';
+    description: string;
+}
 
 export type HealthEntry = {
-    id: string;
+    id: string; // Will be the date string 'yyyy-MM-dd'
     userId: string;
     date: string; // YYYY-MM-DD
-    foodIntake: { meal: string, description: string }[];
+    foodIntake: FoodIntake[];
+    workouts: WorkoutSession[];
     notes: string;
-    exercises?: Exercise[];
     createdAt: FieldValue;
     updatedAt: FieldValue;
 }
@@ -204,4 +216,19 @@ export type Saving = {
   amount: number;
   note: string;
   createdAt: FieldValue;
+};
+
+export type StudySubtask = {
+  id: string;
+  content: string;
+  status: 'pending' | 'completed' | 'not_completed';
+  order: number;
+};
+
+export type StudyPlan = {
+  id: string;
+  title: string;
+  status: 'pending' | 'completed' | 'not_completed';
+  subtasks: StudySubtask[];
+  order: number;
 };
