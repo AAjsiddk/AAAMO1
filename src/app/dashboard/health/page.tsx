@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Plus, Trash2, Loader2, HeartPulse, Dumbbell, Apple, Info, Utensils, CalendarDays, Edit, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { HealthEntry, ForbiddenFood, Exercise } from '@/lib/types';
