@@ -36,7 +36,8 @@ import {
   Archive,
   BookText,
   PiggyBank,
-  BookMarked
+  BookMarked,
+  Wind,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -76,7 +77,8 @@ export function AppSidebar() {
   
   const toolsSections = [
       { name: 'الدورات التعليمية', href: '/dashboard/courses', icon: BookOpen },
-      { name: 'مخطط الدراسة (الترفيه)', href: '/dashboard/study-planner', icon: BookMarked },
+      { name: 'مخطط الدراسة', href: '/dashboard/study-planner', icon: BookMarked },
+      { name: 'مخطط الترفيه', href: '/dashboard/relax', icon: Wind },
       { name: 'مكتبتي المعرفية', href: '/dashboard/library', icon: Library },
       { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: Clock },
       { name: 'تحويشتي', href: '/dashboard/savings', icon: PiggyBank },

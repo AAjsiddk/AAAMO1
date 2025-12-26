@@ -128,14 +128,23 @@ export type WorshipAct = {
   createdAt: FieldValue;
 }
 
+export type RelaxationSubtask = {
+  id: string;
+  content: string;
+  status: 'pending' | 'completed' | 'not_completed';
+  order: number;
+};
+
 export type RelaxationActivity = {
   id: string;
   userId: string;
-  name: string;
-  description?: string;
-  category: string;
+  title: string;
+  status: 'pending' | 'completed' | 'not_completed';
+  pinned: boolean;
+  subtasks: RelaxationSubtask[];
+  order: number;
   createdAt: FieldValue;
-}
+};
 
 export type ExerciseSet = {
   reps: number;
