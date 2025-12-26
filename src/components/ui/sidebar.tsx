@@ -35,14 +35,20 @@ const SidebarProvider = ({
 }: React.ComponentProps<"div">) => {
   const isMobile = useIsMobile()
   const [isOpen, setIsOpen] = React.useState(!isMobile)
+  const pathname = usePathname();
 
   const toggleSidebar = React.useCallback(() => {
     setIsOpen((prev) => !prev)
   }, [])
   
   React.useEffect(() => {
-    setIsOpen(!isMobile);
-  }, [isMobile]);
+    if (isMobile) {
+      setIsOpen(false);
+    } else {
+      setIsOpen(true);
+    }
+  }, [isMobile, pathname]);
+
 
   const contextValue = React.useMemo<SidebarContext>(
     () => ({

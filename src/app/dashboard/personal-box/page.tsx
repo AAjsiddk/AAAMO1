@@ -223,13 +223,14 @@ export default function PersonalBoxPage() {
                 <CalendarHeart className="ml-2 h-4 w-4" />
                 في مثل هذا اليوم
             </Button>
-          <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
-            <DialogTrigger asChild>
-              <Button onClick={() => handleOpenDialog(null)}>
-                <PlusCircle className="ml-2 h-4 w-4" />
-                تدوينة جديدة
-              </Button>
-            </DialogTrigger>
+            <Button onClick={() => handleOpenDialog(null)}>
+              <PlusCircle className="ml-2 h-4 w-4" />
+              تدوينة جديدة
+            </Button>
+        </div>
+      </div>
+      
+       <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader><DialogTitle>{editingEntry ? 'تعديل التدوينة' : 'تدوينة جديدة'}</DialogTitle></DialogHeader>
               <Form {...form}>
@@ -278,8 +279,6 @@ export default function PersonalBoxPage() {
               </Form>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
 
       {isLoadingEntries && <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}
 
