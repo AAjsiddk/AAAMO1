@@ -253,7 +253,7 @@ export default function StudyPlannerPage() {
               <FormItem><FormLabel>الوصف (اختياري)</FormLabel><FormControl><Textarea placeholder="تفاصيل الخطة" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="progress" render={({ field }) => (
-              <FormItem><FormLabel>نسبة التقدم</FormLabel><FormControl><Input type="number" min="0" max="100" {...field} /></FormControl><Progress value={field.value} className="mt-2" /><FormMessage /></FormItem>
+              <FormItem><FormLabel>نسبة التقدم</FormLabel><FormControl><Input type="number" min="0" max="100" {...field} value={field.value || 0} /></FormControl><Progress value={field.value || 0} className="mt-2" /><FormMessage /></FormItem>
             )} />
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="startDate" render={({ field }) => (

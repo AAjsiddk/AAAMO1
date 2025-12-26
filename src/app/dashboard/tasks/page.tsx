@@ -177,10 +177,10 @@ const TaskItem = memo(function TaskItem({ task, level = 0, onEdit, onDelete, onA
               </AlertDialog>
             </div>
           </div>
-          {task.description && <CardDescription className="pt-2 pl-8">{task.description}</CardDescription>}
+          {task.description && <CardDescription className="pt-2 pr-8">{task.description}</CardDescription>}
         </CardHeader>
         
-        <CardContent className="p-4 pt-0 pl-8 space-y-3">
+        <CardContent className="p-4 pt-0 pr-8 space-y-3">
           {typeof task.progress === 'number' && (
             <div>
               <div className="flex justify-between items-center mb-1 text-xs">
@@ -193,7 +193,7 @@ const TaskItem = memo(function TaskItem({ task, level = 0, onEdit, onDelete, onA
         </CardContent>
 
         {(task.status || startDate || endDate) &&
-            <CardFooter className="p-4 pt-0 pl-8">
+            <CardFooter className="p-4 pt-0 pr-8">
                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                   <div className='flex items-center gap-2'>
                     <Badge variant="outline" className={cn("font-normal", statusColors[task.status])}>

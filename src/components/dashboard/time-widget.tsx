@@ -44,7 +44,7 @@ const TimeWidgetInternal = () => {
               styles={buildStyles({
                 pathColor: `hsl(var(--primary) / 0.5)`,
                 trailColor: 'hsl(var(--muted) / 0.3)',
-                pathTransitionDuration: 0.2,
+                pathTransitionDuration: 0,
               })}
             >
               <div style={{ position: 'absolute', width: '75%', height: '75%', top: '12.5%', left: '12.5%' }}>
@@ -54,7 +54,7 @@ const TimeWidgetInternal = () => {
                   styles={buildStyles({
                     pathColor: `hsl(var(--primary))`,
                     trailColor: 'transparent',
-                    pathTransitionDuration: 0.1,
+                    pathTransitionDuration: 0,
                   })}
                 >
                   <div className="flex flex-col items-center">
