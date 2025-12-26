@@ -14,7 +14,13 @@ const TimeWidgetInternal = () => {
       const now = new Date();
       setTime(now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', hour12: true }));
       setDate(now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
-      setHijriDate(new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {day: 'numeric', month: 'long', year: 'numeric'}).format(now));
+      try {
+        setHijriDate(new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {day: 'numeric', month: 'long', year: 'numeric'}).format(now));
+      } catch (e) {
+        // Fallback for browsers that don't support islamic calendar
+        console.error("Hijri calendar not supported", e);
+        setHijriDate("التقويم الهجري غير مدعوم");
+      }
       setSeconds(now.getSeconds());
     };
     
@@ -27,11 +33,11 @@ const TimeWidgetInternal = () => {
   const percentage = (seconds / 60) * 100;
 
   return (
-     <div className="flex flex-col items-center justify-center text-center">
-        <div style={{ width: 150, height: 150 }}>
+     <div className="flex flex-col items-center justify-center text-center h-full">
+        <div style={{ width: 120, height: 120 }}>
           <CircularProgressbarWithChildren
             value={percentage}
-            strokeWidth={4}
+            strokeWidth={3}
             styles={buildStyles({
               pathColor: `hsl(var(--primary))`,
               trailColor: 'hsl(var(--muted))',
@@ -44,8 +50,8 @@ const TimeWidgetInternal = () => {
             </div>
           </CircularProgressbarWithChildren>
         </div>
-        <p className="mt-4 text-lg text-muted-foreground">{date}</p>
-        <p className="text-md text-muted-foreground/80">{hijriDate}</p>
+        <p className="mt-3 text-sm text-muted-foreground">{date}</p>
+        <p className="text-xs text-muted-foreground/80">{hijriDate}</p>
     </div>
   );
 };

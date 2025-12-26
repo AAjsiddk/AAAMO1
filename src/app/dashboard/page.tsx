@@ -5,11 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import type { Task, Goal, Habit, JournalEntry, Inspiration } from '@/lib/types';
-import { Loader2, ArrowLeft, Lightbulb, RefreshCw, PlusCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, Lightbulb, RefreshCw, PlusCircle, ExternalLink } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { JournalDialog } from '@/components/dashboard/JournalDialog';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -70,8 +69,6 @@ const DashboardPage = () => {
 
   const [currentWisdom, setCurrentWisdom] = useState<{type: string, text: string} | null>(null);
   const [greeting, setGreeting] = useState('');
-  const [isJournalOpen, setIsJournalOpen] = useState(false);
-
 
   useEffect(() => {
     setCurrentWisdom(getDailyWisdom());
@@ -106,7 +103,6 @@ const DashboardPage = () => {
 
   return (
     <>
-    <JournalDialog open={isJournalOpen} onOpenChange={setIsJournalOpen} />
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 relative overflow-hidden">
       <motion.div 
         initial={{ opacity: 0, y: -20 }} 
@@ -117,10 +113,12 @@ const DashboardPage = () => {
             <h2 className="text-3xl font-bold tracking-tight">{greeting}</h2>
             <p className="text-muted-foreground">نظرة عامة على عالمك الشخصي.</p>
         </div>
-         <Button onClick={() => setIsJournalOpen(true)} size="lg">
-              <PlusCircle className="ml-2 h-5 w-5" />
+         <Button asChild size="lg">
+            <Link href="https://aaamo68.youware.app/" target="_blank">
+              <ExternalLink className="ml-2 h-5 w-5" />
               اكتب مذكرتك الآن
-            </Button>
+            </Link>
+        </Button>
       </motion.div>
       
        <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
