@@ -13,6 +13,7 @@ export type Task = {
   relatedHabitId?: string;
   updatedAt: FieldValue;
   parentId?: string | null;
+  order: number;
   // Client-side only
   subtasks?: Task[];
 };
@@ -95,7 +96,7 @@ export type JournalEntry = {
     title: string;
     content: string;
     mood?: 'happy' | 'sad' | 'neutral' | 'excited' | 'anxious';
-    createdAt: FieldValue;
+    createdAt: FieldValue | Timestamp;
     updatedAt: FieldValue;
 }
 
@@ -141,9 +142,11 @@ export type RelaxationActivity = {
   title: string;
   status: 'pending' | 'completed' | 'not_completed';
   pinned: boolean;
-  subtasks: RelaxationSubtask[];
   order: number;
   createdAt: FieldValue;
+  parentId: string | null;
+  // Client side
+  subtasks: RelaxationActivity[];
 };
 
 export type ExerciseSet = {

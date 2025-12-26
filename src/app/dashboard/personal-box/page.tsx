@@ -132,8 +132,7 @@ export default function PersonalBoxPage() {
                    entryDate.getMonth() === today.getMonth();
         });
     }
-    // Filter out special entries from other sections
-    return allEntries.filter(entry => entry.title !== 'Gratitude Entry' && entry.title !== 'My Beautiful Moment' && entry.title !== 'لحظة سعيدة');
+    return allEntries;
   }, [allEntries, showOnThisDay, today]);
 
   const handleOpenDialog = (entry: JournalEntry | null) => {
