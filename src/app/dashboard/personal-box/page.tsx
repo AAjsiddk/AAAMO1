@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, orderBy, addDoc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, orderBy, addDoc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -43,22 +43,27 @@ import {
   Trash2,
   Loader2,
   Archive,
-  Calendar,
+  Calendar as CalendarIcon,
   Smile,
   Frown,
   Meh,
   Sparkles,
   Annoyed,
   CalendarHeart,
+  Edit,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { JournalEntry } from '@/lib/types';
 import { format, isSameDay } from 'date-fns';
-import Image from 'next/image';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+
 
 const journalSchema = z.object({
   title: z.string().min(1, { message: 'العنوان مطلوب.' }),
   content: z.string().min(1, { message: 'المحتوى مطلوب.' }),
+  createdAt: z.date().optional(),
 });
 
 
@@ -91,6 +96,7 @@ export default function PersonalBoxPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showOnThisDay, setShowOnThisDay] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
 
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -130,6 +136,26 @@ export default function PersonalBoxPage() {
     return allEntries.filter(entry => entry.title !== 'Gratitude Entry' && entry.title !== 'My Beautiful Moment' && entry.title !== 'لحظة سعيدة');
   }, [allEntries, showOnThisDay, today]);
 
+  const handleOpenDialog = (entry: JournalEntry | null) => {
+    setEditingEntry(entry);
+    if (entry) {
+        form.reset({
+            title: entry.title,
+            content: entry.content,
+            createdAt: entry.createdAt ? (entry.createdAt as Timestamp).toDate() : undefined,
+        });
+    } else {
+        form.reset({ title: '', content: '', createdAt: new Date() });
+    }
+    setIsDialogOpen(true);
+  };
+  
+  const handleDialogClose = () => {
+      setIsDialogOpen(false);
+      setEditingEntry(null);
+      form.reset({ title: '', content: '' });
+  }
+
   const onSubmit = async (values: z.infer<typeof journalSchema>) => {
     if (!firestore || !user || !journalCollectionRef) return;
     setIsSubmitting(true);
@@ -137,23 +163,33 @@ export default function PersonalBoxPage() {
     try {
         const mood = analyzeMood(values.content);
         
-        const newEntry: Omit<JournalEntry, 'id'> = {
-          title: values.title,
-          content: values.content,
-          userId: user.uid,
-          mood: mood,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        };
+        if (editingEntry) {
+            const entryDocRef = doc(firestore, `users/${user.uid}/journalEntries`, editingEntry.id);
+            await updateDoc(entryDocRef, {
+                title: values.title,
+                content: values.content,
+                mood: mood,
+                createdAt: values.createdAt ? Timestamp.fromDate(values.createdAt) : serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+            toast({ title: 'نجاح', description: 'تم تحديث التدوينة بنجاح.' });
+        } else {
+            const newEntry: Omit<JournalEntry, 'id'> = {
+              title: values.title,
+              content: values.content,
+              userId: user.uid,
+              mood: mood,
+              createdAt: values.createdAt ? Timestamp.fromDate(values.createdAt) : serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            };
+            await addDoc(journalCollectionRef, newEntry);
+            toast({ title: 'نجاح', description: 'تمت إضافة تدوينتك بنجاح.' });
+        }
         
-        await addDoc(journalCollectionRef, newEntry);
-        
-        toast({ title: 'نجاح', description: 'تمت إضافة تدوينتك بنجاح.' });
-        form.reset();
-        setIsDialogOpen(false);
+        handleDialogClose();
     } catch (error) {
-        console.error("Error creating journal entry: ", error);
-        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل إنشاء التدوينة.' });
+        console.error("Error saving journal entry: ", error);
+        toast({ variant: 'destructive', title: 'خطأ', description: `فشل ${editingEntry ? 'تحديث' : 'إنشاء'} التدوينة.` });
     } finally {
         setIsSubmitting(false);
     }
@@ -188,15 +224,15 @@ export default function PersonalBoxPage() {
                 <CalendarHeart className="ml-2 h-4 w-4" />
                 في مثل هذا اليوم
             </Button>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) { form.reset(); } setIsDialogOpen(open); }}>
+          <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={() => handleOpenDialog(null)}>
                 <PlusCircle className="ml-2 h-4 w-4" />
                 تدوينة جديدة
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
-              <DialogHeader><DialogTitle>تدوينة جديدة</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{editingEntry ? 'تعديل التدوينة' : 'تدوينة جديدة'}</DialogTitle></DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField name="title" control={form.control} render={({ field }) => (
@@ -205,12 +241,38 @@ export default function PersonalBoxPage() {
                   <FormField name="content" control={form.control} render={({ field }) => (
                     <FormItem><FormLabel>المحتوى</FormLabel><FormControl><Textarea placeholder="ماذا يدور في خلدك؟" {...field} rows={6} /></FormControl><FormMessage /></FormItem>
                   )} />
+                  <FormField
+                    control={form.control}
+                    name="createdAt"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>تاريخ الإنشاء</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={'outline'}
+                                className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                              >
+                                {field.value ? format(field.value, 'PPP') : <span>اختر تاريخ</span>}
+                                <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
                   <DialogFooter>
                     <DialogClose asChild><Button type="button" variant="secondary">إلغاء</Button></DialogClose>
                     <Button type="submit" disabled={isSubmitting}>
                       {isSubmitting && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                      حفظ
+                      {editingEntry ? 'حفظ التعديلات' : 'حفظ'}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -229,7 +291,7 @@ export default function PersonalBoxPage() {
             <h3 className="text-xl font-semibold">{showOnThisDay ? "لا توجد ذكريات في مثل هذا اليوم" : "صندوقك الشخصي فارغ"}</h3>
             <p className="text-muted-foreground">{showOnThisDay ? "ربما العام القادم؟" : "ابدأ بكتابة أول تدوينة لك."}</p>
              {!showOnThisDay && (
-              <Button onClick={() => setIsDialogOpen(true)}>
+              <Button onClick={() => handleOpenDialog(null)}>
                 <PlusCircle className="ml-2 h-4 w-4" />
                 تدوينة جديدة
               </Button>
@@ -245,12 +307,17 @@ export default function PersonalBoxPage() {
               <CardHeader>
                 <CardTitle className="flex justify-between items-start">
                   <span>{entry.title}</span>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => handleDelete(entry.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <div className="flex-shrink-0">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(entry)}>
+                        <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(entry.id)}>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardTitle>
                 <CardDescription className="flex items-center gap-4 text-xs pt-1">
-                    <span className="flex items-center gap-1"><Calendar className="h-4 w-4" /> {formatDate(entry.createdAt)}</span>
+                    <span className="flex items-center gap-1"><CalendarIcon className="h-4 w-4" /> {formatDate(entry.createdAt)}</span>
                     {entry.mood && moodIcons[entry.mood] && (
                         <span className="flex items-center gap-1">
                             {moodIcons[entry.mood]}

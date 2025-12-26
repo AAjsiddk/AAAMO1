@@ -53,18 +53,18 @@ export default function RootLayout({
                 try {
                   const theme = localStorage.getItem('theme');
                   if (theme) {
-                    document.documentElement.classList.add(theme);
+                    document.documentElement.className = theme;
                   } else {
                     // If no theme is stored, check system preference
                     if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                       document.documentElement.classList.add('dark');
+                       document.documentElement.className = 'dark';
                     } else {
-                       document.documentElement.classList.add('light');
+                       document.documentElement.className = 'light';
                     }
                   }
                 } catch (e) {
                   // Fallback for environments where localStorage is not available
-                  document.documentElement.classList.add('dark');
+                  document.documentElement.className = 'dark';
                 }
               })();
             `,

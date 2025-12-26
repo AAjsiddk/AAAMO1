@@ -3,7 +3,7 @@ import { useState, useMemo, memo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
-import { collection, query, orderBy, limit, Timestamp, where } from 'firebase/firestore';
+import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import type { Task, Goal, Habit, JournalEntry, Inspiration } from '@/lib/types';
 import { Loader2, ArrowLeft, Lightbulb, RefreshCw } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
@@ -62,8 +62,8 @@ const DashboardPage = () => {
     setCurrentWisdom(getDailyWisdom());
   }, []);
 
-  const tasksQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/tasks`), where('status', '==', 'completed'), limit(10)) : null), [user, firestore]);
-  const goalsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/goals`), where('progress', '<', 100)) : null), [user, firestore]);
+  const tasksQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/tasks`), limit(10)) : null), [user, firestore]);
+  const goalsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/goals`)) : null), [user, firestore]);
   const habitsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/habits`)) : null), [user, firestore]);
   const journalQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/journalEntries`), orderBy('createdAt', 'desc'), limit(5)) : null), [user, firestore]);
   const inspirationsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/inspirations`), orderBy('createdAt', 'desc'), limit(1)) : null), [user, firestore]);
@@ -79,8 +79,8 @@ const DashboardPage = () => {
   const isLoading = loadingTasks || loadingGoals || loadingHabits || loadingJournal || loadingInspiration;
 
   const stats = useMemo(() => ({
-    tasksCompleted: tasks?.length || 0,
-    activeGoals: goals?.length || 0,
+    tasksCompleted: tasks?.filter(t => t.status === 'completed').length || 0,
+    activeGoals: goals?.filter(g => (g.progress || 0) < 100).length || 0,
     activeHabits: habits?.length || 0,
   }), [tasks, goals, habits]);
   
@@ -125,7 +125,7 @@ const DashboardPage = () => {
         <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants}>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">المهام المنجزة (آخر 10)</CardTitle>
+                    <CardTitle className="text-sm font-medium">المهام المنجزة</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{isLoading ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.tasksCompleted}</div>
