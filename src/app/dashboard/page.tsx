@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import type { Task, Goal, Habit, JournalEntry, Inspiration } from '@/lib/types';
-import { Loader2, ArrowLeft, Lightbulb, RefreshCw, PlusCircle, ExternalLink } from 'lucide-react';
+import { Loader2, ArrowLeft, Lightbulb, RefreshCw, ExternalLink } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
+import { Particles } from '@/components/dashboard/Particles';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -103,7 +104,8 @@ const DashboardPage = () => {
 
   return (
     <>
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 relative overflow-hidden">
+    <Particles />
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 relative z-10">
       <motion.div 
         initial={{ opacity: 0, y: -20 }} 
         animate={{ opacity: 1, y: 0 }} 
@@ -122,7 +124,7 @@ const DashboardPage = () => {
       </motion.div>
       
        <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card>
+             <Card className="bg-card/50 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="flex justify-between items-center text-primary">
                         <span>{currentWisdom?.type} اليوم</span>
@@ -137,7 +139,7 @@ const DashboardPage = () => {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="h-full">
+            <Card className="h-full bg-card/50 backdrop-blur-sm">
                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">الوقت والتاريخ</CardTitle>
                  </CardHeader>
@@ -147,7 +149,7 @@ const DashboardPage = () => {
             </Card>
         </motion.div>
         <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants}>
-             <Card>
+             <Card className="bg-card/50 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">المهام المنجزة</CardTitle>
                 </CardHeader>
@@ -157,7 +159,7 @@ const DashboardPage = () => {
             </Card>
         </motion.div>
          <motion.div custom={3} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card>
+            <Card className="bg-card/50 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">الأهداف النشطة</CardTitle>
                 </CardHeader>
@@ -167,7 +169,7 @@ const DashboardPage = () => {
             </Card>
         </motion.div>
          <motion.div custom={4} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card>
+            <Card className="bg-card/50 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">العادات قيد التتبع</CardTitle>
                 </CardHeader>
@@ -180,7 +182,7 @@ const DashboardPage = () => {
 
        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
          <motion.div custom={5} initial="hidden" animate="visible" variants={cardVariants}>
-             <Card className="h-full">
+             <Card className="h-full bg-card/50 backdrop-blur-sm">
               <CardHeader>
                 <div className="flex justify-between items-center">
                     <div>
@@ -216,7 +218,7 @@ const DashboardPage = () => {
             </Card>
          </motion.div>
         <motion.div custom={6} initial="hidden" animate="visible" variants={cardVariants}>
-             <Card className="h-full">
+             <Card className="h-full bg-card/50 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Lightbulb className="text-primary" />

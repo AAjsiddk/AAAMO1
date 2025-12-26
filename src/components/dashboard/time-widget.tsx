@@ -8,6 +8,7 @@ const TimeWidgetInternal = () => {
   const [date, setDate] = useState('');
   const [hijriDate, setHijriDate] = useState('');
   const [seconds, setSeconds] = useState(0);
+  const [minutes, setMinutes] = useState(0);
 
   useEffect(() => {
     const updateDates = () => {
@@ -22,6 +23,7 @@ const TimeWidgetInternal = () => {
         setHijriDate("التقويم الهجري غير مدعوم");
       }
       setSeconds(now.getSeconds());
+      setMinutes(now.getMinutes());
     };
     
     updateDates();
@@ -30,27 +32,41 @@ const TimeWidgetInternal = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  const percentage = (seconds / 60) * 100;
+  const secondsPercentage = (seconds / 60) * 100;
+  const minutesPercentage = (minutes / 60) * 100;
 
   return (
      <div className="flex flex-col items-center justify-center text-center h-full">
-        <div style={{ width: 120, height: 120 }}>
-          <CircularProgressbarWithChildren
-            value={percentage}
-            strokeWidth={3}
-            styles={buildStyles({
-              pathColor: `hsl(var(--primary))`,
-              trailColor: 'hsl(var(--muted))',
-              pathTransitionDuration: 0.1,
-            })}
-          >
-            <div className="flex flex-col items-center">
-              <div className="text-3xl font-bold tracking-tight text-foreground">{time.split(' ')[0]}</div>
-              <div className="text-sm text-muted-foreground">{time.split(' ')[1]}</div>
-            </div>
-          </CircularProgressbarWithChildren>
+        <div style={{ width: 160, height: 160, position: 'relative' }}>
+          <div style={{ position: 'absolute', width: '100%', height: '100%' }}>
+            <CircularProgressbar
+              value={minutesPercentage}
+              strokeWidth={2}
+              styles={buildStyles({
+                pathColor: `hsl(var(--primary) / 0.5)`,
+                trailColor: 'hsl(var(--muted) / 0.3)',
+                pathTransitionDuration: 0.2,
+              })}
+            />
+          </div>
+          <div style={{ position: 'absolute', width: '75%', height: '75%', top: '12.5%', left: '12.5%' }}>
+            <CircularProgressbarWithChildren
+              value={secondsPercentage}
+              strokeWidth={4}
+              styles={buildStyles({
+                pathColor: `hsl(var(--primary))`,
+                trailColor: 'transparent',
+                pathTransitionDuration: 0.1,
+              })}
+            >
+              <div className="flex flex-col items-center">
+                <div className="text-3xl font-bold tracking-tight text-foreground">{time.split(' ')[0]}</div>
+                <div className="text-sm text-muted-foreground">{time.split(' ')[1]}</div>
+              </div>
+            </CircularProgressbarWithChildren>
+          </div>
         </div>
-        <p className="mt-3 text-sm text-muted-foreground">{date}</p>
+        <p className="mt-4 text-sm text-muted-foreground">{date}</p>
         <p className="text-xs text-muted-foreground/80">{hijriDate}</p>
     </div>
   );
