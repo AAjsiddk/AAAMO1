@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { BookOpen, Link as LinkIcon, Loader2, PlusCircle, Trash2, Pin, PinOff, Inbox } from 'lucide-react';
+import { BookOpen, Link as LinkIcon, Loader2, PlusCircle, Trash2, Pin, PinOff, Inbox, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Course } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -134,7 +134,7 @@ export default function CoursesPage() {
 
     const batch = writeBatch(firestore);
     items.forEach((item, index) => {
-      const docRef = doc(firestore, `users/${user.uid}/courses`, item.id);
+      const docRef = doc(firestore, `users/${user!.uid}/courses`, item.id);
       batch.update(docRef, { order: index });
     });
 
