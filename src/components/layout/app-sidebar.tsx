@@ -85,7 +85,7 @@ export function AppSidebar() {
   ];
 
   const analysisSections = [
-    { name: 'الإنجازات', href: '/dashboard/challenges', icon: Trophy },
+    { name: 'الإنجازات والتحديات', href: '/dashboard/challenges', icon: Trophy },
   ];
 
   const otherSections = [
