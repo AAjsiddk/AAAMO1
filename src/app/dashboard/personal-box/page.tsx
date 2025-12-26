@@ -17,6 +17,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import {
   Dialog,
@@ -143,7 +144,6 @@ export default function PersonalBoxPage() {
           mood: mood,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-          imageUrls: [],
         };
         
         await addDoc(journalCollectionRef, newEntry);
@@ -260,18 +260,9 @@ export default function PersonalBoxPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                 {entry.imageUrls && entry.imageUrls.length > 0 && (
-                  <div className="mb-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                    {entry.imageUrls.map((url, index) => (
-                      <div key={index} className="relative aspect-square w-full overflow-hidden rounded-md">
-                        <Image src={url} alt={`${entry.title} - ${index + 1}`} fill className="object-cover" />
-                      </div>
-                    ))}
-                  </div>
-                )}
                 <p className="whitespace-pre-wrap">{entry.content}</p>
               </CardContent>
-              {entry.updatedAt && !isSameDay((entry.createdAt as Timestamp).toDate(), (entry.updatedAt as Timestamp).toDate()) && (
+              {entry.updatedAt && entry.createdAt && !(entry.createdAt as Timestamp).isEqual((entry.updatedAt as Timestamp)) && (
                 <CardFooter>
                     <p className="text-xs text-muted-foreground">آخر تعديل: {formatDate(entry.updatedAt)}</p>
                 </CardFooter>

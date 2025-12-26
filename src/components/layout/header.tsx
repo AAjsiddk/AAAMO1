@@ -58,7 +58,6 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 const journalSchema = z.object({
   title: z.string().min(1, { message: 'العنوان مطلوب.' }),
   content: z.string().min(1, { message: 'المحتوى مطلوب.' }),
-  imageUrl: z.string().url({ message: 'الرجاء إدخال رابط صحيح' }).optional().or(z.literal('')),
 });
 
 const analyzeMood = (text: string): JournalEntry['mood'] => {
@@ -77,7 +76,7 @@ export function Header() {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-  const [theme, setTheme] = useState<'light' | 'dark' | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
 
   const [isJournalDialogOpen, setIsJournalDialogOpen] = useState(false);
@@ -85,12 +84,12 @@ export function Header() {
   
   const form = useForm<z.infer<typeof journalSchema>>({
     resolver: zodResolver(journalSchema),
-    defaultValues: { title: '', content: '', imageUrl: '' },
+    defaultValues: { title: '', content: '' },
   });
   
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const initialTheme = storedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const initialTheme = storedTheme || 'dark';
     setTheme(initialTheme);
     if (initialTheme === 'light') {
         document.documentElement.classList.remove('dark');
@@ -142,7 +141,7 @@ export function Header() {
       sad: 'أشعر بالحزن',
       anxious: 'قليل من القلق',
     };
-    form.reset({ title: moodTitles[mood], content: '', imageUrl: '' });
+    form.reset({ title: moodTitles[mood], content: '' });
     setIsJournalDialogOpen(true);
   };
   
@@ -163,10 +162,6 @@ export function Header() {
           updatedAt: serverTimestamp(),
         };
 
-        if (values.imageUrl) {
-            newEntry.imageUrls = [values.imageUrl];
-        }
-
         await addDoc(journalCollectionRef, newEntry);
         
         toast({ title: 'نجاح', description: 'تمت إضافة تدوينتك بنجاح.' });
@@ -179,17 +174,6 @@ export function Header() {
         setIsSubmitting(false);
     }
   };
-
-  if (theme === null) {
-      return (
-          <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/50 backdrop-blur-xl">
-             <div className="container flex h-16 max-w-screen-2xl items-center justify-between">
-                <Skeleton className="h-8 w-24" />
-                <Skeleton className="h-8 w-8 rounded-full" />
-            </div>
-        </header>
-      );
-  }
 
 
   return (
@@ -204,9 +188,6 @@ export function Header() {
               )} />
               <FormField name="content" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>المحتوى</FormLabel><FormControl><Textarea placeholder="ماذا يدور في خلدك؟" {...field} rows={6} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField name="imageUrl" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>رابط صورة (اختياري)</FormLabel><FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <DialogFooter>
                 <DialogClose asChild><Button type="button" variant="secondary">إلغاء</Button></DialogClose>
