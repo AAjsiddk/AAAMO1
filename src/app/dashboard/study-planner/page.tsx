@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Trash2, Loader2, Inbox, GripVertical, Plus, Edit, Check, X, Minus } from 'lucide-react';
+import { PlusCircle, Trash2, Loader2, Inbox, GripVertical, Plus, Edit, Check, X, Minus, Pin, PinOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
@@ -44,14 +44,16 @@ export default function StudyPlannerPage() {
 
   // Firestore hooks
   const plansCollectionRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/studyPlans`) : null, [user, firestore]);
-  const plansQuery = useMemoFirebase(() => plansCollectionRef ? query(plansCollectionRef, orderBy('order')) : null, [plansCollectionRef]);
+  const plansQuery = useMemoFirebase(() => plansCollectionRef ? query(plansCollectionRef) : null, [plansCollectionRef]);
   const { data: plans, isLoading } = useCollection<StudyPlan>(plansQuery);
 
   const sortedPlans = useMemo(() => {
     if (!plans) return [];
-    // Ensure subtasks are also sorted by their order property
-    const sorted = [...plans].sort((a, b) => a.order - b.order);
-    return sorted.map(plan => ({
+    return [...plans].sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return (a.order || 0) - (b.order || 0);
+    }).map(plan => ({
         ...plan,
         subtasks: plan.subtasks ? [...plan.subtasks].sort((a,b) => a.order - b.order) : []
     }));
@@ -83,7 +85,7 @@ export default function StudyPlannerPage() {
       const planRef = doc(firestore, `users/${user.uid}/studyPlans`, ids.planId);
       await updateDoc(planRef, { status: newStatus });
     } else if (type === 'subtask' && ids.subtaskId) {
-      const subtaskIndex = plan.subtasks.findIndex(st => st.id === ids.subtaskId);
+      const subtaskIndex = (plan.subtasks || []).findIndex(st => st.id === ids.subtaskId);
       if (subtaskIndex === -1) return;
       
       const newSubtasks = [...plan.subtasks];
@@ -91,6 +93,18 @@ export default function StudyPlannerPage() {
       
       const planRef = doc(firestore, `users/${user.uid}/studyPlans`, ids.planId);
       await updateDoc(planRef, { subtasks: newSubtasks });
+    }
+  };
+  
+  const handleTogglePin = async (plan: StudyPlan) => {
+    if (!firestore || !user) return;
+    const planDocRef = doc(firestore, `users/${user.uid}/studyPlans`, plan.id);
+    try {
+      await updateDoc(planDocRef, { pinned: !plan.pinned });
+      toast({ title: 'نجاح', description: `تم ${plan.pinned ? 'إلغاء تثبيت' : 'تثبيت'} الخطة.` });
+    } catch (error) {
+      console.error("Error pinning plan:", error);
+      toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تغيير حالة التثبيت.' });
     }
   };
 
@@ -133,7 +147,7 @@ export default function StudyPlannerPage() {
     if (subtaskId) {
         const plan = plans.find(p => p.id === planId);
         if (!plan) return;
-        const newSubtasks = plan.subtasks.filter(st => st.id !== subtaskId);
+        const newSubtasks = (plan.subtasks || []).filter(st => st.id !== subtaskId);
         const planRef = doc(firestore, `users/${user.uid}/studyPlans`, planId);
         await updateDoc(planRef, { subtasks: newSubtasks });
         toast({title: "تم حذف المهمة الفرعية"});
@@ -158,6 +172,7 @@ export default function StudyPlannerPage() {
         await addDoc(plansCollectionRef, {
           title: values.title,
           status: 'pending',
+          pinned: false,
           subtasks: [],
           order: plans.length || 0,
           userId: user.uid,
@@ -185,9 +200,9 @@ export default function StudyPlannerPage() {
             id: doc(collection(firestore, 'tmp')).id,
             content: values.title,
             status: 'pending',
-            order: plan.subtasks.length,
+            order: (plan.subtasks || []).length,
         };
-        const newSubtasks = [...plan.subtasks, newSubtask];
+        const newSubtasks = [...(plan.subtasks || []), newSubtask];
         const planRef = doc(firestore, `users/${user.uid}/studyPlans`, parentPlanId);
         await updateDoc(planRef, { subtasks: newSubtasks });
 
@@ -260,7 +275,8 @@ export default function StudyPlannerPage() {
                     <Draggable key={plan.id} draggableId={plan.id} index={index}>
                       {(provided) => (
                         <div ref={provided.innerRef} {...provided.draggableProps}>
-                           <Card>
+                           <Card className={cn("relative", plan.pinned && "border-primary")}>
+                            {plan.pinned && <div className="absolute top-3 right-3 text-primary"><Pin className="h-5 w-5" /></div>}
                             <CardHeader {...provided.dragHandleProps} className="flex flex-row items-center justify-between p-4 cursor-grab bg-muted/30">
                                <div className="flex items-center gap-2">
                                   <GripVertical className="h-5 w-5 text-muted-foreground" />
@@ -269,6 +285,7 @@ export default function StudyPlannerPage() {
                                <div className="flex items-center gap-1">
                                     <StatusButtons type="plan" ids={{ planId: plan.id }} currentStatus={plan.status} />
                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenSubtaskDialog(plan.id)}><Plus className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleTogglePin(plan)}>{plan.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}</Button>
                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(plan)}><Edit className="h-4 w-4" /></Button>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(plan.id)}><Trash2 className="h-4 w-4" /></Button>
                                </div>
@@ -277,7 +294,7 @@ export default function StudyPlannerPage() {
                                <Droppable droppableId={plan.id} type={`subtasks-${plan.id}`}>
                                 {(provided) => (
                                     <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
-                                        {plan.subtasks.map((subtask, subIndex) => (
+                                        {(plan.subtasks || []).map((subtask, subIndex) => (
                                              <Draggable key={subtask.id} draggableId={subtask.id} index={subIndex}>
                                                 {(provided) => (
                                                     <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="flex items-center justify-between p-2 rounded-md bg-background border">
@@ -297,7 +314,7 @@ export default function StudyPlannerPage() {
                                     </div>
                                 )}
                                </Droppable>
-                                {plan.subtasks.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">لا توجد مهام فرعية. أضف واحدة!</p>}
+                                {(!plan.subtasks || plan.subtasks.length === 0) && <p className="text-sm text-muted-foreground text-center py-4">لا توجد مهام فرعية. أضف واحدة!</p>}
                             </CardContent>
                            </Card>
                         </div>

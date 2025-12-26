@@ -229,6 +229,7 @@ export type StudyPlan = {
   userId: string;
   title: string;
   status: 'pending' | 'completed' | 'not_completed';
+  pinned: boolean;
   subtasks: StudySubtask[];
   order: number;
   createdAt: FieldValue;
