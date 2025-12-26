@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
+import { useUser } from '@/firebase/auth/use-user';
 import { Loader2 } from 'lucide-react';
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
+function AuthGuardInner({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
@@ -28,4 +28,16 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   // If user is authenticated, render the children.
   return <>{children}</>;
+}
+
+
+export function AuthGuard({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="mr-4">جاري التحميل...</p>
+      </div>}>
+      <AuthGuardInner>{children}</AuthGuardInner>
+    </Suspense>
+  )
 }

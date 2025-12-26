@@ -14,8 +14,8 @@ export default function DashboardLayout({
         <AppSidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header />
-          <main className="flex-1 overflow-auto">
-            <AuthGuard>{children}</AuthGuard>
+          <main className="flex-1 overflow-y-auto overflow-x-hidden">
+             <AuthGuard>{children}</AuthGuard>
           </main>
         </div>
       </div>
