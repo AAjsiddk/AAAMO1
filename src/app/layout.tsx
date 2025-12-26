@@ -63,12 +63,8 @@ export default function RootLayout({
                   if (theme) {
                     document.documentElement.className = theme;
                   } else {
-                    // If no theme is stored, check system preference
-                    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                       document.documentElement.className = 'dark';
-                    } else {
-                       document.documentElement.className = 'light';
-                    }
+                    // If no theme is stored, default to dark
+                    document.documentElement.className = 'dark';
                   }
                 } catch (e) {
                   // Fallback for environments where localStorage is not available
