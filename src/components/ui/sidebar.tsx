@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { usePathname } from "next/navigation"
 
 type SidebarContext = {
   isOpen: boolean
@@ -59,22 +60,16 @@ const SidebarProvider = ({
     [isOpen, setIsOpen, isMobile, toggleSidebar]
   )
 
+  const pathname = usePathname();
+  React.useEffect(() => {
+    if (isMobile) {
+      setIsOpen(false);
+    }
+  }, [pathname, isMobile]);
+
   return (
     <SidebarContext.Provider value={contextValue}>
-      <div 
-        onClickCapture={(e) => {
-          let target = e.target as HTMLElement;
-          while (target && target.parentElement) {
-            if (target instanceof HTMLAnchorElement && target.href) {
-                if(target.hasAttribute('data-no-close-on-click')) return;
-                closeSidebar();
-                return;
-            }
-            target = target.parentElement;
-          }
-        }}
-        {...props}
-      >
+      <div {...props}>
         {children}
       </div>
     </SidebarContext.Provider>
