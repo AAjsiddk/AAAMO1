@@ -52,13 +52,15 @@ export default function RootLayout({
               (function() {
                 try {
                   const theme = localStorage.getItem('theme');
-                  if (theme === 'light') {
-                    document.documentElement.classList.add('light');
-                    document.documentElement.classList.remove('dark');
+                  if (theme) {
+                    document.documentElement.classList.add(theme);
                   } else {
-                    // Default to dark mode if no theme is set or if it's 'dark'
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.classList.remove('light');
+                    // If no theme is stored, check system preference
+                    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                       document.documentElement.classList.add('dark');
+                    } else {
+                       document.documentElement.classList.add('light');
+                    }
                   }
                 } catch (e) {
                   // Fallback for environments where localStorage is not available

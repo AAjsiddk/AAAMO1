@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, setDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, setDoc, deleteDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -118,7 +118,7 @@ export default function HealthPage() {
   }, [selectedDayIndex]);
 
   const selectedEntry = useMemo(() => {
-    return allEntries?.find(entry => entry.date === selectedDate);
+    return allEntries?.find(entry => entry.id === selectedDate);
   }, [allEntries, selectedDate]);
   
   const isSubmitting = form.formState.isSubmitting;
@@ -159,12 +159,11 @@ export default function HealthPage() {
 
   const handleForbiddenFoodSubmit = async (values: z.infer<typeof forbiddenFoodSchema>) => {
     if (!firestore || !user) return;
-    const forbiddenFoodsCollectionRef = collection(firestore, `users/${user.uid}/forbiddenFoods`);
     const docId = editingForbiddenFood ? editingForbiddenFood.id : uuidv4();
     const docRef = doc(firestore, `users/${user.uid}/forbiddenFoods`, docId);
     
     try {
-        await setDoc(docRef, {...values, userId: user.uid, createdAt: editingForbiddenFood?.createdAt || serverTimestamp() }, {merge: true});
+        await setDoc(docRef, {...values, userId: user.uid, id: docId, createdAt: editingForbiddenFood?.createdAt || serverTimestamp() }, {merge: true});
         toast({title: 'نجاح', description: `تم ${editingForbiddenFood ? 'تحديث' : 'إضافة'} العنصر.`});
         setIsForbiddenFoodDialogOpen(false);
         setEditingForbiddenFood(null);
@@ -184,9 +183,11 @@ export default function HealthPage() {
   const handleDeleteForbiddenFood = async (id: string) => {
       if(!firestore || !user) return;
       try {
-        await deleteDoc(doc(firestore, `users/${user.uid}/forbiddenFoods`, id));
+        const docRef = doc(firestore, `users/${user.uid}/forbiddenFoods`, id);
+        await deleteDoc(docRef);
         toast({title: 'تم الحذف'})
       } catch (error) {
+          console.error("Error deleting forbidden food:", error);
           toast({variant: 'destructive', title: 'خطأ', description: 'فشل حذف العنصر.'})
       }
   }
@@ -425,5 +426,3 @@ export default function HealthPage() {
     </>
   );
 }
-
-    
