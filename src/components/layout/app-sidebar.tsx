@@ -49,8 +49,8 @@ export function AppSidebar() {
   const pathname = usePathname()
 
   const isActive = (path: string) => {
-    if (path === '/dashboard' && pathname !== '/dashboard') return false;
-    return pathname.startsWith(path)
+    // Exact match for dashboard, partial for others
+    return path === '/dashboard' ? pathname === path : pathname.startsWith(path);
   }
   
   const mainSections = [
