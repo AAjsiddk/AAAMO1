@@ -220,8 +220,8 @@ export default function RelaxPage() {
     </div>
   );
 
-  const PlanItem = ({ plan, level = 0 }: { plan: RelaxationActivity & { subtasks: any[] }, level: number }) => (
-    <Draggable key={plan.id} draggableId={plan.id} index={plan.order}>
+  const PlanItem = ({ plan, index, level = 0 }: { plan: RelaxationActivity & { subtasks: any[] }, index: number, level: number }) => (
+    <Draggable key={plan.id} draggableId={plan.id} index={index}>
       {(provided) => (
         <div
           ref={provided.innerRef}
@@ -247,8 +247,8 @@ export default function RelaxPage() {
                 <Droppable droppableId={plan.id} type="subtasks">
                   {(provided) => (
                     <div {...provided.droppableProps} ref={provided.innerRef}>
-                      {plan.subtasks.map((subtask: any) => (
-                        <PlanItem key={subtask.id} plan={subtask} level={level + 1} />
+                      {plan.subtasks.map((subtask: any, subIndex: number) => (
+                        <PlanItem key={subtask.id} plan={subtask} index={subIndex} level={level + 1} />
                       ))}
                       {provided.placeholder}
                     </div>
@@ -293,8 +293,8 @@ export default function RelaxPage() {
             <Droppable droppableId="root-droppable" type="plans">
               {(provided) => (
                 <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
-                  {plansTree.map((plan) => (
-                      <PlanItem key={plan.id} plan={plan} level={0} />
+                  {plansTree.map((plan, index) => (
+                      <PlanItem key={plan.id} plan={plan} index={index} level={0} />
                   ))}
                   {provided.placeholder}
                 </div>

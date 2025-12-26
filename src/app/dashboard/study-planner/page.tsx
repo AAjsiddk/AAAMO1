@@ -52,10 +52,10 @@ export default function StudyPlannerPage() {
     return [...plans].sort((a, b) => {
         if (a.pinned && !b.pinned) return -1;
         if (!a.pinned && b.pinned) return 1;
-        return (a.order || 0) - (b.order || 0);
+        return (a.order ?? 0) - (b.order ?? 0);
     }).map(plan => ({
         ...plan,
-        subtasks: plan.subtasks ? [...plan.subtasks].sort((a,b) => a.order - b.order) : []
+        subtasks: plan.subtasks ? [...plan.subtasks].sort((a,b) => (a.order ?? 0) - (b.order ?? 0)) : []
     }));
   }, [plans]);
 
