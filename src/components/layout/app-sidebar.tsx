@@ -17,7 +17,6 @@ import {
   File,
   Target,
   Repeat,
-  BarChart,
   Settings,
   Calendar,
   Camera,
@@ -26,9 +25,7 @@ import {
   Smile,
   Heart,
   Trophy,
-  Package,
   Droplets,
-  TrendingUp,
   Coffee,
   Library,
   HandHeart,
@@ -39,8 +36,6 @@ import {
   Lightbulb,
   Archive,
   BookText,
-  Swords,
-  BrainCircuit,
   PiggyBank,
   BookMarked
 } from 'lucide-react'
@@ -90,9 +85,7 @@ export function AppSidebar() {
   ];
 
   const analysisSections = [
-    { name: 'التحليلات', href: '/dashboard/analytics', icon: BarChart },
-    { name: 'الإنجاز التراكمي', href: '/dashboard/cumulative-achievements', icon: TrendingUp },
-    { name: 'التحديات', href: '/dashboard/challenges', icon: Trophy },
+    { name: 'الإنجازات', href: '/dashboard/challenges', icon: Trophy },
   ];
 
   const otherSections = [

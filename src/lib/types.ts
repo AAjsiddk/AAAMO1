@@ -104,7 +104,7 @@ export type FutureMessage = {
   userId: string;
   message: string;
   createdAt: FieldValue;
-  // In a real app, you would add a `sendAt: Timestamp` field
+  status: 'pending' | 'completed' | 'not_completed';
 };
 
 export type LibraryItem = {
@@ -123,7 +123,6 @@ export type WorshipAct = {
   id: string;
   userId: string;
   name: string;
-  count?: number;
   notes?: string;
   date: string; // YYYY-MM-DD
   createdAt: FieldValue;
