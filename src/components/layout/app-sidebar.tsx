@@ -26,7 +26,6 @@ import {
   Heart,
   Trophy,
   Droplets,
-  Coffee,
   Library,
   HandHeart,
   StickyNote,
@@ -80,7 +79,6 @@ export function AppSidebar() {
       { name: 'مخطط الدراسة', href: '/dashboard/study-planner', icon: BookMarked },
       { name: 'مكتبتي المعرفية', href: '/dashboard/library', icon: Library },
       { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: Clock },
-      { name: 'مخطط الترفيه', href: '/dashboard/relax', icon: Coffee },
       { name: 'تحويشتي', href: '/dashboard/savings', icon: PiggyBank },
   ];
 
