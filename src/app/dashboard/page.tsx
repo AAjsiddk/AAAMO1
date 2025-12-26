@@ -6,7 +6,7 @@ import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebas
 import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import type { Task, Goal, Habit } from '@/lib/types';
 import type { Challenge } from './challenges/page';
-import { Loader2, ArrowLeft, Lightbulb, RefreshCw, ExternalLink, Trophy, PlusCircle, HandMetal, RotateCcw } from 'lucide-react';
+import { Loader2, ArrowLeft, RefreshCw, ExternalLink, Trophy, HandMetal } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -95,37 +95,6 @@ const StatsCard = memo(({title, value, isLoading}: {title: string, value: number
     </Card>
 ));
 StatsCard.displayName = 'StatsCard';
-
-const TasbeehCounter = memo(() => {
-    const [count, setCount] = useState(0);
-    return (
-        <Card className="h-full bg-card/50 backdrop-blur-sm flex flex-col">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <HandMetal className="text-primary" />
-                    السبحة الإلكترونية
-                </CardTitle>
-                <CardDescription>
-                   ابدأ بذكر الله
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-center gap-4">
-               <div className="text-7xl font-bold font-mono tracking-tighter text-foreground">
-                   {count}
-               </div>
-                <div className="flex gap-2">
-                    <Button size="lg" onClick={() => setCount(prev => prev + 1)}>
-                        <PlusCircle className="ml-2 h-5 w-5"/> تسبيح
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => setCount(0)}>
-                        <RotateCcw className="h-5 w-5"/>
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
-    )
-});
-TasbeehCounter.displayName = 'TasbeehCounter';
 
 const AchievementsCard = memo(({ challenges, isLoading }: { challenges: Challenge[] | null, isLoading: boolean }) => {
     const recentAchievements = useMemo(() => {
@@ -258,10 +227,7 @@ const DashboardPage = () => {
         </motion.div>
       </div>
 
-       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-         <motion.div custom={5} initial="hidden" animate="visible" variants={cardVariants}>
-            <TasbeehCounter />
-         </motion.div>
+       <div className="grid gap-4 grid-cols-1">
         <motion.div custom={6} initial="hidden" animate="visible" variants={cardVariants}>
             <AchievementsCard challenges={challenges} isLoading={loadingChallenges} />
         </motion.div>

@@ -41,7 +41,8 @@ import {
   Wind,
   GripVertical,
   Pin,
-  PinOff
+  PinOff,
+  HandMetal
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
@@ -96,6 +97,7 @@ const initialSections: { [key: string]: SidebarSection } = {
       { name: 'صندوق الامتنان', href: '/dashboard/gratitude', icon: Heart },
       { name: 'يومي الجميل', href: '/dashboard/beautiful-day', icon: Sparkles },
       { name: 'العبادات', href: '/dashboard/faith', icon: HandHeart },
+      { name: 'السبحة الإلكترونية', href: '/dashboard/tasbeeh', icon: HandMetal },
       { name: 'الصحة والغذاء', href: '/dashboard/health', icon: HeartPulse },
       { name: 'صندوق الإلهام', href: '/dashboard/inspirations', icon: Lightbulb },
   ],
@@ -161,7 +163,7 @@ export function AppSidebar() {
         const userDocRef = doc(firestore, 'users', user.uid);
         updateDoc(userDocRef, settings);
     }
-    setUserSettings(prev => ({...prev, ...settings}));
+    setUserSettings(prev => prev ? ({...prev, ...settings}) : null);
   };
   
   const handleTogglePin = (href: string) => {
