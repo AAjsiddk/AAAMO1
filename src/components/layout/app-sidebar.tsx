@@ -39,7 +39,8 @@ import {
   Lightbulb,
   Archive,
   BookText,
-  Swords
+  Swords,
+  BrainCircuit
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -80,6 +81,7 @@ export function AppSidebar() {
       { name: 'مكتبتي المعرفية', href: '/dashboard/library', icon: Library },
       { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: Clock },
       { name: 'مخطط الترفيه', href: '/dashboard/relax', icon: Coffee },
+      { name: 'AI', href: '/dashboard/ai', icon: BrainCircuit },
   ];
 
   const analysisSections = [
@@ -101,18 +103,17 @@ export function AppSidebar() {
       <h2 className="px-2 py-1 text-xs font-semibold text-muted-foreground/80">{title}</h2>
       {items.map((item) => (
         <SidebarMenuItem key={item.name}>
-          <Link href={item.href} passHref legacyBehavior>
-            <a
-              className={cn(
-                'flex items-center gap-3 rounded-md p-2 text-sm transition-colors',
-                isActive(item.href)
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-foreground/70 hover:bg-muted hover:text-foreground'
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              <span>{item.name}</span>
-            </a>
+          <Link
+            href={item.href}
+            className={cn(
+              'flex items-center gap-3 rounded-md p-2 text-sm transition-colors',
+              isActive(item.href)
+                ? 'bg-primary text-primary-foreground'
+                : 'text-foreground/70 hover:bg-muted hover:text-foreground'
+            )}
+          >
+            <item.icon className="h-5 w-5" />
+            <span>{item.name}</span>
           </Link>
         </SidebarMenuItem>
       ))}
@@ -128,18 +129,17 @@ export function AppSidebar() {
         <SidebarMenu>
           {mainSections.map((item) => (
              <SidebarMenuItem key={item.name}>
-              <Link href={item.href} passHref legacyBehavior>
-                <a
-                  className={cn(
-                    'flex items-center gap-3 rounded-md p-2 text-sm transition-colors',
-                    isActive(item.href)
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground/70 hover:bg-muted hover:text-foreground'
-                  )}
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.name}</span>
-                </a>
+              <Link
+                href={item.href}
+                className={cn(
+                  'flex items-center gap-3 rounded-md p-2 text-sm transition-colors',
+                  isActive(item.href)
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground/70 hover:bg-muted hover:text-foreground'
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                <span>{item.name}</span>
               </Link>
             </SidebarMenuItem>
           ))}

@@ -8,7 +8,7 @@ import { collection, doc, query, where, writeBatch, Timestamp, serverTimestamp }
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Loader2, Check, X, Edit2, Save, Mosque, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Check, X, Edit2, Save, Landmark, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Prayer, WorshipAct } from '@/lib/types';
 import { format, startOfDay } from 'date-fns';
@@ -230,7 +230,7 @@ export default function FaithPage() {
                                         return (
                                             <div key={name} className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-card border">
                                                 <div className="flex items-center gap-4">
-                                                    <Mosque className="h-8 w-8 text-primary"/>
+                                                    <Landmark className="h-8 w-8 text-primary"/>
                                                     <div>
                                                         <h3 className="text-xl font-bold">{prayerTranslations[name]}</h3>
                                                         <p className="text-muted-foreground text-sm">{prayerForm.getValues(`times.${name}`)}</p>
