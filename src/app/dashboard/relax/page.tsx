@@ -11,7 +11,7 @@ import {
 } from '@/firebase';
 import { collection, doc, serverTimestamp, query, writeBatch, addDoc, deleteDoc, updateDoc, orderBy, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -88,7 +88,7 @@ export default function RelaxPage() {
     if(item) {
       form.reset({
         title: item.title,
-        description: item.description,
+        description: item.description || '',
         status: item.status,
         startDate: item.startDate ? (item.startDate as Timestamp).toDate() : undefined,
         endDate: item.endDate ? (item.endDate as Timestamp).toDate() : undefined,

@@ -90,9 +90,9 @@ export default function StudyPlannerPage() {
     if(item) {
       form.reset({
         title: item.title,
-        description: item.description,
+        description: item.description || '',
         status: item.status,
-        progress: item.progress,
+        progress: item.progress || 0,
         startDate: item.startDate ? (item.startDate as Timestamp).toDate() : undefined,
         endDate: item.endDate ? (item.endDate as Timestamp).toDate() : undefined,
       });
