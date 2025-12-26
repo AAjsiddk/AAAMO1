@@ -139,6 +139,18 @@ export type RelaxationActivity = {
   createdAt: FieldValue;
 }
 
+export type ExerciseSet = {
+  reps: number;
+  weight: number;
+};
+
+export type Exercise = {
+  id: string; // Should be unique within the workout
+  name: string;
+  sets: ExerciseSet[];
+};
+
+
 export type HealthEntry = {
     id: string;
     userId: string;
@@ -146,8 +158,18 @@ export type HealthEntry = {
     foodIntake: { meal: string, description: string }[];
     notes: string;
     wentToGym: boolean;
+    exercises?: Exercise[];
     createdAt: FieldValue;
 }
+
+export type ForbiddenFood = {
+  id: string;
+  userId: string;
+  name: string;
+  reason?: string;
+  createdAt: FieldValue;
+};
+
 
 export type Course = {
     id: string;
