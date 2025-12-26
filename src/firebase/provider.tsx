@@ -124,15 +124,21 @@ function SettingsLoader() {
     useEffect(() => {
         if (user && firestore) {
             const userDocRef = doc(firestore, 'users', user.uid);
-            getDoc(userDocRef).then(userDoc => {
+            const unsub = onSnapshot(userDocRef, (userDoc) => {
                 if (userDoc.exists()) {
                     const data = userDoc.data();
                     const settings: UserSettings = {
                         sidebarOrder: data.sidebarOrder || [],
+                        pinnedItems: data.pinnedItems || [],
                     };
                     setUserSettings(settings);
+                } else {
+                     setUserSettings({ sidebarOrder: [], pinnedItems: [] });
                 }
             });
+            return () => unsub();
+        } else {
+            setUserSettings(null);
         }
     }, [user, firestore, setUserSettings]);
 

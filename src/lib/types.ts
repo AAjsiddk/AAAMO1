@@ -243,4 +243,5 @@ export type StudyPlan = {
 
 export type UserSettings = {
     sidebarOrder?: string[];
+    pinnedItems?: string[];
 }

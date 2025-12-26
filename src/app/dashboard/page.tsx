@@ -4,8 +4,9 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
-import type { Task, Goal, Habit, JournalEntry, Inspiration } from '@/lib/types';
-import { Loader2, ArrowLeft, Lightbulb, RefreshCw, ExternalLink } from 'lucide-react';
+import type { Task, Goal, Habit } from '@/lib/types';
+import type { Challenge } from './challenges/page';
+import { Loader2, ArrowLeft, Lightbulb, RefreshCw, ExternalLink, Trophy, PlusCircle, HandMetal, RotateCcw } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,118 @@ const getGreeting = () => {
 };
 
 
+// Memoized components for performance
+const MemoizedTimeWidget = memo(TimeWidget);
+const MemoizedParticles = memo(Particles);
+
+const WisdomCard = memo(({wisdom, onRefresh}: {wisdom: {type: string, text: string} | null, onRefresh: () => void}) => (
+    <Card className="bg-card/50 backdrop-blur-sm">
+        <CardHeader>
+            <CardTitle className="flex justify-between items-center text-primary">
+                <span>{wisdom?.type} اليوم</span>
+                 <Button variant="ghost" size="icon" onClick={onRefresh}><RefreshCw className="h-4 w-4"/></Button>
+            </CardTitle>
+        </CardHeader>
+        <CardContent>
+            <p className="text-lg font-semibold text-center">"{wisdom?.text}"</p>
+        </CardContent>
+    </Card>
+));
+WisdomCard.displayName = 'WisdomCard';
+
+const StatsCard = memo(({title, value, isLoading}: {title: string, value: number, isLoading: boolean}) => (
+    <Card className="bg-card/50 backdrop-blur-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">{isLoading ? <Loader2 className="h-6 w-6 animate-spin"/> : value}</div>
+        </CardContent>
+    </Card>
+));
+StatsCard.displayName = 'StatsCard';
+
+const TasbeehCounter = memo(() => {
+    const [count, setCount] = useState(0);
+    return (
+        <Card className="h-full bg-card/50 backdrop-blur-sm flex flex-col">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <HandMetal className="text-primary" />
+                    السبحة الإلكترونية
+                </CardTitle>
+                <CardDescription>
+                   ابدأ بذكر الله
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-grow items-center justify-center gap-4">
+               <div className="text-7xl font-bold font-mono tracking-tighter text-foreground">
+                   {count}
+               </div>
+                <div className="flex gap-2">
+                    <Button size="lg" onClick={() => setCount(prev => prev + 1)}>
+                        <PlusCircle className="ml-2 h-5 w-5"/> تسبيح
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => setCount(0)}>
+                        <RotateCcw className="h-5 w-5"/>
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    )
+});
+TasbeehCounter.displayName = 'TasbeehCounter';
+
+const AchievementsCard = memo(({ challenges, isLoading }: { challenges: Challenge[] | null, isLoading: boolean }) => {
+    const recentAchievements = useMemo(() => {
+        if (!challenges) return [];
+        return challenges
+            .filter(c => c.achieved && c.achievedAt)
+            .sort((a, b) => (b.achievedAt as Timestamp).toMillis() - (a.achievedAt as Timestamp).toMillis())
+            .slice(0, 5);
+    }, [challenges]);
+    
+    return (
+        <Card className="h-full bg-card/50 backdrop-blur-sm flex flex-col">
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle className="flex items-center gap-2"><Trophy className="text-primary"/> آخر الإنجازات</CardTitle>
+                        <CardDescription>أحدث ما قمت بتحقيقه.</CardDescription>
+                    </div>
+                    <Button asChild variant="ghost" size="sm">
+                        <Link href="/dashboard/challenges">
+                             الكل <ArrowLeft className="mr-2 h-4 w-4" />
+                        </Link>
+                    </Button>
+                </div>
+            </CardHeader>
+            <CardContent className="flex-grow">
+                 {isLoading ? (
+                    <div className="flex items-center justify-center h-full py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+                 ) : recentAchievements && recentAchievements.length > 0 ? (
+                    <div className="space-y-3">
+                        {recentAchievements.map(achievement => (
+                            <div key={achievement.id} className="p-2 bg-background/50 rounded-lg hover:bg-background transition-colors">
+                                <h4 className="font-semibold truncate">{achievement.title}</h4>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    {(achievement.achievedAt as Timestamp)?.toDate().toLocaleDateString('ar-EG', { day: 'numeric', month: 'long' })}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                 ) : (
+                    <div className="flex items-center justify-center h-full">
+                        <p className="text-center text-muted-foreground py-10">لا توجد إنجازات حديثة.</p>
+                    </div>
+                 )}
+            </CardContent>
+        </Card>
+    );
+});
+AchievementsCard.displayName = 'AchievementsCard';
+
+
 const DashboardPage = () => {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -76,21 +189,17 @@ const DashboardPage = () => {
     setGreeting(getGreeting());
   }, []);
 
-  const tasksQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/tasks`), limit(10)) : null), [user, firestore]);
+  const tasksQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/tasks`), limit(50)) : null), [user, firestore]);
   const goalsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/goals`)) : null), [user, firestore]);
   const habitsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/habits`)) : null), [user, firestore]);
-  const journalQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/journalEntries`), orderBy('createdAt', 'desc'), limit(5)) : null), [user, firestore]);
-  const inspirationsQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/inspirations`), orderBy('createdAt', 'desc'), limit(1)) : null), [user, firestore]);
-
+  const challengesQuery = useMemoFirebase(() => (user ? query(collection(firestore, `users/${user.uid}/challenges`)) : null), [user, firestore]);
 
   const { data: tasks, isLoading: loadingTasks } = useCollection<Task>(tasksQuery);
   const { data: goals, isLoading: loadingGoals } = useCollection<Goal>(goalsQuery);
   const { data: habits, isLoading: loadingHabits } = useCollection<Habit>(habitsQuery);
-  const { data: journalEntries, isLoading: loadingJournal } = useCollection<JournalEntry>(journalQuery);
-  const { data: latestInspiration, isLoading: loadingInspiration } = useCollection<Inspiration>(inspirationsQuery);
+  const { data: challenges, isLoading: loadingChallenges } = useCollection<Challenge>(challengesQuery);
 
-
-  const isLoading = loadingTasks || loadingGoals || loadingHabits || loadingJournal || loadingInspiration;
+  const isLoading = loadingTasks || loadingGoals || loadingHabits || loadingChallenges;
 
   const stats = useMemo(() => ({
     tasksCompleted: tasks?.filter(t => t.status === 'completed').length || 0,
@@ -104,7 +213,7 @@ const DashboardPage = () => {
 
   return (
     <>
-    <Particles />
+    <MemoizedParticles />
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 relative z-10">
       <motion.div 
         initial={{ opacity: 0, y: -20 }} 
@@ -124,17 +233,7 @@ const DashboardPage = () => {
       </motion.div>
       
        <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
-             <Card className="bg-card/50 backdrop-blur-sm">
-                <CardHeader>
-                    <CardTitle className="flex justify-between items-center text-primary">
-                        <span>{currentWisdom?.type} اليوم</span>
-                         <Button variant="ghost" size="icon" onClick={getNewWisdom}><RefreshCw className="h-4 w-4"/></Button>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-lg font-semibold text-center">"{currentWisdom?.text}"</p>
-                </CardContent>
-            </Card>
+             <WisdomCard wisdom={currentWisdom} onRefresh={getNewWisdom} />
         </motion.div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -144,116 +243,27 @@ const DashboardPage = () => {
                     <CardTitle className="text-sm font-medium">الوقت والتاريخ</CardTitle>
                  </CardHeader>
                  <CardContent>
-                    <TimeWidget/>
+                    <MemoizedTimeWidget/>
                  </CardContent>
             </Card>
         </motion.div>
         <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants}>
-             <Card className="bg-card/50 backdrop-blur-sm">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">المهام المنجزة</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{isLoading ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.tasksCompleted}</div>
-                </CardContent>
-            </Card>
+            <StatsCard title="المهام المنجزة" value={stats.tasksCompleted} isLoading={isLoading} />
         </motion.div>
          <motion.div custom={3} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="bg-card/50 backdrop-blur-sm">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">الأهداف النشطة</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{isLoading ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.activeGoals}</div>
-                </CardContent>
-            </Card>
+            <StatsCard title="الأهداف النشطة" value={stats.activeGoals} isLoading={isLoading} />
         </motion.div>
          <motion.div custom={4} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="bg-card/50 backdrop-blur-sm">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">العادات قيد التتبع</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{isLoading ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.activeHabits}</div>
-                </CardContent>
-            </Card>
+            <StatsCard title="العادات قيد التتبع" value={stats.activeHabits} isLoading={isLoading} />
         </motion.div>
       </div>
 
        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
          <motion.div custom={5} initial="hidden" animate="visible" variants={cardVariants}>
-             <Card className="h-full bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                    <div>
-                        <CardTitle>آخر المذكرات</CardTitle>
-                        <CardDescription>أحدث ما قمت بتدوينه.</CardDescription>
-                    </div>
-                    <Button asChild variant="ghost" size="sm">
-                        <Link href="/dashboard/personal-box">
-                             الكل <ArrowLeft className="mr-2 h-4 w-4" />
-                        </Link>
-                    </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                 {loadingJournal ? (
-                    <div className="flex items-center justify-center h-full py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-                 ) : journalEntries && journalEntries.length > 0 ? (
-                    <div className="space-y-4">
-                        {journalEntries.map(entry => (
-                            <div key={entry.id} className="p-3 bg-background/50 rounded-lg hover:bg-background transition-colors">
-                                <h4 className="font-semibold truncate">{entry.title}</h4>
-                                <p className="text-sm text-muted-foreground line-clamp-2">{entry.content}</p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    {(entry.createdAt as Timestamp)?.toDate().toLocaleDateString('ar-EG', { day: 'numeric', month: 'long' })}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                 ) : (
-                    <p className="text-center text-muted-foreground py-10">لا توجد مذكرات بعد.</p>
-                 )}
-              </CardContent>
-            </Card>
+            <TasbeehCounter />
          </motion.div>
         <motion.div custom={6} initial="hidden" animate="visible" variants={cardVariants}>
-             <Card className="h-full bg-card/50 backdrop-blur-sm">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Lightbulb className="text-primary" />
-                        صندوق الإلهام
-                    </CardTitle>
-                    <CardDescription>
-                       آخر فكرة سريعة قمت بتدوينها.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col h-full items-center justify-center">
-                   {loadingInspiration ? (
-                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                   ) : latestInspiration && latestInspiration.length > 0 ? (
-                       <div className="text-center">
-                           <blockquote className="border-r-2 border-primary pr-4 italic text-foreground text-lg">
-                            "{latestInspiration[0].content}"
-                           </blockquote>
-                           <Button asChild variant="link" className="mt-4">
-                                <Link href="/dashboard/inspirations">
-                                    عرض كل الإلهامات <ArrowLeft className="mr-2 h-4 w-4" />
-                                </Link>
-                            </Button>
-                       </div>
-                   ) : (
-                       <div className="text-center">
-                           <p className="text-muted-foreground">اذهب إلى صفحة الإلهامات لتدوين أفكارك.</p>
-                           <Button asChild variant="link" className="mt-2">
-                                <Link href="/dashboard/inspirations">
-                                    الذهاب إلى الإلهامات <ArrowLeft className="mr-2 h-4 w-4" />
-                                </Link>
-                           </Button>
-                       </div>
-                   )}
-                </CardContent>
-            </Card>
+            <AchievementsCard challenges={challenges} isLoading={loadingChallenges} />
         </motion.div>
        </div>
     </div>
@@ -261,4 +271,4 @@ const DashboardPage = () => {
   );
 }
 
-export default memo(DashboardPage);
+export default DashboardPage;

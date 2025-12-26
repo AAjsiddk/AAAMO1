@@ -1,7 +1,7 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, Edit, PlusCircle, RotateCcw, Trash2, Award, Star, Trophy, Zap, Loader2 } from 'lucide-react';
+import { Check, Edit, PlusCircle, RotateCcw, Trash2, Award, Star, Trophy, Zap, Loader2, Gift, Heart, Rocket, Flag, Shield, Target, Sun, Moon, BookOpen, Crown, Feather, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import React, { useState, useMemo } from 'react';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
@@ -16,7 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as AllIcons from 'lucide-react';
 import { useForm } from 'react-hook-form';
 
-type Challenge = {
+export type Challenge = {
   id: string;
   title: string;
   description: string;
@@ -24,6 +24,7 @@ type Challenge = {
   color: string;
   achieved: boolean;
   isCustom: boolean;
+  achievedAt?: any;
 };
 
 const challengeSchema = z.object({
@@ -75,8 +76,12 @@ export default function ChallengesPage() {
   const handleToggle = async (challenge: Challenge) => {
     if (!firestore || !user) return;
     const docRef = doc(firestore, `users/${user.uid}/challenges`, challenge.id);
-    await updateDoc(docRef, { achieved: !challenge.achieved });
-    if (!challenge.achieved) {
+    const newAchievedState = !challenge.achieved;
+    await updateDoc(docRef, { 
+        achieved: newAchievedState,
+        achievedAt: newAchievedState ? serverTimestamp() : null
+    });
+    if (newAchievedState) {
       triggerConfetti();
     }
   };
@@ -121,6 +126,7 @@ export default function ChallengesPage() {
           color: 'text-gray-400',
           isCustom: true,
           achieved: false,
+          achievedAt: null,
           userId: user.uid, 
           createdAt: serverTimestamp()
         };
@@ -174,7 +180,7 @@ export default function ChallengesPage() {
           </Form>
         </DialogContent>
       </Dialog>
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 bg-gray-900 text-white relative overflow-hidden min-h-screen">
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 bg-background text-foreground relative overflow-hidden min-h-screen">
         <div className="relative z-10">
           <div className="flex items-center justify-between space-y-2 mb-8">
             <h2 className="text-3xl font-bold tracking-tight">الإنجازات والتحديات</h2>
@@ -197,11 +203,11 @@ export default function ChallengesPage() {
                 const IconComponent = (AllIcons as any)[challenge.icon] || Star;
                 return (
                   <motion.div key={challenge.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
-                    <Card className="bg-gray-800/80 backdrop-blur-sm border-gray-700 text-white flex flex-col h-full">
+                    <Card className="bg-card/80 backdrop-blur-sm border-border/50 text-foreground flex flex-col h-full">
                       <CardHeader>
                         <div className="flex items-center justify-between">
                           <CardTitle className="text-xl">{challenge.title}</CardTitle>
-                          <div className={`p-3 rounded-full bg-gray-700 ${ isCompleted ? 'text-yellow-400' : 'text-gray-400'}`}>
+                          <div className={`p-3 rounded-full bg-muted/50 ${ isCompleted ? 'text-yellow-400' : 'text-muted-foreground'}`}>
                             <IconComponent className="h-6 w-6" />
                           </div>
                         </div>

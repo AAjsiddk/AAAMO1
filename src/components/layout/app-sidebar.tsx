@@ -40,12 +40,18 @@ import {
   BookMarked,
   Wind,
   GripVertical,
+  Pin,
+  PinOff
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
-import { useUser, useFirestore } from '@/firebase'
+import { useUser, useFirestore, useFirebaseServices } from '@/firebase'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import type { UserSettings } from '@/lib/types'
+
+type SidebarItem = { name: string; href: string; icon: React.ElementType; isPinned?: boolean; };
+type SidebarSection = SidebarItem[];
 
 const SidebarLink = React.memo(({ href, icon: Icon, name, isActive }: { href: string; icon: React.ElementType; name: string, isActive: boolean }) => {
   const { isMobile, setIsOpen } = useSidebar();
@@ -73,7 +79,7 @@ const SidebarLink = React.memo(({ href, icon: Icon, name, isActive }: { href: st
 });
 SidebarLink.displayName = 'SidebarLink';
 
-const initialSections = {
+const initialSections: { [key: string]: SidebarSection } = {
   main: [{ name: 'لوحة التحكم', href: '/dashboard', icon: LayoutDashboard }],
   organization: [
     { name: 'التقويم', href: '/dashboard/calendar', icon: Calendar },
@@ -112,43 +118,59 @@ const initialSections = {
   settings: [{ name: 'الإعدادات', href: '/dashboard/settings', icon: Settings }],
 };
 
+const ALL_SECTIONS = [
+  ...initialSections.organization,
+  ...initialSections.selfDevelopment,
+  ...initialSections.tools,
+  ...initialSections.analysis,
+  ...initialSections.other,
+];
+const ALL_SECTIONS_MAP = new Map(ALL_SECTIONS.map(item => [item.href, item]));
+
 export function AppSidebar() {
   const pathname = usePathname()
   const { user } = useUser()
   const firestore = useFirestore()
-  const [orderedSections, setOrderedSections] = useState(initialSections.organization);
+  const { userSettings, setUserSettings } = useFirebaseServices();
+  const [orderedSections, setOrderedSections] = useState<SidebarSection>(ALL_SECTIONS);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (user && firestore) {
-      const userDocRef = doc(firestore, 'users', user.uid);
-      getDoc(userDocRef).then(docSnap => {
-        if (docSnap.exists() && docSnap.data().sidebarOrder) {
-          const savedOrder = docSnap.data().sidebarOrder as string[];
-          const allSections = [...initialSections.organization, ...initialSections.selfDevelopment, ...initialSections.tools, ...initialSections.analysis, ...initialSections.other];
-          const sectionMap = new Map(allSections.map(item => [item.href, item]));
-          const newOrderedSections = savedOrder.map(href => sectionMap.get(href)).filter(Boolean) as typeof orderedSections;
-
-          // Add any new sections that were not in the saved order
-          allSections.forEach(section => {
+    if (userSettings) {
+        const savedOrder = userSettings.sidebarOrder || [];
+        const savedPinned = userSettings.pinnedItems || [];
+        
+        const newOrderedSections: SidebarItem[] = savedOrder.map(href => {
+            const item = ALL_SECTIONS_MAP.get(href);
+            return item ? { ...item, isPinned: savedPinned.includes(href) } : null;
+        }).filter((item): item is SidebarItem => item !== null);
+        
+        ALL_SECTIONS.forEach(section => {
             if (!newOrderedSections.find(s => s.href === section.href)) {
-              newOrderedSections.push(section);
+                newOrderedSections.push({ ...section, isPinned: savedPinned.includes(section.href) });
             }
-          });
-          
-          setOrderedSections(newOrderedSections);
-        } else {
-            // Default order if nothing is saved
-            setOrderedSections([
-                ...initialSections.organization,
-                ...initialSections.selfDevelopment,
-                ...initialSections.tools,
-                ...initialSections.analysis,
-                ...initialSections.other,
-            ]);
-        }
-      });
+        });
+        
+        setOrderedSections(newOrderedSections);
+        setIsLoading(false);
     }
-  }, [user, firestore]);
+  }, [userSettings]);
+
+  const updateFirestoreSettings = (settings: Partial<UserSettings>) => {
+    if (user && firestore) {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        updateDoc(userDocRef, settings);
+    }
+    setUserSettings(prev => ({...prev, ...settings}));
+  };
+  
+  const handleTogglePin = (href: string) => {
+    const newOrderedSections = orderedSections.map(s => s.href === href ? { ...s, isPinned: !s.isPinned } : s);
+    setOrderedSections(newOrderedSections);
+    
+    const pinnedHrefs = newOrderedSections.filter(s => s.isPinned).map(s => s.href);
+    updateFirestoreSettings({ pinnedItems: pinnedHrefs });
+  };
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) {
@@ -159,12 +181,7 @@ export function AppSidebar() {
     items.splice(result.destination.index, 0, reorderedItem);
 
     setOrderedSections(items);
-    
-    if (user && firestore) {
-      const userDocRef = doc(firestore, 'users', user.uid);
-      const newOrderHrefs = items.map(item => item.href);
-      updateDoc(userDocRef, { sidebarOrder: newOrderHrefs });
-    }
+    updateFirestoreSettings({ sidebarOrder: items.map(item => item.href) });
   };
 
   const isActive = useCallback((path: string) => {
@@ -173,6 +190,13 @@ export function AppSidebar() {
     }
     return pathname.startsWith(path);
   }, [pathname]);
+  
+  const { pinned, unpinned } = useMemo(() => {
+      const p = orderedSections.filter(item => item.isPinned);
+      const u = orderedSections.filter(item => !item.isPinned);
+      return { pinned: p, unpinned: u };
+  }, [orderedSections]);
+
 
   return (
     <Sidebar>
@@ -189,11 +213,28 @@ export function AppSidebar() {
           <SidebarSeparator />
         </SidebarMenu>
         
+        {pinned.length > 0 && (
+            <>
+                <div className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">المثبتة</div>
+                 <ul className="flex w-full min-w-0 flex-col gap-1 mt-2">
+                    {pinned.map(item => (
+                        <li key={item.href} className="flex items-center gap-2">
+                            <button className="p-1 text-muted-foreground hover:text-foreground" onClick={() => handleTogglePin(item.href)}>
+                                <PinOff className="h-4 w-4 text-primary" />
+                            </button>
+                             <SidebarLink href={item.href} icon={item.icon} name={item.name} isActive={isActive(item.href)} />
+                        </li>
+                    ))}
+                </ul>
+                <SidebarSeparator />
+            </>
+        )}
+
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="sidebar-sections">
             {(provided) => (
               <ul {...provided.droppableProps} ref={provided.innerRef} className="flex w-full min-w-0 flex-col gap-1">
-                {orderedSections.map((item, index) => (
+                {unpinned.map((item, index) => (
                   <Draggable key={item.href} draggableId={item.href} index={index}>
                     {(provided) => (
                       <li
@@ -201,6 +242,9 @@ export function AppSidebar() {
                         {...provided.draggableProps}
                         className="flex items-center gap-2"
                       >
+                         <button className="p-1 text-muted-foreground hover:text-foreground" onClick={() => handleTogglePin(item.href)}>
+                            <Pin className="h-4 w-4" />
+                        </button>
                         <div {...provided.dragHandleProps} className="cursor-grab p-1 text-muted-foreground hover:text-foreground">
                             <GripVertical className="h-5 w-5" />
                         </div>
