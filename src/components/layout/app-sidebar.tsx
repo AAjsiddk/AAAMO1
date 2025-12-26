@@ -41,7 +41,8 @@ import {
   BookText,
   Swords,
   BrainCircuit,
-  PiggyBank
+  PiggyBank,
+  BookMarked
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -79,6 +80,7 @@ export function AppSidebar() {
   
   const toolsSections = [
       { name: 'الدورات التعليمية', href: '/dashboard/courses', icon: BookOpen },
+      { name: 'مخطط الدراسة', href: '/dashboard/study-planner', icon: BookMarked },
       { name: 'مكتبتي المعرفية', href: '/dashboard/library', icon: Library },
       { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: Clock },
       { name: 'مخطط الترفيه', href: '/dashboard/relax', icon: Coffee },

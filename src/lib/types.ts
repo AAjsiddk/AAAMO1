@@ -156,9 +156,9 @@ export type HealthEntry = {
     date: string; // YYYY-MM-DD
     foodIntake: { meal: string, description: string }[];
     notes: string;
-    wentToGym: boolean;
     exercises?: Exercise[];
     createdAt: FieldValue;
+    updatedAt: FieldValue;
 }
 
 export type ForbiddenFood = {

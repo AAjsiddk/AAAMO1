@@ -88,10 +88,12 @@ export function Header() {
   });
   
   useEffect(() => {
-    // Only run on client
+    // This now runs only on client, after the initial render.
+    // The server will always render dark theme, and this script will correct it if needed.
     const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const initialTheme = storedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    setTheme(initialTheme);
+    if (storedTheme) {
+      setTheme(storedTheme);
+    }
   }, []);
 
   const toggleTheme = () => {

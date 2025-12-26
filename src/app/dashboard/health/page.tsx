@@ -9,7 +9,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, doc, serverTimestamp, query, where, addDoc, updateDoc, orderBy, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, where, addDoc, updateDoc, orderBy, deleteDoc, setDoc, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -20,10 +20,8 @@ import { Label } from '@/components/ui/label';
 import { Plus, Trash2, Loader2, HeartPulse, Dumbbell, Apple, Info, Utensils, CalendarDays, Edit, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { HealthEntry, ForbiddenFood, Exercise } from '@/lib/types';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Switch } from '@/components/ui/switch';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -60,7 +58,6 @@ const exerciseSchema = z.object({
 const healthEntrySchema = z.object({
   notes: z.string().optional(),
   foodIntake: z.array(foodSchema),
-  wentToGym: z.boolean().default(false),
   exercises: z.array(exerciseSchema).optional(),
 });
 
@@ -71,14 +68,12 @@ const forbiddenFoodSchema = z.object({
   reason: z.string().optional(),
 });
 
-const todayString = format(new Date(), 'yyyy-MM-dd');
 
 export default function HealthPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
-  const [selectedDate, setSelectedDate] = useState(todayString);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(new Date().getDay());
   const [dailyTip, setDailyTip] = useState('');
   const [isForbiddenFoodDialogOpen, setIsForbiddenFoodDialogOpen] = useState(false);
   const [editingForbiddenFood, setEditingForbiddenFood] = useState<ForbiddenFood | null>(null);
@@ -89,7 +84,7 @@ export default function HealthPage() {
 
   const form = useForm<FormData>({
     resolver: zodResolver(healthEntrySchema),
-    defaultValues: { notes: '', foodIntake: [], wentToGym: false, exercises: [] },
+    defaultValues: { notes: '', foodIntake: [], exercises: [] },
   });
 
   const forbiddenForm = useForm<z.infer<typeof forbiddenFoodSchema>>({
@@ -107,74 +102,68 @@ export default function HealthPage() {
       name: "exercises"
   });
 
-
-  const healthCollectionRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return collection(firestore, `users/${user.uid}/healthEntries`);
-  }, [firestore, user]);
-
-  const allEntriesQuery = useMemoFirebase(() => {
-    if (!healthCollectionRef || !user?.uid) return null;
-    return query(healthCollectionRef, orderBy('date', 'desc'));
-  }, [healthCollectionRef, user?.uid]);
+  const healthEntriesQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return query(collection(firestore, `users/${user.uid}/healthEntries`));
+  }, [firestore, user?.uid]);
   
   const forbiddenFoodsQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(collection(firestore, `users/${user.uid}/forbiddenFoods`), orderBy('createdAt', 'desc'));
   }, [firestore, user?.uid]);
 
-  const { data: allEntries, isLoading } = useCollection<HealthEntry>(allEntriesQuery);
+  const { data: allEntries, isLoading } = useCollection<HealthEntry>(healthEntriesQuery);
   const { data: forbiddenFoods, isLoading: isLoadingForbidden } = useCollection<ForbiddenFood>(forbiddenFoodsQuery);
+
+  const selectedDate = useMemo(() => {
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const date = addDays(today, selectedDayIndex - dayOfWeek);
+      return format(date, 'yyyy-MM-dd');
+  }, [selectedDayIndex]);
 
   const selectedEntry = useMemo(() => {
     return allEntries?.find(entry => entry.date === selectedDate);
   }, [allEntries, selectedDate]);
+  
+  const isToday = selectedDate === format(new Date(), 'yyyy-MM-dd');
+  const isSubmitting = form.formState.isSubmitting;
 
   useEffect(() => {
     if (selectedEntry) {
       form.reset({
         notes: selectedEntry.notes,
         foodIntake: selectedEntry.foodIntake || [],
-        wentToGym: selectedEntry.wentToGym,
         exercises: selectedEntry.exercises || [],
       });
     } else {
-        form.reset({ notes: '', foodIntake: [], wentToGym: false, exercises: [] });
+      form.reset({ notes: '', foodIntake: [], exercises: [] });
     }
-  }, [selectedEntry, form, selectedDate]);
-  
-   const isToday = selectedDate === todayString;
+  }, [selectedEntry, form]);
 
   const onSubmit = async (values: FormData) => {
-    if (!healthCollectionRef || !user) return;
-    if (!isToday) {
-        toast({ variant: 'destructive', title: 'خطأ', description: 'لا يمكنك تعديل سجل يوم سابق.' });
-        return;
-    }
-    setIsSubmitting(true);
+    if (!firestore || !user) return;
     
     try {
       const entryData = {
         ...values,
         userId: user.uid,
-        date: todayString,
+        date: selectedDate,
         updatedAt: serverTimestamp(),
       };
 
+      const entryDocRef = doc(firestore, `users/${user.uid}/healthEntries`, selectedDate);
+      
       if (selectedEntry) {
-        const entryDocRef = doc(firestore, `users/${user.uid}/healthEntries`, selectedEntry.id);
         await updateDoc(entryDocRef, entryData);
-        toast({ title: 'نجاح', description: 'تم تحديث سجل اليوم الصحي.' });
+        toast({ title: 'نجاح', description: `تم تحديث سجل يوم ${format(new Date(selectedDate), 'EEEE', {locale: ar})}.` });
       } else {
-        const entryDocRef = doc(healthCollectionRef, todayString);
         await setDoc(entryDocRef, { ...entryData, createdAt: serverTimestamp() });
-        toast({ title: 'نجاح', description: 'تم تسجيل بيانات اليوم الصحية.' });
+        toast({ title: 'نجاح', description: `تم تسجيل بيانات يوم ${format(new Date(selectedDate), 'EEEE', {locale: ar})}.` });
       }
     } catch (error) {
       console.error("Error saving health entry: ", error);
       toast({ variant: 'destructive', title: 'خطأ', description: `فشل حفظ السجل الصحي.` });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -239,6 +228,7 @@ export default function HealthPage() {
       }
   };
 
+  const weekDays = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
   return (
     <>
@@ -262,7 +252,6 @@ export default function HealthPage() {
         </DialogContent>
     </Dialog>
 
-
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">الصحة والغذاء</h2>
@@ -279,82 +268,72 @@ export default function HealthPage() {
           <Card>
             <CardHeader>
               <CardTitle className='flex items-center gap-2'><HeartPulse className="text-primary"/> 
-              سجل يوم {format(new Date(selectedDate.replace(/-/g, '/')), 'd MMMM yyyy', { locale: ar })}
+              سجل يوم {weekDays[selectedDayIndex]}
               </CardTitle>
               <CardDescription>
-                {isToday ? 'سجل وجباتك، نشاطك الرياضي وملاحظاتك الصحية لهذا اليوم.' : 'عرض سجل يوم سابق.'}
+                سجل وجباتك، نشاطك الرياضي وملاحظاتك الصحية لهذا اليوم.
               </CardDescription>
             </CardHeader>
             <CardContent>
               {isLoading ? <div className="flex justify-center"><Loader2 className="animate-spin" /></div> : (
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <Accordion type="multiple" defaultValue={['food', 'gym']} className="w-full">
-                       <AccordionItem value="food">
-                         <AccordionTrigger className="text-lg font-medium"><Utensils className="ml-2" /> الوجبات</AccordionTrigger>
-                         <AccordionContent>
-                           <div className="space-y-4 pt-4">
-                            {foodFields.map((field, index) => (
-                              <div key={field.id} className="flex items-start gap-2 p-3 border rounded-md bg-background/50">
-                                <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <FormField control={form.control} name={`foodIntake.${index}.meal`} render={({ field }) => (
-                                    <FormItem><FormLabel>الوجبة</FormLabel><FormControl><Input placeholder="فطور، غداء..." {...field} disabled={!isToday} /></FormControl><FormMessage /></FormItem>
-                                  )} />
-                                  <FormField control={form.control} name={`foodIntake.${index}.description`} render={({ field }) => (
-                                    <FormItem><FormLabel>الوصف</FormLabel><FormControl><Input placeholder="شوفان وفواكه..." {...field} disabled={!isToday} /></FormControl><FormMessage /></FormItem>
-                                  )} />
-                                </div>
-                                {isToday && <Button type="button" variant="ghost" size="icon" className="mt-8 text-destructive" onClick={() => removeFood(index)}><Trash2 className="h-4 w-4" /></Button>}
-                              </div>
-                            ))}
-                             {foodFields.length === 0 && !isToday && <p className="text-muted-foreground text-center p-4">لم يتم تسجيل وجبات في هذا اليوم.</p>}
-                             {isToday && <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => appendFood({ meal: '', description: '' })}><Plus className="h-4 w-4 ml-2" /> إضافة وجبة</Button>}
+                     <div className="space-y-4 pt-4">
+                        <h3 className="text-lg font-medium flex items-center gap-2"><Utensils /> الوجبات</h3>
+                        {foodFields.map((field, index) => (
+                          <div key={field.id} className="flex items-start gap-2 p-3 border rounded-md bg-background/50">
+                            <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField control={form.control} name={`foodIntake.${index}.meal`} render={({ field }) => (
+                                <FormItem><FormLabel>الوجبة</FormLabel><FormControl><Input placeholder="فطور، غداء..." {...field} /></FormControl><FormMessage /></FormItem>
+                              )} />
+                              <FormField control={form.control} name={`foodIntake.${index}.description`} render={({ field }) => (
+                                <FormItem><FormLabel>الوصف</FormLabel><FormControl><Input placeholder="شوفان وفواكه..." {...field} /></FormControl><FormMessage /></FormItem>
+                              )} />
+                            </div>
+                            <Button type="button" variant="ghost" size="icon" className="mt-8 text-destructive" onClick={() => removeFood(index)}><Trash2 className="h-4 w-4" /></Button>
                           </div>
-                         </AccordionContent>
-                       </AccordionItem>
-                        <AccordionItem value="gym">
-                           <AccordionTrigger className="text-lg font-medium"><Dumbbell className="ml-2"/> سجل التمارين</AccordionTrigger>
-                           <AccordionContent>
-                             <div className="space-y-4 pt-4">
-                                {exerciseFields.map((field, index) => (
-                                  <Card key={field.id} className="p-4 bg-background/50">
-                                    <div className="flex justify-between items-center mb-4">
-                                      <FormField control={form.control} name={`exercises.${index}.name`} render={({ field }) => (
-                                        <FormItem className="flex-1"><FormLabel>اسم التمرين</FormLabel><FormControl><Input placeholder="مثال: ضغط بنش" {...field} disabled={!isToday} /></FormControl><FormMessage /></FormItem>
-                                      )} />
-                                      {isToday && <Button type="button" variant="ghost" size="icon" className="mr-2 text-destructive" onClick={() => removeExercise(index)}><Trash2 className="h-4 w-4" /></Button>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>المجموعات</Label>
-                                         <Controller
-                                            control={form.control}
-                                            name={`exercises.${index}.sets`}
-                                            render={({ field: { value: sets = [] } }) => (
-                                              <>
-                                                {sets.map((set, setIndex) => (
-                                                  <div key={setIndex} className="flex items-center gap-2">
-                                                     <FormField control={form.control} name={`exercises.${index}.sets.${setIndex}.reps`} render={({ field }) => (
-                                                        <FormItem className="flex-1"><FormControl><Input type="number" placeholder="التكرار" {...field} disabled={!isToday} /></FormControl></FormItem>
-                                                     )}/>
-                                                     <FormField control={form.control} name={`exercises.${index}.sets.${setIndex}.weight`} render={({ field }) => (
-                                                        <FormItem className="flex-1"><FormControl><Input type="number" placeholder="الوزن" {...field} disabled={!isToday} /></FormControl></FormItem>
-                                                     )}/>
-                                                     {isToday && <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeSet(index, setIndex)}><Trash2 className="h-4 w-4" /></Button>}
-                                                  </div>
-                                                ))}
-                                              </>
-                                            )}
-                                          />
-                                          {isToday && <Button type="button" variant="outline" size="sm" onClick={() => addSet(index)}><Plus className="h-4 w-4 ml-1"/>إضافة مجموعة</Button>}
-                                    </div>
-                                  </Card>
-                                ))}
-                                {exerciseFields.length === 0 && !isToday && <p className="text-muted-foreground text-center p-4">لم يتم تسجيل تمارين في هذا اليوم.</p>}
-                                {isToday && <Button type="button" variant="outline" className="mt-4" onClick={() => appendExercise({ id: uuidv4(), name: '', sets: [] })}><Plus className="h-4 w-4 ml-2" /> إضافة تمرين</Button>}
-                             </div>
-                           </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
+                        ))}
+                         {foodFields.length === 0 && <p className="text-muted-foreground text-center p-4">لم يتم تسجيل وجبات.</p>}
+                         <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => appendFood({ meal: '', description: '' })}><Plus className="h-4 w-4 ml-2" /> إضافة وجبة</Button>
+                      </div>
+                      <div className="space-y-4 pt-4">
+                        <h3 className="text-lg font-medium flex items-center gap-2"><Dumbbell/> سجل التمارين</h3>
+                           {exerciseFields.map((field, index) => (
+                              <Card key={field.id} className="p-4 bg-background/50">
+                                <div className="flex justify-between items-center mb-4">
+                                  <FormField control={form.control} name={`exercises.${index}.name`} render={({ field }) => (
+                                    <FormItem className="flex-1"><FormLabel>اسم التمرين</FormLabel><FormControl><Input placeholder="مثال: ضغط بنش" {...field} /></FormControl><FormMessage /></FormItem>
+                                  )} />
+                                  <Button type="button" variant="ghost" size="icon" className="mr-2 mt-8 text-destructive" onClick={() => removeExercise(index)}><Trash2 className="h-4 w-4" /></Button>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>المجموعات</Label>
+                                     <Controller
+                                        control={form.control}
+                                        name={`exercises.${index}.sets`}
+                                        render={({ field: { value: sets = [] } }) => (
+                                          <>
+                                            {sets.map((set, setIndex) => (
+                                              <div key={setIndex} className="flex items-center gap-2">
+                                                 <FormField control={form.control} name={`exercises.${index}.sets.${setIndex}.reps`} render={({ field }) => (
+                                                    <FormItem className="flex-1"><FormControl><Input type="number" placeholder="التكرار" {...field} /></FormControl></FormItem>
+                                                 )}/>
+                                                 <FormField control={form.control} name={`exercises.${index}.sets.${setIndex}.weight`} render={({ field }) => (
+                                                    <FormItem className="flex-1"><FormControl><Input type="number" placeholder="الوزن" {...field} /></FormControl></FormItem>
+                                                 )}/>
+                                                 <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeSet(index, setIndex)}><Trash2 className="h-4 w-4" /></Button>
+                                              </div>
+                                            ))}
+                                          </>
+                                        )}
+                                      />
+                                      <Button type="button" variant="outline" size="sm" onClick={() => addSet(index)}><Plus className="h-4 w-4 ml-1"/>إضافة مجموعة</Button>
+                                </div>
+                              </Card>
+                            ))}
+                            {exerciseFields.length === 0 && <p className="text-muted-foreground text-center p-4">لم يتم تسجيل تمارين.</p>}
+                            <Button type="button" variant="outline" className="mt-4" onClick={() => appendExercise({ id: uuidv4(), name: '', sets: [] })}><Plus className="h-4 w-4 ml-2" /> إضافة تمرين</Button>
+                         </div>
                     
                     <FormField
                       control={form.control}
@@ -362,18 +341,15 @@ export default function HealthPage() {
                       render={({ field }) => (
                         <FormItem className="mt-6">
                           <FormLabel>ملاحظات صحية عامة</FormLabel>
-                          <FormControl><Textarea placeholder="كيف تشعر اليوم؟ هل شربت كمية كافية من الماء؟" {...field} disabled={!isToday} /></FormControl>
+                          <FormControl><Textarea placeholder="كيف تشعر اليوم؟ هل شربت كمية كافية من الماء؟" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-
-                    {isToday && 
-                        <Button type="submit" disabled={isSubmitting} className="mt-6">
-                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
-                        {selectedEntry ? 'تحديث سجل اليوم' : 'حفظ سجل اليوم'}
-                        </Button>
-                    }
+                    <Button type="submit" disabled={isSubmitting} className="mt-6">
+                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
+                    {selectedEntry ? 'تحديث سجل اليوم' : 'حفظ سجل اليوم'}
+                    </Button>
                   </form>
                 </Form>
               )}
@@ -383,14 +359,13 @@ export default function HealthPage() {
         <div className="space-y-4">
              <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><CalendarDays /> الأيام السابقة</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><CalendarDays /> أيام الأسبوع</CardTitle>
                 </CardHeader>
-                <CardContent className="max-h-60 overflow-y-auto">
+                <CardContent className="max-h-96 overflow-y-auto">
                     <div className="space-y-2">
-                        {isLoading && <Loader2 className="animate-spin"/>}
-                        {allEntries?.map(entry => (
-                            <Button key={entry.id} variant={selectedDate === entry.date ? "secondary" : "ghost"} className="w-full justify-start" onClick={() => setSelectedDate(entry.date)}>
-                                {format(new Date(entry.date.replace(/-/g, '/')), 'EEEE, d MMMM yyyy', { locale: ar })}
+                        {weekDays.map((day, index) => (
+                            <Button key={day} variant={selectedDayIndex === index ? "secondary" : "ghost"} className="w-full justify-start" onClick={() => setSelectedDayIndex(index)}>
+                                {day}
                             </Button>
                         ))}
                     </div>
@@ -422,17 +397,6 @@ export default function HealthPage() {
                             </div>
                         ))}
                     </div>
-                </CardContent>
-            </Card>
-           <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Info /> كيف أستخدم هذا القسم؟</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground space-y-2">
-                   <p>1. **سجل يومك:** استخدم النموذج لتسجيل وجباتك، تمارينك وملاحظاتك لليوم الحالي فقط.</p>
-                   <p>2. **احفظ تقدمك:** اضغط على زر الحفظ في نهاية اليوم لتوثيق كل شيء.</p>
-                   <p>3. **تصفح الماضي:** استخدم قائمة "الأيام السابقة" لاستعراض سجلاتك القديمة.</p>
-                   <p>4. **قائمة الممنوعات:** أضف الأطعمة أو العادات التي تتجنبها حاليًا لتظل على المسار الصحيح.</p>
                 </CardContent>
             </Card>
         </div>
