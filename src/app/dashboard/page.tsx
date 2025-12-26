@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useCollection, useUser, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import type { Task, Goal, Habit, JournalEntry, Inspiration } from '@/lib/types';
-import { Loader2, ArrowLeft, Lightbulb, RefreshCw } from 'lucide-react';
+import { Loader2, ArrowLeft, Lightbulb, RefreshCw, PlusCircle } from 'lucide-react';
 import { TimeWidget } from "@/components/dashboard/time-widget";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
