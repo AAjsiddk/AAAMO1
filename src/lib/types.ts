@@ -166,3 +166,13 @@ export type Inspiration = {
   content: string;
   createdAt: FieldValue;
 }
+
+export type Prayer = {
+    id: string; // date_prayerName e.g. 2024-07-30_Fajr
+    userId: string;
+    date: string; // YYYY-MM-DD
+    prayerName: 'Fajr' | 'Dhuhr' | 'Asr' | 'Maghrib' | 'Isha';
+    isDoneInMosque: boolean;
+    notes?: string;
+    updatedAt: FieldValue;
+}

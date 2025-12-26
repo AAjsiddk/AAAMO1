@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Particles } from '@/components/dashboard/Particles';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -99,7 +100,7 @@ const DashboardPage = () => {
   
   const handleTasbeehClick = () => {
     if (tasbeehCount + 1 >= tasbeehTarget) {
-        if (navigator.vibrate) {
+        if (typeof window !== 'undefined' && navigator.vibrate) {
             navigator.vibrate(200);
         }
         setTasbeehCount(tasbeehTarget);
@@ -117,7 +118,8 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 relative overflow-hidden">
+      <Particles />
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between space-y-2">
         <div>
             <h2 className="text-3xl font-bold tracking-tight">لوحة التحكم</h2>
@@ -126,7 +128,7 @@ const DashboardPage = () => {
       </motion.div>
       
        <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="bg-card/70 border-primary/20 backdrop-blur-sm">
+            <Card className="card-glass">
                 <CardHeader>
                     <CardTitle className="flex justify-between items-center text-primary">
                         <span>{currentWisdom?.type} اليوم</span>
@@ -141,7 +143,7 @@ const DashboardPage = () => {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="h-full bg-card/70 border-border/50 backdrop-blur-sm">
+            <Card className="h-full card-glass">
                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">الوقت والتاريخ</CardTitle>
                  </CardHeader>
@@ -151,7 +153,7 @@ const DashboardPage = () => {
             </Card>
         </motion.div>
         <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants}>
-             <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
+             <Card className="card-glass">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">المهام المنجزة (آخر 10)</CardTitle>
                 </CardHeader>
@@ -161,7 +163,7 @@ const DashboardPage = () => {
             </Card>
         </motion.div>
          <motion.div custom={3} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
+            <Card className="card-glass">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">الأهداف النشطة</CardTitle>
                 </CardHeader>
@@ -171,7 +173,7 @@ const DashboardPage = () => {
             </Card>
         </motion.div>
          <motion.div custom={4} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
+            <Card className="card-glass">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">العادات قيد التتبع</CardTitle>
                 </CardHeader>
@@ -184,7 +186,7 @@ const DashboardPage = () => {
 
        <div className="grid gap-4 grid-cols-1">
          <motion.div custom={5} initial="hidden" animate="visible" variants={cardVariants}>
-             <Card className="h-full bg-card/70 border-border/50 backdrop-blur-sm">
+             <Card className="h-full card-glass">
               <CardHeader>
                 <div className="flex justify-between items-center">
                     <div>
@@ -204,7 +206,7 @@ const DashboardPage = () => {
                  ) : journalEntries && journalEntries.length > 0 ? (
                     <div className="space-y-4">
                         {journalEntries.map(entry => (
-                            <div key={entry.id} className="p-3 bg-card/80 rounded-lg hover:bg-card transition-colors">
+                            <div key={entry.id} className="p-3 bg-background/50 rounded-lg hover:bg-background transition-colors">
                                 <h4 className="font-semibold truncate">{entry.title}</h4>
                                 <p className="text-sm text-muted-foreground line-clamp-2">{entry.content}</p>
                                 <p className="text-xs text-muted-foreground mt-1">
@@ -223,7 +225,7 @@ const DashboardPage = () => {
 
        <div className="grid gap-4 md:grid-cols-2">
          <motion.div custom={7} initial="hidden" animate="visible" variants={cardVariants}>
-            <Card className="bg-card/70 border-border/50 backdrop-blur-sm">
+            <Card className="card-glass">
                 <CardHeader>
                     <CardTitle className="text-center text-2xl font-bold text-primary">السبحة الإلكترونية</CardTitle>
                 </CardHeader>
@@ -273,7 +275,7 @@ const DashboardPage = () => {
             </Card>
         </motion.div>
         <motion.div custom={8} initial="hidden" animate="visible" variants={cardVariants}>
-             <Card className="bg-card/70 border-border/50 backdrop-blur-sm h-full">
+             <Card className="card-glass h-full">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Lightbulb className="text-primary" />

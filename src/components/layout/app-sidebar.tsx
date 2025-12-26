@@ -38,7 +38,8 @@ import {
   HeartPulse,
   Lightbulb,
   Archive,
-  BookText
+  BookText,
+  Swords
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -69,7 +70,7 @@ export function AppSidebar() {
       { name: 'مرآة الذات', href: '/dashboard/mood', icon: Smile },
       { name: 'صندوق الامتنان', href: '/dashboard/gratitude', icon: Heart },
       { name: 'يومي الجميل', href: '/dashboard/beautiful-day', icon: Sparkles },
-      { name: 'ركن العبادات', href: '/dashboard/faith', icon: HandHeart },
+      { name: 'الصلوات', href: '/dashboard/prayers', icon: HandHeart },
       { name: 'الصحة والغذاء', href: '/dashboard/health', icon: HeartPulse },
       { name: 'الإلهامات', href: '/dashboard/inspirations', icon: Lightbulb },
   ];
@@ -79,13 +80,12 @@ export function AppSidebar() {
       { name: 'مكتبتي المعرفية', href: '/dashboard/library', icon: Library },
       { name: 'وضع الإنتاج العميق', href: '/dashboard/focus', icon: Clock },
       { name: 'مخطط الترفيه', href: '/dashboard/relax', icon: Coffee },
-      { name: 'تصدير واستيراد', href: '/dashboard/data-sync', icon: Package },
   ];
 
   const analysisSections = [
     { name: 'التحليلات', href: '/dashboard/analytics', icon: BarChart },
     { name: 'الإنجاز التراكمي', href: '/dashboard/cumulative-achievements', icon: TrendingUp },
-    { name: 'الإنجازات', href: '/dashboard/achievements', icon: Trophy },
+    { name: 'التحديات', href: '/dashboard/challenges', icon: Swords },
   ];
 
   const otherSections = [

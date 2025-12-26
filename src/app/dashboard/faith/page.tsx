@@ -1,256 +1,223 @@
 'use client';
-import { useState, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
-  useFirestore,
-  useUser,
-  useCollection,
-  useMemoFirebase,
-} from '@/firebase';
-import { collection, doc, serverTimestamp, query, where, addDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, doc, query, where, writeBatch, Timestamp, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, Loader2, BookOpen, Link as LinkIcon, HandHeart, Minus, Edit, MessageSquare } from 'lucide-react';
+import { Loader2, Check, X, Edit2, Save, Mosque } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { WorshipAct } from '@/lib/types';
-import CalendarHeatmap from 'react-calendar-heatmap';
-import 'react-calendar-heatmap/dist/styles.css';
-import { Tooltip as ReactTooltip } from 'react-tooltip'
-import { subYears, format } from 'date-fns';
-import Link from 'next/link';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
+import type { Prayer } from '@/lib/types';
+import { format, startOfDay } from 'date-fns';
 
+const prayerNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'] as const;
+type PrayerName = typeof prayerNames[number];
+const prayerTranslations: Record<PrayerName, string> = {
+    Fajr: 'الفجر',
+    Dhuhr: 'الظهر',
+    Asr: 'العصر',
+    Maghrib: 'المغرب',
+    Isha: 'العشاء',
+};
 
-const actSchema = z.object({
-  name: z.string().min(1, { message: 'اسم العمل مطلوب.' }),
-  notes: z.string().optional(),
+const prayerSchema = z.object({
+    times: z.object({
+        Fajr: z.string(),
+        Dhuhr: z.string(),
+        Asr: z.string(),
+        Maghrib: z.string(),
+        Isha: z.string(),
+    })
 });
 
+type PrayerFormData = z.infer<typeof prayerSchema>;
+
+async function getPrayerTimes(latitude: number, longitude: number) {
+    const date = new Date();
+    const response = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Dubai&country=AE&method=8`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch prayer times');
+    }
+    const data = await response.json();
+    return data.data.timings;
+}
 
 export default function FaithPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-  const firestore = useFirestore();
-  const { user } = useUser();
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [isEditingTimes, setIsEditingTimes] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
-  const form = useForm<z.infer<typeof actSchema>>({
-    resolver: zodResolver(actSchema),
-    defaultValues: { name: '', notes: '' },
-  });
-  
-  const todayString = format(new Date(), 'yyyy-MM-dd');
-  
-  const actsCollectionRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return collection(firestore, `users/${user.uid}/worshipActs`);
-  }, [firestore, user]);
+    const form = useForm<PrayerFormData>({
+        resolver: zodResolver(prayerSchema),
+        defaultValues: {
+            times: { Fajr: '00:00', Dhuhr: '00:00', Asr: '00:00', Maghrib: '00:00', Isha: '00:00' },
+        },
+    });
 
-  // Query for today's acts
-  const todayActsQuery = useMemoFirebase(() => {
-    if (!actsCollectionRef) return null;
-    return query(actsCollectionRef, where('date', '==', todayString));
-  }, [actsCollectionRef, todayString]);
-  
-  // Query for all acts for the heatmap
-  const allActsQuery = useMemoFirebase(() => actsCollectionRef, [actsCollectionRef]);
+    const todayString = format(startOfDay(new Date()), 'yyyy-MM-dd');
 
-  const { data: todayActs, isLoading: isLoadingToday } = useCollection<WorshipAct>(todayActsQuery);
-  const { data: allActs, isLoading: isLoadingAll } = useCollection<WorshipAct>(allActsQuery);
-  
-  const heatmapData = useMemo(() => {
-    if (!allActs) return [];
-    return allActs.reduce((acc, act) => {
-        if (!act.date) return acc;
-        const existing = acc.find(d => d.date === act.date);
-        if (existing) {
-            existing.count += (act.count || 1);
-        } else {
-            acc.push({ date: act.date, count: act.count || 1 });
+    const prayersQuery = useMemoFirebase(() => {
+        if (!user) return null;
+        return query(collection(firestore, `users/${user.uid}/prayers`), where('date', '==', todayString));
+    }, [user, firestore, todayString]);
+
+    const { data: prayers, isLoading: isLoadingPrayers } = useCollection<Prayer>(prayersQuery);
+
+    const prayerData = useMemo(() => {
+        const map = new Map<PrayerName, Prayer>();
+        prayers?.forEach(p => map.set(p.prayerName, p));
+        return map;
+    }, [prayers]);
+
+    const fetchAndSetPrayerTimes = useCallback(() => {
+        setIsLoading(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                try {
+                    const times = await getPrayerTimes(position.coords.latitude, position.coords.longitude);
+                    form.reset({
+                        times: {
+                            Fajr: times.Fajr,
+                            Dhuhr: times.Dhuhr,
+                            Asr: times.Asr,
+                            Maghrib: times.Magrib,
+                            Isha: times.Isha,
+                        },
+                    });
+                } catch (error) {
+                    toast({ variant: 'destructive', title: 'خطأ', description: 'فشل في جلب أوقات الصلاة تلقائيًا.' });
+                    console.error(error);
+                } finally {
+                    setIsLoading(false);
+                }
+            },
+            (error) => {
+                console.error("Geolocation error:", error);
+                toast({ variant: 'destructive', title: 'خطأ', description: 'فشل في تحديد موقعك. يرجى إدخال الأوقات يدويًا.' });
+                setIsLoading(false);
+            }
+        );
+    }, [form, toast]);
+
+    useEffect(() => {
+        fetchAndSetPrayerTimes();
+    }, [fetchAndSetPrayerTimes]);
+
+    const handleUpdate = async (prayerName: PrayerName, field: 'isDoneInMosque' | 'notes', value: boolean | string) => {
+        if (!user || !firestore) return;
+        const id = `${todayString}_${prayerName}`;
+        const docRef = doc(firestore, `users/${user.uid}/prayers`, id);
+        
+        try {
+            const batch = writeBatch(firestore);
+            const dataToUpdate = {
+                [field]: value,
+                userId: user.uid,
+                date: todayString,
+                prayerName: prayerName,
+                updatedAt: serverTimestamp(),
+            };
+            batch.set(docRef, dataToUpdate, { merge: true });
+            await batch.commit();
+        } catch (error) {
+            console.error('Error updating prayer:', error);
+            toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحديث بيانات الصلاة.' });
         }
-        return acc;
-    }, [] as {date: string, count: number}[]);
-  }, [allActs]);
+    };
+    
+    return (
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+            <div className="flex items-center justify-between space-y-2">
+                <h2 className="text-3xl font-bold tracking-tight">متابعة الصلوات</h2>
+            </div>
 
-
-  const onSubmit = async (values: z.infer<typeof actSchema>) => {
-    if (!actsCollectionRef || !user) return;
-    setIsSubmitting(true);
-
-    try {
-        await addDoc(actsCollectionRef, {
-            ...values,
-            userId: user.uid,
-            date: todayString,
-            count: 1,
-            createdAt: serverTimestamp(),
-        });
-        toast({ title: 'نجاح', description: 'تقبل الله. تم تسجيل العمل.' });
-        form.reset();
-    } catch (error) {
-        console.error("Error saving act: ", error);
-        toast({ variant: 'destructive', title: 'خطأ', description: `فشل تسجيل العمل.` });
-    } finally {
-        setIsSubmitting(false);
-    }
-  };
-  
-  const handleActUpdate = async(act: WorshipAct, change: 1 | -1) => {
-     if (!firestore || !user) return;
-     const actDocRef = doc(firestore, `users/${user.uid}/worshipActs`, act.id);
-     const newCount = (act.count || 0) + change;
-     if (newCount <= 0) {
-         await deleteDoc(actDocRef);
-         toast({title: "تم الحذف", description: "تم حذف العمل من قائمة اليوم."});
-     } else {
-         await updateDoc(actDocRef, { count: newCount });
-     }
-  }
-
-  const handleDeleteAct = async (actId: string) => {
-    if (!firestore || !user) return;
-    const actDocRef = doc(firestore, `users/${user.uid}/worshipActs`, actId);
-    try {
-        await deleteDoc(actDocRef);
-    } catch (error) {
-        console.error("Error deleting act: ", error);
-        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل حذف العمل.' });
-    }
-  };
-
-  return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">ركن العبادات</h2>
-      </div>
-      
-      <div className="grid gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
-                    <CardTitle className='flex items-center gap-2'><HandHeart className="text-primary"/> أعمال اليوم</CardTitle>
-                    <CardDescription>سجل العبادات التي قمت بها اليوم وأضف ملاحظاتك لتعميق تجربتك الروحانية.</CardDescription>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>أوقات صلاة اليوم</CardTitle>
+                            <CardDescription>
+                                {isEditingTimes ? 'عدّل أوقات الصلاة حسب مدينتك' : 'الأوقات تضبط تلقائيًا حسب موقعك'}
+                            </CardDescription>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => setIsEditingTimes(!isEditingTimes)}>
+                            {isEditingTimes ? <Save className="h-5 w-5" /> : <Edit2 className="h-5 w-5" />}
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent>
-                    <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField control={form.control} name="name" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>اسم العمل</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="مثال: قراءة سورة الكهف، صدقة..." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                        <FormField control={form.control} name="notes" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>ملاحظات وتأملات (اختياري)</FormLabel>
-                                <FormControl>
-                                    <Textarea placeholder="اكتب خواطرك، دعاء، أو تفاصيل أخرى..." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Plus className="h-4 w-4 ml-2" />}
-                            إضافة عمل
-                        </Button>
-                    </form>
-                    </Form>
-                    <div className="mt-6 space-y-2">
-                        {isLoadingToday ? <div className="flex justify-center"><Loader2 className="animate-spin" /></div> : 
-                        (todayActs && todayActs.length > 0) ? (
-                            <Accordion type="multiple" className="w-full">
-                                {todayActs.map(act => (
-                                    <AccordionItem value={act.id} key={act.id}>
-                                        <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
-                                             <AccordionTrigger className="flex-grow text-right mr-4 hover:no-underline p-0">
-                                                <span className="font-medium">{act.name}</span>
-                                            </AccordionTrigger>
-                                            <div className="flex items-center gap-1 flex-shrink-0">
-                                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleActUpdate(act, 1)}><Plus className="h-4 w-4"/></Button>
-                                                <span className="font-bold text-primary w-6 text-center">{act.count || 1}</span>
-                                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleActUpdate(act, -1)}><Minus className="h-4 w-4"/></Button>
-                                                <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => handleDeleteAct(act.id)}><Trash2 className="h-4 w-4"/></Button>
-                                            </div>
-                                        </div>
-                                        {act.notes && (
-                                            <AccordionContent>
-                                                <p className="text-sm text-muted-foreground whitespace-pre-wrap px-4 pb-2 border-r-2 mr-6 border-border">
-                                                    {act.notes}
-                                                </p>
-                                            </AccordionContent>
-                                        )}
-                                    </AccordionItem>
-                                ))}
-                             </Accordion>
-                        ) : <p className="text-center text-sm text-muted-foreground pt-4">لم تسجل أي أعمال اليوم.</p>
-                        }
-                    </div>
-                </CardContent>
-            </Card>
-          </div>
-          <div className="space-y-4">
-            <Card>
-                <CardHeader>
-                    <CardTitle>خريطة العبادات</CardTitle>
-                    <CardDescription>نظرة على التزامك خلال العام الماضي.</CardDescription>
-                </CardHeader>
-                <CardContent className='overflow-x-auto'>
-                    {isLoadingAll ? <div className="flex justify-center"><Loader2 className="animate-spin" /></div> : 
-                        <>
-                            <CalendarHeatmap
-                                startDate={subYears(new Date(), 1)}
-                                endDate={new Date()}
-                                values={heatmapData}
-                                classForValue={(value) => {
-                                    if (!value) { return 'color-empty'; }
-                                    return `color-scale-${Math.min(value.count, 4)}`;
-                                }}
-                                tooltipDataAttrs={(value: {date: string, count: number}) => {
-                                    return {
-                                    'data-tooltip-id': 'heatmap-tooltip',
-                                    'data-tooltip-content': value.date && value.count ? `${value.date}: ${value.count} عمل` : '',
-                                    };
-                                }}
-                            />
-                            <ReactTooltip id="heatmap-tooltip" />
-                        </>
+                    {isLoading ? <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div> :
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            {prayerNames.map((name) => (
+                                <div key={name} className="space-y-2">
+                                    <label className="font-semibold text-lg">{prayerTranslations[name]}</label>
+                                    <Input 
+                                        type="time" 
+                                        disabled={!isEditingTimes}
+                                        {...form.register(`times.${name}`)}
+                                        className="text-center text-lg"
+                                    />
+                                </div>
+                            ))}
+                        </div>
                     }
                 </CardContent>
             </Card>
-            <Button asChild className="w-full" variant="outline">
-                <Link href="https://remembrances-1.vercel.app/" target="_blank">
-                    <BookOpen className="ml-2 h-4 w-4" />
-                    موقع أذكار وأدعية (نجاتك بيدك)
-                </Link>
-            </Button>
-          </div>
-      </div>
 
-    </div>
-  );
+            <Card>
+                <CardHeader>
+                    <CardTitle>سجل صلوات اليوم</CardTitle>
+                    <CardDescription>سجل أداءك لصلوات اليوم وأضف ملاحظاتك.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     {isLoadingPrayers ? <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div> :
+                        prayerNames.map(name => {
+                            const currentPrayer = prayerData.get(name);
+                            return (
+                                <div key={name} className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-card border">
+                                    <div className="flex items-center gap-4">
+                                        <Mosque className="h-8 w-8 text-primary"/>
+                                        <div>
+                                            <h3 className="text-xl font-bold">{prayerTranslations[name]}</h3>
+                                            <p className="text-muted-foreground text-sm">{form.getValues(`times.${name}`)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex-grow w-full md:w-auto">
+                                        <Input 
+                                            placeholder="أضف ملاحظة (مثال: خشوع، دعاء...)"
+                                            defaultValue={currentPrayer?.notes || ''}
+                                            onBlur={(e) => handleUpdate(name, 'notes', e.target.value)}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                         <span className="text-sm font-medium">صليتها في المسجد؟</span>
+                                        <Button 
+                                            variant={currentPrayer?.isDoneInMosque === true ? 'default' : 'outline'}
+                                            size="icon"
+                                            onClick={() => handleUpdate(name, 'isDoneInMosque', true)}
+                                        >
+                                            <Check />
+                                        </Button>
+                                         <Button 
+                                            variant={currentPrayer?.isDoneInMosque === false ? 'destructive' : 'outline'}
+                                            size="icon"
+                                            onClick={() => handleUpdate(name, 'isDoneInMosque', false)}
+                                        >
+                                            <X />
+                                        </Button>
+                                    </div>
+                                </div>
+                            )
+                        })
+                     }
+                </CardContent>
+            </Card>
+        </div>
+    );
 }

@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { useUser, useAuth, useFirestore } from '@/firebase';
@@ -49,6 +49,8 @@ import {
   Sparkles as ExcitedIcon,
   Annoyed,
   Loader2,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -75,6 +77,7 @@ export function Header() {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
 
   const [isJournalDialogOpen, setIsJournalDialogOpen] = useState(false);
@@ -84,6 +87,28 @@ export function Header() {
     resolver: zodResolver(journalSchema),
     defaultValues: { title: '', content: '', imageUrl: '' },
   });
+  
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const initialTheme = storedTheme || 'dark';
+    setTheme(initialTheme);
+    if (initialTheme === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    if (newTheme === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  };
 
 
   const handleSignOut = async () => {
@@ -205,6 +230,11 @@ export function Header() {
                 </>
               ) : user ? (
                 <>
+                  <Button onClick={toggleTheme} variant="ghost" size="icon">
+                    <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <span className="sr-only">Toggle theme</span>
+                  </Button>
                   <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
@@ -284,5 +314,3 @@ export function Header() {
     </>
   );
 }
-
-    
