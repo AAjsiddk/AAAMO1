@@ -40,12 +40,6 @@ const SidebarProvider = ({
     setIsOpen((prev) => !prev)
   }, [])
   
-   const closeSidebar = React.useCallback(() => {
-    if (isMobile) {
-      setIsOpen(false);
-    }
-  }, [isMobile]);
-
   React.useEffect(() => {
     setIsOpen(!isMobile);
   }, [isMobile]);
@@ -59,13 +53,6 @@ const SidebarProvider = ({
     }),
     [isOpen, setIsOpen, isMobile, toggleSidebar]
   )
-
-  const pathname = usePathname();
-  React.useEffect(() => {
-    if (isMobile) {
-      setIsOpen(false);
-    }
-  }, [pathname, isMobile]);
 
   return (
     <SidebarContext.Provider value={contextValue}>

@@ -240,3 +240,7 @@ export type StudyPlan = {
    // Client side
   subtasks: StudyPlan[];
 };
+
+export type UserSettings = {
+    sidebarOrder?: string[];
+}

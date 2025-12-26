@@ -6,6 +6,7 @@ import { Firestore, doc, getDoc } from 'firebase/firestore';
 import { Auth, User } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { useUser as useUserHook } from './auth/use-user'; // Renaming to avoid conflict
+import type { UserSettings } from '@/lib/types';
 
 // --- Context and Types ---
 
@@ -13,6 +14,8 @@ export interface FirebaseContextState {
   firebaseApp: FirebaseApp | null;
   firestore: Firestore | null;
   auth: Auth | null;
+  userSettings: UserSettings | null;
+  setUserSettings: React.Dispatch<React.SetStateAction<UserSettings | null>>;
 }
 
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
@@ -89,24 +92,52 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   firestore,
   auth,
 }) => {
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
+  
   const contextValue = useMemo((): FirebaseContextState => {
     return {
       firebaseApp,
       firestore,
       auth,
+      userSettings,
+      setUserSettings,
     };
-  }, [firebaseApp, firestore, auth]);
+  }, [firebaseApp, firestore, auth, userSettings]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
        <Suspense fallback={null}>
          <ThemeLoader />
+         <SettingsLoader />
        </Suspense>
        <FirebaseErrorListener />
       {children}
     </FirebaseContext.Provider>
   );
 };
+
+function SettingsLoader() {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const { setUserSettings } = useFirebaseServices();
+
+    useEffect(() => {
+        if (user && firestore) {
+            const userDocRef = doc(firestore, 'users', user.uid);
+            getDoc(userDocRef).then(userDoc => {
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    const settings: UserSettings = {
+                        sidebarOrder: data.sidebarOrder || [],
+                    };
+                    setUserSettings(settings);
+                }
+            });
+        }
+    }, [user, firestore, setUserSettings]);
+
+    return null;
+}
 
 /**
  * A client component responsible for loading and applying the user's theme
@@ -141,7 +172,7 @@ function ThemeLoader() {
       });
     } else if (!isUserLoading && !user) {
         // Fallback for logged-out users
-        const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        const theme = localStorage.getItem('theme') || 'dark'; // Default to dark if no preference
         if (theme === 'light') {
             document.documentElement.classList.add('light');
             document.documentElement.classList.remove('dark');
