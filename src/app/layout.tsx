@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Cairo, Readex_Pro } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
@@ -32,6 +33,19 @@ export const metadata: Metadata = {
   },
 };
 
+const fontCairo = Cairo({
+  subsets: ['arabic', 'latin'],
+  variable: '--font-cairo',
+  display: 'swap',
+});
+
+const fontReadex = Readex_Pro({
+  subsets: ['arabic', 'latin'],
+  variable: '--font-readex-pro',
+  display: 'swap',
+});
+
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -40,12 +54,6 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700&family=Cairo:wght@200;300;400;500;600;700;800;900;1000&display=swap"
-          rel="stylesheet"
-        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -71,7 +79,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={cn('min-h-screen font-body antialiased')}>
+      <body className={cn('min-h-screen font-body antialiased', fontCairo.variable, fontReadex.variable)}>
         <FirebaseClientProvider>{children}</FirebaseClientProvider>
         <Toaster />
       </body>

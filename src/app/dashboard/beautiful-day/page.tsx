@@ -59,7 +59,7 @@ export default function BeautifulDayPage() {
           createdAt: entry.createdAt,
         } as BeautifulMoment;
       })
-      .filter(Boolean) as BeautifulMoment[];
+      .filter((moment): moment is BeautifulMoment => moment !== null);
   }, [allEntries]);
   
   const handleDelete = async (momentId: string) => {

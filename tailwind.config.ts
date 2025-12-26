@@ -22,8 +22,8 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        body: ['Cairo', 'Readex Pro', 'sans-serif'],
-        headline: ['Cairo', 'Readex Pro', 'sans-serif'],
+        body: ['var(--font-cairo)', 'var(--font-readex-pro)', 'sans-serif'],
+        headline: ['var(--font-cairo)', 'var(--font-readex-pro)', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
