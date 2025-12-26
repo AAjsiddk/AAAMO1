@@ -97,15 +97,22 @@ function HabitDayTracker({ habit }: { habit: Habit }) {
         }
     };
     
-    const days = eachDayOfInterval({
-        start: (habit.startDate as Timestamp).toDate(),
-        end: (habit.endDate as Timestamp).toDate(),
-    });
+    const days = useMemo(() => {
+        if (!habit.startDate || !habit.endDate) return [];
+        return eachDayOfInterval({
+            start: (habit.startDate as Timestamp).toDate(),
+            end: (habit.endDate as Timestamp).toDate(),
+        });
+    }, [habit.startDate, habit.endDate]);
 
     const marksMap = useMemo(() => {
         if (!marks) return new Map<string, HabitMark['status']>();
         return new Map(marks.map(mark => [mark.date, mark.status]));
     }, [marks]);
+    
+    if (!habit.startDate || !habit.endDate) {
+        return <div className="p-2 text-center text-sm text-muted-foreground">الرجاء تحديد تاريخ البدء والانتهاء.</div>;
+    }
 
     return (
         <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
