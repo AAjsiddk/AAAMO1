@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import type { RelaxationActivity } from '@/lib/types';
 import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const formSchema = z.object({
   title: z.string().min(1, { message: 'العنوان مطلوب' }),
@@ -51,8 +52,7 @@ export default function RelaxPage() {
   });
 
   const plansCollectionRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/relaxationActivities`) : null, [user, firestore]);
-  const plansQuery = useMemoFirebase(() => plansCollectionRef ? query(plansCollectionRef) : null, [plansCollectionRef]);
-  const { data: plans, isLoading } = useCollection<RelaxationActivity>(plansQuery);
+  const { data: plans, isLoading } = useCollection<RelaxationActivity>(plansCollectionRef);
 
  const plansTree = useMemo(() => {
     if (!plans) return [];
@@ -154,8 +154,8 @@ export default function RelaxPage() {
             ...values,
             userId: user.uid,
             createdAt: serverTimestamp(),
-            order: editingItem ? editingItem.order : (plans?.length || 0),
-            pinned: editingItem ? editingItem.pinned : false,
+            order: editingItem?.order ?? (plans?.length || 0),
+            pinned: editingItem?.pinned ?? false,
             parentId: parentPlanId,
             startDate: values.startDate ? Timestamp.fromDate(values.startDate) : null,
             endDate: values.endDate ? Timestamp.fromDate(values.endDate) : null,
@@ -199,7 +199,7 @@ export default function RelaxPage() {
                 <StatusButtons item={plan} />
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(null, plan.id)}><Plus className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleTogglePin(plan)}>{plan.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}</Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(plan)}><Edit className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(plan, plan.parentId)}><Edit className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(plan.id)}><Trash2 className="h-4 w-4" /></Button>
               </div>
             </CardHeader>

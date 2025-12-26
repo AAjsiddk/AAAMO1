@@ -19,12 +19,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Progress } from '@/components/ui/progress';
-import { PlusCircle, Trash2, Loader2, Inbox, GripVertical, Plus, Edit, Check, X, Minus, Pin, PinOff, CalendarIcon } from 'lucide-react';
+import { PlusCircle, Trash2, Loader2, Inbox, GripVertical, Plus, Edit, Check, X, Pin, PinOff, CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import type { StudyPlan } from '@/lib/types';
 import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const formSchema = z.object({
   title: z.string().min(1, { message: 'العنوان مطلوب' }),
@@ -53,8 +54,7 @@ export default function StudyPlannerPage() {
   });
 
   const plansCollectionRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/studyPlans`) : null, [user, firestore]);
-  const plansQuery = useMemoFirebase(() => plansCollectionRef ? query(plansCollectionRef) : null, [plansCollectionRef]);
-  const { data: plans, isLoading } = useCollection<StudyPlan>(plansQuery);
+  const { data: plans, isLoading } = useCollection<StudyPlan>(plansCollectionRef);
 
  const plansTree = useMemo(() => {
     if (!plans) return [];
@@ -124,12 +124,10 @@ export default function StudyPlannerPage() {
     const batch = writeBatch(firestore);
     const docRef = doc(firestore, `users/${user.uid}/studyPlans`, draggableId);
     
-    // Changing parent
     if (source.droppableId !== destination.droppableId) {
       batch.update(docRef, { parentId: destination.droppableId === 'root-droppable' ? null : destination.droppableId });
     }
 
-    // Reordering logic
     const list = plans.filter(p => (p.parentId || 'root-droppable') === destination.droppableId);
     const [movedItem] = list.splice(source.index, 1);
     list.splice(destination.index, 0, movedItem);
@@ -159,8 +157,8 @@ export default function StudyPlannerPage() {
             ...values,
             userId: user.uid,
             createdAt: serverTimestamp(),
-            order: editingItem ? editingItem.order : (plans?.length || 0),
-            pinned: editingItem ? editingItem.pinned : false,
+            order: editingItem?.order ?? (plans?.length || 0),
+            pinned: editingItem?.pinned ?? false,
             parentId: parentPlanId,
             startDate: values.startDate ? Timestamp.fromDate(values.startDate) : null,
             endDate: values.endDate ? Timestamp.fromDate(values.endDate) : null,
@@ -204,7 +202,7 @@ export default function StudyPlannerPage() {
                 <StatusButtons item={plan} />
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(null, plan.id)}><Plus className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleTogglePin(plan)}>{plan.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}</Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(plan)}><Edit className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(plan, plan.parentId)}><Edit className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(plan.id)}><Trash2 className="h-4 w-4" /></Button>
               </div>
             </CardHeader>
