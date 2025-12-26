@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as AllIcons from 'lucide-react';
+import { useForm } from 'react-hook-form';
 
 type Challenge = {
   id: string;
